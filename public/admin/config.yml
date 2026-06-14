@@ -2,8 +2,8 @@ backend:
   name: github
   repo: projectlexbot/blog-youngjune
   branch: main
-  base_url: https://visionary-axolotl-75c5e4.netlify.app
-  auth_endpoint: /.netlify/functions/auth
+  auth_type: pkce
+  app_id: 0v23liW60GFC9IxW6VpG
 
 media_folder: public/image
 public_folder: /image
