@@ -1,6 +1,6 @@
 backend:
   name: github
-  repo: projectlexbot/blog-youngjune
+  repo: YoungJuneNLEX/blog-youngjune
   branch: main
   auth_type: pkce
   app_id: 0v23liW60GFC9IxW6VpG
