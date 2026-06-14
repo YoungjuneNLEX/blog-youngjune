@@ -1,14 +1,13 @@
 backend:
-  name: git-gateway
+  name: github
+  repo: projectlexbot/blog-youngjune
+  branch: main
+  base_url: https://visionary-axolotl-75c5e4.netlify.app
+  auth_endpoint: /.netlify/functions/auth
 
-# 로컬 개발 모드 — npx decap-server를 함께 실행해야 작동합니다
-local_backend: true
-
-# 이미지 업로드 위치
 media_folder: public/image
 public_folder: /image
 
-# 글 목록
 collections:
   - name: posts
     label: 글
@@ -45,13 +44,13 @@ collections:
         name: tags
         widget: list
         min: 1
-        hint: "★ 첫 번째 태그가 메인 책장에서 책 제목이 됩니다. 예: 커피공부 / 커피 / 일상 순서로 입력하세요."
+        hint: "★ 첫 번째 태그가 메인 책장에서 책 제목이 됩니다."
 
       - label: 썸네일 (책 표지)
         name: thumbnail
         widget: image
         required: false
-        hint: "이 이미지가 메인 책장에서 책 표지로 사용됩니다. 같은 책의 글이 여러 편이면 가장 최신 글의 썸네일이 표지가 됩니다."
+        hint: "이 이미지가 메인 책장에서 책 표지로 사용됩니다."
 
       - label: 한 줄 설명
         name: description
@@ -67,4 +66,4 @@ collections:
         name: draft
         widget: boolean
         default: false
-        hint: "켜면 초안으로 저장됩니다 (사이트에 보이지 않음). 끄면 발행 상태입니다."
+        hint: "켜면 초안 (사이트에 보이지 않음), 끄면 발행 상태입니다."
