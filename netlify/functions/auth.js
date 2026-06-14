@@ -7,7 +7,7 @@ exports.handler = async (event) => {
   if (!code) {
     return {
       statusCode: 302,
-      headers: { Location: `https://github.com/login/oauth/authorize?client_id=${clientId}&scope=repo,user` },
+      headers: { Location: `https://github.com/login/oauth/authorize?client_id=${clientId}&scope=repo` },
       body: '',
     };
   }
