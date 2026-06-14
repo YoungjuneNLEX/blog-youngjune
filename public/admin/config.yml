@@ -1,9 +1,9 @@
 backend:
   name: github
-  repo: YoungJuneNLEX/blog-youngjune
+  repo: YoungjuneNLEX/blog-youngjune
   branch: main
-  auth_type: pkce
-  app_id: 0v23liW60GFC9IxW6VpG
+  base_url: https://visionary-axolotl-75c5e4.netlify.app
+  auth_endpoint: /.netlify/functions/auth
 
 media_folder: public/image
 public_folder: /image
