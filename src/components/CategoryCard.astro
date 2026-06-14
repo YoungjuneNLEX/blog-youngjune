@@ -1,0 +1,73 @@
+---
+interface Props {
+  name: string;
+  description: string;
+  count: number;
+  icon: string;
+}
+const { name, description, count, icon } = Astro.props;
+---
+
+<a href={`/category/${name}`} class="cat-card">
+  <span class="cat-icon">{icon}</span>
+  <div class="cat-info">
+    <h3 class="cat-name">{name}</h3>
+    <p class="cat-desc">{description}</p>
+  </div>
+  <span class="cat-count">{count}편</span>
+</a>
+
+<style>
+  .cat-card {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 1.25rem 1.5rem;
+    border: 1px solid var(--border-soft);
+    border-radius: 10px;
+    background: var(--bg-mid);
+    box-shadow: var(--shadow-sm);
+    transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+  }
+  .cat-card:hover {
+    border-color: var(--accent);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+  }
+
+  .cat-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--accent-bg);
+    border: 1px solid rgba(176, 90, 58, 0.15);
+    border-radius: 10px;
+  }
+
+  .cat-info { flex: 1; min-width: 0; }
+
+  .cat-name {
+    font-family: var(--serif);
+    font-size: 1.05rem;
+    color: var(--text-main);
+    margin-bottom: 0.25rem;
+  }
+
+  .cat-desc {
+    font-size: 0.85rem;
+    color: var(--text-sub);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .cat-count {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+</style>

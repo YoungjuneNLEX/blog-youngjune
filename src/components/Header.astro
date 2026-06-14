@@ -1,0 +1,171 @@
+---
+import { getCollection } from 'astro:content';
+
+const allPosts = await getCollection('posts', ({ data }) => !data.draft);
+const sections = [...new Set(allPosts.map(p => p.data.category))].sort();
+
+const current = Astro.url.pathname;
+---
+
+<header class="site-header">
+  <div class="container header-inner">
+    <a href="/" class="logo">
+      <img src="/logo.png" alt="사무장 박영준 로고" class="logo-img" />
+      <span class="logo-text">사무장 박영준</span>
+    </a>
+
+    <nav>
+      <ul class="nav-list">
+        <li>
+          <a href="/" class:list={['nav-link', { active: current === '/' }]}>홈</a>
+        </li>
+        <li>
+          <a href="/about" class:list={['nav-link', { active: current === '/about' }]}>소개</a>
+        </li>
+        {sections.map(section => (
+          <li class="nav-item-has-sub">
+            <a
+              href={`/shelf/${section}`}
+              class:list={['nav-link', { active: current.startsWith(`/shelf/${section}`) }]}
+            >
+              {section}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+
+    <button class="menu-toggle" id="menu-toggle" aria-label="메뉴 열기">☰</button>
+  </div>
+
+  <!-- 모바일 메뉴 -->
+  <div class="mobile-nav" id="mobile-nav">
+    <ul class="mobile-nav-list">
+      <li><a href="/" class="mobile-nav-link">홈</a></li>
+      <li><a href="/about" class="mobile-nav-link">소개</a></li>
+      {sections.map(section => (
+        <li><a href={`/shelf/${section}`} class="mobile-nav-link">{section}</a></li>
+      ))}
+    </ul>
+  </div>
+</header>
+
+<script is:inline>
+  const toggle = document.getElementById('menu-toggle');
+  const mobileNav = document.getElementById('mobile-nav');
+  toggle?.addEventListener('click', function() {
+    mobileNav.classList.toggle('open');
+    toggle.textContent = mobileNav.classList.contains('open') ? '✕' : '☰';
+  });
+</script>
+
+<style>
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: #ffffff;
+    border-bottom: 1px solid var(--border);
+    box-shadow: 0 1px 6px rgba(80, 50, 20, 0.06);
+  }
+
+  .header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    text-decoration: none;
+    flex-shrink: 0;
+  }
+  .logo-img {
+    height: 36px;
+    width: auto;
+    display: block;
+  }
+  .logo-text {
+    font-family: var(--serif);
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-main);
+    letter-spacing: -0.02em;
+    white-space: nowrap;
+    border-bottom: 2px solid var(--accent);
+    padding-bottom: 1px;
+  }
+
+  .nav-list {
+    display: flex;
+    list-style: none;
+    gap: 0.15rem;
+    flex-wrap: wrap;
+  }
+
+  .nav-link {
+    display: block;
+    padding: 0.4rem 0.65rem;
+    border-radius: 6px;
+    font-size: 0.88rem;
+    color: var(--text-sub);
+    transition: color 0.15s, background 0.15s;
+    white-space: nowrap;
+  }
+  .nav-link:hover,
+  .nav-link.active {
+    color: var(--accent);
+    background: var(--accent-bg);
+  }
+
+  .menu-toggle {
+    display: none;
+    background: none;
+    border: none;
+    color: var(--text-main);
+    font-size: 1.4rem;
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+  }
+
+  /* 모바일 드로어 */
+  .mobile-nav {
+    display: none;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    background: #fff;
+    border-top: 1px solid var(--border-soft);
+  }
+  .mobile-nav.open {
+    max-height: 400px;
+  }
+  .mobile-nav-list {
+    list-style: none;
+    padding: 0.75rem 1.5rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  .mobile-nav-link {
+    display: block;
+    padding: 0.55rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    color: var(--text-sub);
+    transition: background 0.15s, color 0.15s;
+  }
+  .mobile-nav-link:hover {
+    background: var(--accent-bg);
+    color: var(--accent);
+  }
+
+  @media (max-width: 700px) {
+    nav { display: none; }
+    .menu-toggle { display: block; }
+    .mobile-nav { display: block; }
+  }
+</style>

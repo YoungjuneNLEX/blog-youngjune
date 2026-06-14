@@ -1,0 +1,80 @@
+---
+const channels = [
+  { label: '네이버 블로그', href: 'https://blog.naver.com/lawyer_youngjune', icon: 'N' },
+  { label: '유튜브', href: 'https://www.youtube.com/@사무장박영준', icon: '▶' },
+  { label: 'X', href: 'https://x.com/youngjune0529', icon: '✕' },
+  { label: '카카오채널', href: 'https://pf.kakao.com/_ExjlsX/chat', icon: '💬' },
+];
+---
+
+<footer class="site-footer">
+  <div class="container footer-inner">
+    <p class="footer-name">영준의 책장</p>
+    <nav class="footer-nav">
+      {channels.map(ch => (
+        <a href={ch.href} target="_blank" rel="noopener noreferrer" class="footer-link">
+          <span class="footer-icon">{ch.icon}</span>
+          {ch.label}
+        </a>
+      ))}
+    </nav>
+    <p class="footer-copy">© {new Date().getFullYear()} 사무장 박영준. 모든 글의 저작권은 저자에게 있습니다.</p>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    margin-top: 6rem;
+    border-top: 1px solid var(--border-soft);
+    padding: 2.5rem 0;
+    background: var(--bg-mid);
+  }
+
+  .footer-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.25rem;
+    text-align: center;
+  }
+
+  .footer-name {
+    font-family: var(--serif);
+    font-size: 1.05rem;
+    color: var(--text-main);
+  }
+
+  .footer-nav {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .footer-link {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--text-sub);
+    font-size: 0.88rem;
+    transition: color 0.15s;
+  }
+  .footer-link:hover { color: var(--accent); }
+
+  .footer-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 0.75rem;
+    background: var(--bg);
+  }
+
+  .footer-copy {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+</style>

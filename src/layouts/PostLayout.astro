@@ -1,0 +1,152 @@
+---
+import BaseLayout from './BaseLayout.astro';
+
+interface Props {
+  title: string;
+  date: Date;
+  category: string;
+  tags?: string[];
+  description?: string;
+  thumbnail?: string;
+}
+const { title, date, category, tags = [], description, thumbnail } = Astro.props;
+
+const formattedDate = date.toLocaleDateString('ko-KR', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+});
+---
+
+<BaseLayout title={title} description={description} image={thumbnail} type="article">
+  <article class="post-page container">
+    <header class="post-header">
+      <div class="post-meta">
+        <a href={`/shelf/${category}`} class="cat-badge">{category}</a>
+        <time datetime={date.toISOString()}>{formattedDate}</time>
+      </div>
+      <h1 class="post-title">{title}</h1>
+      {tags.length > 0 && (
+        <div class="post-tags">
+          {tags.map(tag => (
+            <a href={`/tag/${tag}`} class="tag">#{tag}</a>
+          ))}
+        </div>
+      )}
+    </header>
+
+    <div class="post-body">
+      <slot />
+    </div>
+
+    <footer class="post-footer">
+      <a href="/" class="back-link">← 모든 글 보기</a>
+    </footer>
+  </article>
+</BaseLayout>
+
+<style>
+  .post-page {
+    padding-top: 3.5rem;
+    padding-bottom: 4rem;
+  }
+
+  .post-header {
+    margin-bottom: 3rem;
+    border-bottom: 1px solid var(--border-soft);
+    padding-bottom: 2rem;
+  }
+
+  .post-meta {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    font-size: 0.875rem;
+    color: var(--text-sub);
+  }
+
+  .cat-badge {
+    background: var(--accent-bg);
+    border: 1px solid var(--border);
+    padding: 0.2rem 0.65rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    color: var(--accent);
+    font-weight: 600;
+    transition: background 0.15s;
+  }
+  .cat-badge:hover { background: var(--border); }
+
+  .post-title {
+    font-size: clamp(1.6rem, 4vw, 2.2rem);
+    color: var(--text-main);
+    letter-spacing: -0.02em;
+    margin-bottom: 1rem;
+  }
+
+  .post-tags {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .tag {
+    font-size: 0.83rem;
+    color: var(--text-muted);
+    transition: color 0.15s;
+  }
+  .tag:hover { color: var(--accent); }
+
+  /* 본문 타이포그래피 */
+  .post-body :global(h2) {
+    font-size: 1.35rem;
+    margin: 2.5rem 0 1rem;
+    color: var(--text-main);
+  }
+  .post-body :global(h3) {
+    font-size: 1.1rem;
+    margin: 2rem 0 0.75rem;
+    color: var(--text-main);
+  }
+  .post-body :global(p) {
+    margin-bottom: 1.4rem;
+    color: var(--text-main);
+  }
+  .post-body :global(blockquote) {
+    border-left: 3px solid var(--accent);
+    margin: 1.5rem 0;
+    padding: 0.75rem 1.25rem;
+    background: var(--bg-mid);
+    border-radius: 0 6px 6px 0;
+    color: var(--text-sub);
+  }
+  .post-body :global(strong) {
+    color: var(--accent-dark);
+    font-weight: 700;
+  }
+  .post-body :global(a) {
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .post-body :global(ul), .post-body :global(ol) {
+    padding-left: 1.5rem;
+    margin-bottom: 1.4rem;
+  }
+  .post-body :global(li) { margin-bottom: 0.4rem; }
+  .post-body :global(hr) { margin: 2.5rem 0; }
+
+  .post-footer {
+    margin-top: 3.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-soft);
+  }
+
+  .back-link {
+    font-size: 0.9rem;
+    color: var(--text-sub);
+    transition: color 0.15s;
+  }
+  .back-link:hover { color: var(--accent); }
+</style>

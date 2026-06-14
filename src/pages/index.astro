@@ -1,0 +1,716 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PostCard from '../components/PostCard.astro';
+import { getCollection } from 'astro:content';
+
+const allPosts = await getCollection('posts', ({ data }) => !data.draft);
+allPosts.sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+const recentPosts = allPosts.slice(0, 2);
+
+// 책별 커스텀 색상 — 없으면 자동 배색 (tags[0]이 책 제목)
+const bookMeta: Record<string, { color: string }> = {
+  '커피공부':   { color: '#c8956a' },
+  '생각에세이': { color: '#8abb8a' },
+  '소설독후감': { color: '#8ab0c8' },
+};
+
+// 자동 배색 팔레트 — 파스텔 일러스트 톤
+const autoPalette = [
+  '#c8c070', '#78b8b0', '#b0a0c8', '#c89080',
+  '#88b8a8', '#d4a870', '#a8c8a0', '#c8a0b8',
+];
+
+// tags[0]을 책 제목으로 사용해 책 목록 자동 생성
+const bookNames = [...new Set(allPosts.map(p => p.data.tags[0]))];
+let paletteIndex = 0;
+
+const bookshelf = bookNames.map(name => {
+  const postsInBook = allPosts
+    .filter(p => p.data.tags[0] === name)
+    .sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+  // 책 표지: 가장 최신 글의 thumbnail, 없으면 null
+  const cover = postsInBook.find(p => p.data.thumbnail)?.data.thumbnail ?? null;
+  const color = bookMeta[name]?.color ?? autoPalette[paletteIndex++ % autoPalette.length];
+  return { name, color, cover, count: postsInBook.length };
+});
+
+const channels = [
+  {
+    label: '네이버 블로그',
+    href: 'https://blog.naver.com/lawyer_youngjune',
+    thumb: '/sns/naver.svg',
+    desc: '현직 사무장의 법무사사무소',
+  },
+  {
+    label: '유튜브',
+    href: 'https://www.youtube.com/@사무장박영준',
+    thumb: '/sns/youtube.svg',
+    desc: '공부하는 법학도 채널',
+  },
+  {
+    label: 'X',
+    href: 'https://x.com/youngjune0529',
+    thumb: '/sns/x.svg',
+    desc: '법률 관련 이슈 스크랩',
+  },
+  {
+    label: '카카오채널',
+    href: 'https://pf.kakao.com/_ExjlsX/chat',
+    thumb: '/sns/kakao.svg',
+    desc: '카카오로 바로 채팅하기',
+  },
+];
+---
+
+<BaseLayout>
+  <!-- 히어로 -->
+  <section class="hero">
+    <div class="container hero-inner">
+      <span class="hero-sub">보고 듣고 읽고 쓰는</span>
+      <h1 class="hero-title">영준의 책장</h1>
+      <p class="hero-desc">
+        법무사 사무소 현직 사무장의 생각과 기록이 담긴 공간
+      </p>
+    </div>
+  </section>
+
+  <!-- 최근 포스팅 -->
+  {recentPosts.length > 0 && (
+    <section class="section">
+      <div class="container">
+        <h2 class="section-title">최근 포스팅</h2>
+        <div class="posts-grid">
+          {recentPosts.map(post => (
+            <PostCard
+              title={post.data.title}
+              date={post.data.date}
+              category={post.data.category}
+              slug={post.slug}
+              description={post.data.description}
+              tags={post.data.tags}
+            />
+          ))}
+        </div>
+      </div>
+    </section>
+  )}
+
+  <!-- 영준의 책장 — 책꽂이 -->
+  <section class="section shelf-section">
+    <div class="container">
+      <h2 class="section-title">영준의 책장</h2>
+      <p class="section-sub">제목별 분류</p>
+
+      <!-- 책꽂이 가구 -->
+      <div
+        class="bookshelf-wrap"
+        id="bookshelf"
+        data-books={JSON.stringify(bookshelf.map(book => ({
+          name: book.name,
+          color: book.color,
+          cover: book.cover,
+          count: book.count,
+        })))}
+      >
+        <!-- 장식 요소: 식물·배경 책등 (실제 책 카드 뒤에 배치) -->
+        <div class="shelf-deco" aria-hidden="true">
+          <!-- 트레일링 아이비 (우측) -->
+          <svg class="deco-ivy" viewBox="0 0 72 340" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="8" y="0" width="56" height="10" fill="#88b0a0" stroke="#68908a" stroke-width="0.8" rx="3"/>
+            <ellipse cx="36" cy="0" rx="28" ry="5" fill="#78a090" stroke="#68908a" stroke-width="0.6"/>
+            <path d="M22 9 Q14 30 20 55 Q26 78 18 105 Q10 130 18 158 Q24 182 16 210 Q10 234 18 265 Q24 290 16 318" stroke="#5a8050" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+            <path d="M36 9 Q36 34 36 62 Q36 86 36 114 Q36 138 36 166 Q36 190 36 218 Q36 242 36 270" stroke="#5a8050" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+            <path d="M50 9 Q58 30 52 55 Q46 78 54 105 Q62 130 54 158 Q48 182 56 210 Q62 234 54 265" stroke="#5a8050" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+            <ellipse cx="19" cy="20"  rx="11" ry="7" fill="#80b860" transform="rotate(-35 19 20)"  opacity="0.86"/>
+            <ellipse cx="21" cy="37"  rx="11" ry="7" fill="#90c870" transform="rotate(-45 21 37)"  opacity="0.86"/>
+            <ellipse cx="18" cy="54"  rx="11" ry="7" fill="#70aa58" transform="rotate(-30 18 54)"  opacity="0.86"/>
+            <ellipse cx="16" cy="71"  rx="11" ry="7" fill="#88b868" transform="rotate(-40 16 71)"  opacity="0.85"/>
+            <ellipse cx="19" cy="89"  rx="11" ry="7" fill="#80b860" transform="rotate(-35 19 89)"  opacity="0.84"/>
+            <ellipse cx="17" cy="107" rx="11" ry="7" fill="#90c870" transform="rotate(-30 17 107)" opacity="0.82"/>
+            <ellipse cx="18" cy="124" rx="10" ry="6" fill="#70aa58" transform="rotate(-35 18 124)" opacity="0.80"/>
+            <ellipse cx="16" cy="141" rx="10" ry="6" fill="#88b868" transform="rotate(-40 16 141)" opacity="0.76"/>
+            <ellipse cx="17" cy="158" rx="10" ry="6" fill="#80b860" transform="rotate(-30 17 158)" opacity="0.72"/>
+            <ellipse cx="15" cy="175" rx="9"  ry="6" fill="#90c870" transform="rotate(-35 15 175)" opacity="0.67"/>
+            <ellipse cx="16" cy="192" rx="9"  ry="5" fill="#70aa58" transform="rotate(-30 16 192)" opacity="0.60"/>
+            <ellipse cx="14" cy="209" rx="8"  ry="5" fill="#88b868" transform="rotate(-35 14 209)" opacity="0.52"/>
+            <ellipse cx="36" cy="22"  rx="12" ry="8" fill="#88c870" opacity="0.86"/>
+            <ellipse cx="36" cy="41"  rx="12" ry="7" fill="#78b860" opacity="0.86"/>
+            <ellipse cx="36" cy="60"  rx="11" ry="7" fill="#90c878" opacity="0.85"/>
+            <ellipse cx="36" cy="79"  rx="11" ry="7" fill="#80b868" opacity="0.84"/>
+            <ellipse cx="36" cy="98"  rx="11" ry="7" fill="#70aa58" opacity="0.82"/>
+            <ellipse cx="36" cy="117" rx="11" ry="7" fill="#88c870" opacity="0.79"/>
+            <ellipse cx="36" cy="135" rx="10" ry="6" fill="#78b860" opacity="0.75"/>
+            <ellipse cx="36" cy="153" rx="10" ry="6" fill="#90c878" opacity="0.70"/>
+            <ellipse cx="36" cy="171" rx="9"  ry="6" fill="#80b868" opacity="0.64"/>
+            <ellipse cx="36" cy="189" rx="9"  ry="5" fill="#88c870" opacity="0.56"/>
+            <ellipse cx="53" cy="20"  rx="11" ry="7" fill="#70aa58" transform="rotate(35 53 20)"  opacity="0.86"/>
+            <ellipse cx="51" cy="37"  rx="11" ry="7" fill="#80b860" transform="rotate(45 51 37)"  opacity="0.86"/>
+            <ellipse cx="54" cy="54"  rx="11" ry="7" fill="#90c870" transform="rotate(30 54 54)"  opacity="0.85"/>
+            <ellipse cx="56" cy="71"  rx="11" ry="7" fill="#88b868" transform="rotate(40 56 71)"  opacity="0.84"/>
+            <ellipse cx="53" cy="89"  rx="11" ry="7" fill="#78b860" transform="rotate(35 53 89)"  opacity="0.82"/>
+            <ellipse cx="55" cy="107" rx="11" ry="7" fill="#90c870" transform="rotate(30 55 107)" opacity="0.80"/>
+            <ellipse cx="54" cy="124" rx="10" ry="6" fill="#70aa58" transform="rotate(35 54 124)" opacity="0.76"/>
+            <ellipse cx="56" cy="141" rx="10" ry="6" fill="#88b868" transform="rotate(40 56 141)" opacity="0.72"/>
+            <ellipse cx="55" cy="158" rx="9"  ry="6" fill="#80b860" transform="rotate(30 55 158)" opacity="0.66"/>
+            <ellipse cx="57" cy="175" rx="9"  ry="5" fill="#90c870" transform="rotate(35 57 175)" opacity="0.58"/>
+          </svg>
+
+          <!-- 고사리 화분 (좌하단) -->
+          <svg class="deco-fern" viewBox="0 0 110 96" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="20" y="72" width="70" height="22" fill="#c87850" stroke="#a85830" stroke-width="0.8" rx="5"/>
+            <ellipse cx="55" cy="72" rx="35" ry="6" fill="#b86840" stroke="#a85830" stroke-width="0.7"/>
+            <ellipse cx="55" cy="71" rx="28" ry="4" fill="#7a5030" opacity="0.38"/>
+            <path d="M55 70 Q38 54 22 40" stroke="#5a8848" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+            <path d="M55 69 Q44 52 36 36" stroke="#5a8848" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+            <path d="M55 69 Q55 52 55 32" stroke="#5a8848" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+            <path d="M55 69 Q66 52 74 36" stroke="#5a8848" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+            <path d="M55 70 Q72 54 88 40" stroke="#5a8848" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+            <ellipse cx="20" cy="38" rx="14" ry="7" fill="#80b868" transform="rotate(-35 20 38)" opacity="0.88"/>
+            <ellipse cx="34" cy="32" rx="13" ry="7" fill="#90c878" transform="rotate(-20 34 32)" opacity="0.88"/>
+            <ellipse cx="55" cy="29" rx="13" ry="7" fill="#78b060" opacity="0.88"/>
+            <ellipse cx="76" cy="32" rx="13" ry="7" fill="#90c878" transform="rotate(20 76 32)" opacity="0.88"/>
+            <ellipse cx="90" cy="38" rx="14" ry="7" fill="#80b868" transform="rotate(35 90 38)" opacity="0.88"/>
+            <ellipse cx="25" cy="50" rx="10" ry="6" fill="#a8d888" transform="rotate(-25 25 50)" opacity="0.7"/>
+            <ellipse cx="85" cy="50" rx="10" ry="6" fill="#a8d888" transform="rotate(25 85 50)" opacity="0.7"/>
+            <ellipse cx="42" cy="24" rx="10" ry="5" fill="#98c880" transform="rotate(-10 42 24)" opacity="0.72"/>
+            <ellipse cx="68" cy="24" rx="10" ry="5" fill="#98c880" transform="rotate(10 68 24)" opacity="0.72"/>
+          </svg>
+
+          <!-- 장식용 책등 (반투명 배경) -->
+          <svg class="deco-spines" viewBox="0 0 56 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="1"  y="22" width="12" height="138" fill="#8ab0cc" stroke="#6a90ac" stroke-width="0.5" rx="1" opacity="0.38"/>
+            <rect x="15" y="10" width="10" height="150" fill="#c8c070" stroke="#a8a050" stroke-width="0.5" rx="1" opacity="0.38"/>
+            <rect x="27" y="28" width="13" height="132" fill="#8abb8a" stroke="#6a9b6a" stroke-width="0.5" rx="1" opacity="0.38"/>
+            <rect x="42" y="16" width="11" height="144" fill="#c8a890" stroke="#a88870" stroke-width="0.5" rx="1" opacity="0.38"/>
+          </svg>
+        </div>
+
+        <!-- 3단 선반 -->
+        <div class="shelf-unit">
+          <div class="shelf-row"><div class="shelf-books" id="shelf-row-0"></div><div class="shelf-board"></div></div>
+          <div class="shelf-row"><div class="shelf-books" id="shelf-row-1"></div><div class="shelf-board"></div></div>
+          <div class="shelf-row"><div class="shelf-books" id="shelf-row-2"></div><div class="shelf-board"></div></div>
+        </div>
+
+        <!-- 페이지 컨트롤 -->
+        <div class="shelf-pagination" id="shelf-pagination">
+          <button class="page-btn" id="prev-btn" aria-label="이전 페이지">←</button>
+          <div class="page-dots" id="page-dots"></div>
+          <button class="page-btn" id="next-btn" aria-label="다음 페이지">→</button>
+        </div>
+      </div>
+
+      <script is:inline>
+      (function() {
+        const wrap = document.getElementById('bookshelf');
+        const books = JSON.parse(wrap.dataset.books || '[]');
+        const PER_PAGE = 9, PER_ROW = 3;
+        const totalPages = Math.max(1, Math.ceil(books.length / PER_PAGE));
+        let cur = 0;
+
+        const rowEls   = [0,1,2].map(i => document.getElementById('shelf-row-' + i));
+        const pag      = document.getElementById('shelf-pagination');
+        const dotsWrap = document.getElementById('page-dots');
+        const prevBtn  = document.getElementById('prev-btn');
+        const nextBtn  = document.getElementById('next-btn');
+
+        if (totalPages > 1) {
+          for (let i = 0; i < totalPages; i++) {
+            const d = document.createElement('button');
+            d.className = 'page-dot';
+            d.setAttribute('aria-label', (i+1) + '페이지');
+            d.addEventListener('click', function(){ goTo(i); });
+            dotsWrap.appendChild(d);
+          }
+          pag.style.display = 'flex';
+        }
+
+        function makeAutoCard(book) {
+          var d = document.createElement('div');
+          d.className = 'book-cover-auto';
+          d.style.background = book.color;
+          var s = document.createElement('span');
+          s.className = 'book-cover-letter';
+          s.textContent = Array.from(book.name)[0];
+          d.appendChild(s);
+          return d;
+        }
+        function makeCover(book) {
+          // 1순위: 글에 지정한 thumbnail
+          if (book.cover) {
+            var img = document.createElement('img');
+            img.src = book.cover;
+            img.alt = book.name;
+            img.onerror = function() { img.replaceWith(makeAutoCard(book)); };
+            return img;
+          }
+          // 2순위: /covers/책제목.png|jpg|webp|svg
+          var exts = ['png', 'jpg', 'webp', 'svg'];
+          var idx = 0;
+          var img = document.createElement('img');
+          var base = '/covers/' + encodeURIComponent(book.name) + '.';
+          img.src = base + exts[idx];
+          img.alt = book.name;
+          img.onerror = function() {
+            idx++;
+            if (idx < exts.length) { img.src = base + exts[idx]; return; }
+            img.replaceWith(makeAutoCard(book));
+          };
+          return img;
+        }
+
+        function render(page) {
+          var slice = books.slice(page * PER_PAGE, page * PER_PAGE + PER_PAGE);
+          rowEls.forEach(function(rowEl, ri) {
+            rowEl.innerHTML = '';
+            var rowBooks = slice.slice(ri * PER_ROW, ri * PER_ROW + PER_ROW);
+            // 해당 행에 책이 없으면 선반 자체를 숨김
+            var rowContainer = rowEl.closest('.shelf-row');
+            if (rowContainer) rowContainer.style.display = rowBooks.length > 0 ? '' : 'none';
+            rowBooks.forEach(function(book) {
+              var a = document.createElement('a');
+              a.href = '/series/' + encodeURIComponent(book.name);
+              a.className = 'book-item';
+
+              var cv = document.createElement('div');
+              cv.className = 'book-cover';
+              cv.appendChild(makeCover(book));
+              var sp = document.createElement('div');
+              sp.className = 'book-spine';
+              sp.style.background = book.color;
+              cv.appendChild(sp);
+
+              var info = document.createElement('div');
+              info.className = 'book-info';
+              info.innerHTML =
+                '<p class="book-count">' + book.count + '편</p>' +
+                '<p class="book-name">' + book.name + '</p>';
+
+              a.appendChild(cv);
+              a.appendChild(info);
+              rowEl.appendChild(a);
+            });
+            for (var g = rowBooks.length; g < PER_ROW; g++) {
+              var ghost = document.createElement('div');
+              ghost.className = 'book-ghost';
+              rowEl.appendChild(ghost);
+            }
+          });
+
+          dotsWrap.querySelectorAll('.page-dot').forEach(function(d, i) {
+            d.classList.toggle('active', i === page);
+          });
+          prevBtn.disabled = page === 0;
+          nextBtn.disabled = page === totalPages - 1;
+        }
+
+        function goTo(page) { cur = page; render(cur); }
+        prevBtn.addEventListener('click', function(){ goTo(Math.max(0, cur - 1)); });
+        nextBtn.addEventListener('click', function(){ goTo(Math.min(totalPages - 1, cur + 1)); });
+        render(0);
+      })();
+      </script>
+    </div>
+  </section>
+
+  <!-- 사무장의 SNS -->
+  <section class="section channels-section">
+    <div class="container">
+      <h2 class="section-title">사무장의 SNS</h2>
+      <p class="section-sub">블로그, 유튜브, 엑스, 카카오채널</p>
+      <div class="channels-grid">
+        {channels.map(ch => (
+          <a href={ch.href} target="_blank" rel="noopener noreferrer" class="channel-card">
+            <div class="ch-thumb">
+              <img src={ch.thumb} alt={ch.label} />
+            </div>
+            <div class="ch-body">
+              <p class="ch-label">{ch.label}</p>
+              <p class="ch-desc">{ch.desc}</p>
+            </div>
+            <span class="ch-arrow">→</span>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  /* ── 히어로 ── */
+  .hero {
+    padding: 5rem 0 4rem;
+    border-bottom: 1px solid var(--border-soft);
+    position: relative;
+    overflow: hidden;
+  }
+  /* 배경 이미지: 블러 처리, 우측에서 스며드는 효과 */
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: -24px;
+    background-image: url('/image/hero-bg.png');
+    background-size: cover;
+    background-position: center 25%;
+    filter: blur(4px);
+    transform: scale(1.05);
+    opacity: 0.70;
+    z-index: 0;
+  }
+  /* 왼쪽(텍스트 영역)은 크림색으로, 오른쪽은 이미지가 보이게 */
+  .hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to right,
+      var(--bg) 0%,
+      var(--bg) 25%,
+      rgba(250, 247, 242, 0.3) 55%,
+      transparent 100%
+    );
+    z-index: 0;
+  }
+  .hero-inner { position: relative; z-index: 1; max-width: 620px; }
+  .hero-sub {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.82rem;
+    color: var(--accent);
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    margin-bottom: 1.1rem;
+    background: var(--accent-bg);
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    border: 1px solid rgba(176, 90, 58, 0.2);
+  }
+  .hero-title {
+    font-size: clamp(2rem, 5vw, 3rem);
+    color: var(--text-main);
+    letter-spacing: -0.03em;
+    margin-bottom: 1rem;
+    line-height: 1.2;
+  }
+  .hero-desc {
+    font-size: 1rem;
+    color: var(--text-sub);
+    line-height: 1.8;
+  }
+
+  /* ── 섹션 공통 ── */
+  .section { padding: 4rem 0; }
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 1.4rem;
+    color: var(--text-main);
+    margin-bottom: 0.4rem;
+  }
+  .section-title::before {
+    content: '';
+    display: inline-block;
+    width: 4px;
+    height: 1.2em;
+    background: var(--accent);
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+  .section-sub {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin-bottom: 2rem;
+    padding-left: 0.65rem;
+  }
+
+  /* ── 글 그리드 ── */
+  .posts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.25rem;
+  }
+
+  /* ── 책꽂이 ── */
+  .shelf-section { background: var(--bg); }
+
+  /* 전체 가구 프레임 — 일러스트 스타일 */
+  .bookshelf-wrap {
+    background: #f8ede0;
+    border-radius: 12px;
+    padding: 20px 28px 24px;
+    border: 1.5px solid #c8a46a;
+    box-shadow: 0 4px 24px rgba(160, 100, 40, 0.10), 0 1px 6px rgba(160, 100, 40, 0.06);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* 장식 레이어 (식물·배경 책등) */
+  .shelf-deco {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .deco-ivy {
+    position: absolute;
+    top: -2px;
+    right: 14px;
+    width: 70px;
+    height: 100%;
+  }
+  .deco-fern {
+    position: absolute;
+    bottom: 30px;
+    left: 10px;
+    width: 100px;
+  }
+  .deco-spines {
+    position: absolute;
+    top: 8px;
+    left: 36px;
+    width: 58px;
+    height: 85%;
+  }
+
+  /* 3단 선반 컨테이너 */
+  .shelf-unit {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* 선반 한 줄 */
+  .shelf-row {
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* 책들이 놓이는 공간 */
+  .shelf-books {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem 2rem;
+    padding: 1.75rem 0.5rem 1.25rem;
+    align-items: flex-end;
+    min-height: 220px;
+  }
+
+  /* 선반 판 — 허니우드 플랫 스타일 */
+  .shelf-board {
+    background: #c89450;
+    height: 10px;
+    border-radius: 2px;
+    margin: 0 -4px;
+    box-shadow: 0 3px 10px rgba(140, 90, 30, 0.18), inset 0 1px 0 rgba(255, 210, 140, 0.4);
+    position: relative;
+    z-index: 2;
+  }
+
+  /* ── 책 한 권 (JS 생성 DOM → :global 필요) ── */
+  :global(.book-item) {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    text-decoration: none;
+    transition: transform 0.28s cubic-bezier(.34,1.4,.64,1);
+    transform-origin: bottom center;
+  }
+  :global(.book-item:hover) {
+    transform: translateY(-16px) scale(1.04);
+    z-index: 2;
+  }
+  :global(.book-ghost) {
+    visibility: hidden;
+  }
+  :global(.book-cover) {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 3/4;
+    border-radius: 2px 7px 7px 2px;
+    overflow: hidden;
+    box-shadow:
+      -4px 0 0 0 rgba(0,0,0,0.12),
+      5px 7px 18px rgba(140, 100, 50, 0.22),
+      inset -2px 0 6px rgba(0,0,0,0.07);
+  }
+  :global(.book-cover img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  :global(.book-cover-auto) {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  :global(.book-cover-letter) {
+    font-family: var(--serif);
+    font-size: 3rem;
+    font-weight: 700;
+    color: rgba(255,255,255,0.88);
+    text-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  }
+  :global(.book-spine) {
+    position: absolute;
+    left: 0; top: 0;
+    width: 11px;
+    height: 100%;
+    opacity: 0.75;
+  }
+  :global(.book-info) {
+    margin-top: 0.85rem;
+    text-align: center;
+    padding: 0 0.15rem;
+  }
+  :global(.book-count) {
+    font-size: 0.7rem;
+    color: var(--text-muted) !important;
+    margin-bottom: 0.15rem;
+    letter-spacing: 0.03em;
+  }
+  :global(.book-name) {
+    font-family: var(--serif) !important;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-main) !important;
+    margin-bottom: 0.2rem;
+  }
+  :global(.book-desc) {
+    font-size: 0.72rem;
+    color: var(--text-sub) !important;
+    line-height: 1.4;
+  }
+
+  /* ── 페이지네이션 ── */
+  .shelf-pagination {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1.25rem;
+    position: relative;
+    z-index: 1;
+  }
+  .page-btn {
+    background: rgba(160, 100, 40, 0.08);
+    border: 1px solid rgba(160, 100, 40, 0.20);
+    color: var(--accent);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .page-btn:hover:not(:disabled) {
+    background: rgba(160, 100, 40, 0.15);
+    color: var(--accent-dark);
+  }
+  .page-btn:disabled {
+    opacity: 0.3;
+    cursor: default;
+  }
+  .page-dots {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+  .page-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(160, 100, 40, 0.22);
+    border: none;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.15s;
+    padding: 0;
+  }
+  .page-dot.active {
+    background: var(--accent);
+    transform: scale(1.3);
+  }
+
+  /* ── SNS 채널 ── */
+  .channels-section { border-top: 1px solid var(--border-soft); }
+  .channels-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+  }
+  @media (max-width: 780px) {
+    .channels-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 480px) {
+    .channels-grid { grid-template-columns: 1fr; }
+  }
+
+  .channel-card {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--border-soft);
+    border-radius: 12px;
+    background: var(--bg-mid);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+    text-decoration: none;
+  }
+  .channel-card:hover {
+    border-color: var(--accent);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-3px);
+  }
+
+  .ch-thumb {
+    width: 100%;
+    aspect-ratio: 4/3;
+    overflow: hidden;
+    background: var(--bg-light);
+  }
+  .ch-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.3s;
+  }
+  .channel-card:hover .ch-thumb img {
+    transform: scale(1.04);
+  }
+
+  .ch-body {
+    padding: 0.9rem 1.1rem 0.75rem;
+    flex: 1;
+  }
+  .ch-label {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: 0.25rem;
+  }
+  .ch-desc {
+    font-size: 0.82rem;
+    color: var(--text-sub);
+    line-height: 1.5;
+  }
+
+  .ch-arrow {
+    display: block;
+    padding: 0.5rem 1.1rem 0.75rem;
+    font-size: 0.85rem;
+    color: var(--accent);
+    font-weight: 600;
+    text-align: right;
+  }
+</style>

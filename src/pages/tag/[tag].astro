@@ -1,0 +1,74 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PostCard from '../../components/PostCard.astro';
+
+export async function getStaticPaths() {
+  const allPosts = await getCollection('posts', ({ data }) => !data.draft);
+  const tagMap: Record<string, typeof allPosts> = {};
+  allPosts.forEach(post => {
+    (post.data.tags ?? []).forEach(tag => {
+      if (!tagMap[tag]) tagMap[tag] = [];
+      tagMap[tag].push(post);
+    });
+  });
+  return Object.entries(tagMap).map(([tag, posts]) => ({
+    params: { tag },
+    props: {
+      posts: posts.sort((a, b) => a.data.date.getTime() - b.data.date.getTime()),
+    },
+  }));
+}
+
+const { tag } = Astro.params;
+const { posts } = Astro.props;
+---
+
+<BaseLayout title={`#${tag}`} description={`#${tag} 시리즈 글 모음입니다.`}>
+  <div class="container list-page">
+    <header class="page-header">
+      <p class="breadcrumb"><a href="/">홈</a> / 태그</p>
+      <h1>#{tag}</h1>
+      <p class="post-count">총 {posts.length}편 — 오래된 순서대로 정주행할 수 있습니다</p>
+    </header>
+
+    <div class="posts-series">
+      {posts.map((post, i) => (
+        <div class="series-item">
+          <span class="series-num">{String(i + 1).padStart(2, '0')}</span>
+          <PostCard
+            title={post.data.title}
+            date={post.data.date}
+            category={post.data.category}
+            slug={post.slug}
+            description={post.data.description}
+            tags={post.data.tags}
+          />
+        </div>
+      ))}
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .list-page { padding: 3.5rem 0 5rem; }
+  .page-header { margin-bottom: 2.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border-soft); }
+  .breadcrumb { font-size: 0.83rem; color: var(--text-muted); margin-bottom: 0.75rem; }
+  .breadcrumb a { color: var(--text-muted); }
+  .breadcrumb a:hover { color: var(--accent); }
+  h1 { font-size: 2rem; color: var(--text-main); }
+  .post-count { font-size: 0.88rem; color: var(--text-muted); margin-top: 0.4rem; }
+
+  .posts-series { display: flex; flex-direction: column; gap: 1rem; }
+  .series-item { display: flex; align-items: flex-start; gap: 1rem; }
+  .series-num {
+    font-size: 1.5rem;
+    font-family: var(--serif);
+    color: var(--border-soft);
+    flex-shrink: 0;
+    width: 2.5rem;
+    padding-top: 1.5rem;
+    text-align: right;
+  }
+  .series-item > :global(.post-card) { flex: 1; }
+</style>
