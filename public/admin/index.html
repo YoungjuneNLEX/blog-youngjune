@@ -4,9 +4,276 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>영준의 책장 — 글쓰기</title>
+  <link rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, 'Apple SD Gothic Neo', sans-serif; background: #f5f4f0; color: #2c2c2c; min-height: 100vh; }
+
+    /* 로그인 화면 */
+    #login-screen {
+      display: flex; align-items: center; justify-content: center; min-height: 100vh;
+    }
+    .login-box {
+      background: white; border-radius: 16px; padding: 48px 40px; width: 360px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    }
+    .login-box h1 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+    .login-box p { font-size: 14px; color: #888; margin-bottom: 32px; }
+    .login-box input {
+      width: 100%; padding: 12px 16px; border: 1.5px solid #e0e0e0; border-radius: 10px;
+      font-size: 16px; outline: none; margin-bottom: 16px;
+    }
+    .login-box input:focus { border-color: #4a7c59; }
+    .login-box button {
+      width: 100%; padding: 13px; background: #4a7c59; color: white; border: none;
+      border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer;
+    }
+    .login-box button:hover { background: #3d6649; }
+    .login-error { color: #e04040; font-size: 14px; margin-top: 10px; display: none; }
+
+    /* 에디터 화면 */
+    #editor-screen { display: none; }
+    .top-bar {
+      background: white; border-bottom: 1px solid #e8e4dc; padding: 0 32px;
+      display: flex; align-items: center; justify-content: space-between; height: 56px;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .top-bar h1 { font-size: 16px; font-weight: 700; }
+    .top-bar-right { display: flex; gap: 12px; align-items: center; }
+    .btn-save {
+      padding: 8px 24px; background: #4a7c59; color: white; border: none;
+      border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;
+    }
+    .btn-save:hover { background: #3d6649; }
+    .btn-save:disabled { background: #aaa; cursor: not-allowed; }
+    .btn-logout {
+      padding: 8px 16px; background: none; border: 1.5px solid #ddd; border-radius: 8px;
+      font-size: 13px; color: #888; cursor: pointer;
+    }
+
+    .editor-layout { display: flex; gap: 0; min-height: calc(100vh - 56px); }
+
+    .sidebar {
+      width: 300px; background: white; border-right: 1px solid #e8e4dc;
+      padding: 24px 20px; flex-shrink: 0; overflow-y: auto;
+    }
+    .sidebar h2 { font-size: 13px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 16px; }
+    .field { margin-bottom: 20px; }
+    .field label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #444; }
+    .field input, .field select, .field textarea {
+      width: 100%; padding: 9px 12px; border: 1.5px solid #e0e0e0; border-radius: 8px;
+      font-size: 14px; font-family: inherit; outline: none;
+    }
+    .field input:focus, .field select:focus { border-color: #4a7c59; }
+    .field .hint { font-size: 12px; color: #aaa; margin-top: 4px; }
+    .field-row { display: flex; align-items: center; gap: 10px; }
+    .field-row input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
+    .field-row label { font-size: 14px; color: #444; cursor: pointer; }
+
+    .main-editor { flex: 1; padding: 32px; min-width: 0; }
+    .main-editor .field label { font-size: 15px; font-weight: 700; margin-bottom: 10px; }
+    .title-input {
+      width: 100%; font-size: 26px; font-weight: 700; border: none; outline: none;
+      background: transparent; font-family: inherit; color: #1a1a1a; margin-bottom: 24px;
+      border-bottom: 2px solid #e8e4dc; padding-bottom: 16px;
+    }
+    .title-input::placeholder { color: #ccc; }
+
+    .EasyMDEContainer { border-radius: 10px; }
+    .CodeMirror { border-radius: 0 0 10px 10px; }
+
+    .save-status {
+      font-size: 13px; padding: 6px 14px; border-radius: 20px;
+    }
+    .save-status.success { background: #e8f5e9; color: #388e3c; }
+    .save-status.error { background: #fdecea; color: #c62828; }
+  </style>
 </head>
 <body>
-  <link rel="stylesheet" href="https://unpkg.com/@sveltia/cms/dist/sveltia-cms.css" />
-  <script src="https://unpkg.com/@sveltia/cms/dist/sveltia-cms.js"></script>
+
+<!-- 로그인 화면 -->
+<div id="login-screen">
+  <div class="login-box">
+    <h1>영준의 책장</h1>
+    <p>글쓰기 관리자 화면</p>
+    <input type="password" id="pw-input" placeholder="비밀번호 입력" />
+    <button onclick="login()">로그인</button>
+    <div class="login-error" id="login-error">비밀번호가 틀렸습니다.</div>
+  </div>
+</div>
+
+<!-- 에디터 화면 -->
+<div id="editor-screen">
+  <div class="top-bar">
+    <h1>✍️ 새 글 쓰기</h1>
+    <div class="top-bar-right">
+      <span class="save-status" id="save-status"></span>
+      <button class="btn-save" id="btn-save" onclick="savePost()">저장 &amp; 발행</button>
+      <button class="btn-logout" onclick="logout()">로그아웃</button>
+    </div>
+  </div>
+
+  <div class="editor-layout">
+    <div class="sidebar">
+      <h2>글 설정</h2>
+
+      <div class="field">
+        <label>날짜</label>
+        <input type="date" id="f-date" />
+      </div>
+
+      <div class="field">
+        <label>서가 (카테고리)</label>
+        <select id="f-category">
+          <option value="에세이">에세이</option>
+          <option value="소설">소설</option>
+          <option value="인문교양">인문교양</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>책 제목 (첫 번째 태그)</label>
+        <input type="text" id="f-book" placeholder="예: 커피공부" />
+        <div class="hint">메인 책장에서 책 이름이 됩니다</div>
+      </div>
+
+      <div class="field">
+        <label>추가 태그 (선택)</label>
+        <input type="text" id="f-tags" placeholder="예: 커피, 일상" />
+        <div class="hint">쉼표로 구분</div>
+      </div>
+
+      <div class="field">
+        <label>한 줄 소개 (선택)</label>
+        <input type="text" id="f-desc" placeholder="검색·공유 미리보기에 표시됩니다" />
+      </div>
+
+      <div class="field">
+        <div class="field-row">
+          <input type="checkbox" id="f-draft" />
+          <label for="f-draft">초안으로 저장 (비공개)</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="main-editor">
+      <input class="title-input" id="f-title" type="text" placeholder="제목을 입력하세요" />
+      <textarea id="body-editor"></textarea>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/easymde/dist/easymde.min.js"></script>
+<script>
+  let pw = '';
+  let easyMDE;
+
+  // 오늘 날짜 기본값
+  const today = new Date().toISOString().slice(0, 10);
+  document.getElementById('f-date').value = today;
+
+  // Enter 키로 로그인
+  document.getElementById('pw-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') login();
+  });
+
+  function login() {
+    const input = document.getElementById('pw-input').value;
+    // 서버에 검증 (빈 글 전송으로 비밀번호만 확인)
+    fetch('/.netlify/functions/cms', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: input, filename: '__check__', content: '' }),
+    }).then(r => {
+      // 401이면 틀린 비번, 그 외는 성공 (파일명 __check__는 저장 안 됨)
+      if (r.status === 401) {
+        document.getElementById('login-error').style.display = 'block';
+      } else {
+        pw = input;
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('editor-screen').style.display = 'block';
+        initEditor();
+      }
+    });
+  }
+
+  function initEditor() {
+    easyMDE = new EasyMDE({
+      element: document.getElementById('body-editor'),
+      placeholder: '본문을 여기에 쓰세요...\n\n## 소제목은 ## 으로\n\n> 인용문은 > 로 시작합니다.',
+      spellChecker: false,
+      autofocus: false,
+      toolbar: ['bold', 'italic', '|', 'heading-2', 'quote', '|', 'unordered-list', 'ordered-list', '|', 'link', '|', 'preview'],
+      status: false,
+    });
+  }
+
+  function makeSlug(title) {
+    return title
+      .replace(/\s+/g, '-')
+      .replace(/[^\wㄱ-힣가-힣-]/g, '')
+      .slice(0, 40) || 'untitled';
+  }
+
+  async function savePost() {
+    const title = document.getElementById('f-title').value.trim();
+    const date = document.getElementById('f-date').value;
+    const category = document.getElementById('f-category').value;
+    const book = document.getElementById('f-book').value.trim();
+    const extraTags = document.getElementById('f-tags').value.split(',').map(t => t.trim()).filter(Boolean);
+    const desc = document.getElementById('f-desc').value.trim();
+    const draft = document.getElementById('f-draft').checked;
+    const body = easyMDE.value();
+
+    if (!title) { alert('제목을 입력해주세요.'); return; }
+    if (!book) { alert('책 제목(첫 번째 태그)을 입력해주세요.'); return; }
+
+    const tags = [book, ...extraTags];
+    const tagsYaml = '[' + tags.map(t => t).join(', ') + ']';
+
+    let frontmatter = `---\ntitle: ${title}\ndate: ${date}\ncategory: ${category}\ntags: ${tagsYaml}\n`;
+    if (desc) frontmatter += `description: ${desc}\n`;
+    if (draft) frontmatter += `draft: true\n`;
+    frontmatter += `---\n\n`;
+
+    const content = frontmatter + body;
+    const filename = `${date}-${makeSlug(title)}.md`;
+
+    const btn = document.getElementById('btn-save');
+    const status = document.getElementById('save-status');
+    btn.disabled = true;
+    btn.textContent = '저장 중...';
+
+    try {
+      const res = await fetch('/.netlify/functions/cms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: pw, filename, content }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        status.textContent = '✓ 저장 완료! 1~2분 후 블로그에 반영됩니다.';
+        status.className = 'save-status success';
+      } else {
+        status.textContent = '오류: ' + data.error;
+        status.className = 'save-status error';
+      }
+    } catch (e) {
+      status.textContent = '네트워크 오류가 발생했습니다.';
+      status.className = 'save-status error';
+    }
+
+    btn.disabled = false;
+    btn.textContent = '저장 & 발행';
+    setTimeout(() => { status.textContent = ''; status.className = 'save-status'; }, 5000);
+  }
+
+  function logout() {
+    pw = '';
+    document.getElementById('editor-screen').style.display = 'none';
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('pw-input').value = '';
+  }
+</script>
 </body>
 </html>
