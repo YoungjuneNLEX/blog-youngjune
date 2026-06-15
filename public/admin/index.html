@@ -102,6 +102,23 @@
       border-radius: 6px; font-size: 12px; color: #888; cursor: pointer;
     }
 
+    /* 글 목록 화면 */
+    #list-screen { display: none; }
+    .list-wrap { max-width: 720px; margin: 0 auto; padding: 28px 20px; }
+    .list-item {
+      display: block; background: white; border: 1px solid #e8e4dc; border-radius: 10px;
+      padding: 16px 18px; margin-bottom: 12px; cursor: pointer; text-align: left; width: 100%;
+      font-family: inherit;
+    }
+    .list-item:hover { border-color: #4a7c59; }
+    .list-item .li-title { font-size: 16px; font-weight: 700; color: #1a1a1a; margin-bottom: 4px; }
+    .list-item .li-meta { font-size: 13px; color: #999; }
+    .list-empty { text-align: center; color: #999; padding: 40px 0; }
+    .btn-ghost {
+      padding: 8px 16px; background: none; border: 1.5px solid #ddd; border-radius: 8px;
+      font-size: 13px; color: #555; cursor: pointer; font-family: inherit;
+    }
+
     /* ── 모바일 반응형 ─────────────────────────────────────── */
     @media (max-width: 768px) {
       /* 상단 바: 칸이 좁으니 패딩·글자·버튼 축소, 줄바꿈 방지 */
@@ -111,9 +128,11 @@
       .top-bar h1 {
         font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
       }
-      .top-bar-right { gap: 8px; flex-shrink: 0; }
-      .btn-save { padding: 8px 14px; font-size: 13px; }
-      .btn-logout { padding: 8px 10px; font-size: 12px; }
+      .top-bar-right { gap: 6px; flex-shrink: 0; }
+      .btn-save { padding: 8px 12px; font-size: 13px; }
+      .btn-logout { padding: 8px 9px; font-size: 12px; }
+      .btn-ghost { padding: 8px 9px; font-size: 12px; }
+      .list-wrap { padding: 16px 12px; }
       /* 저장 상태 메시지는 좁은 화면에서 숨김 (저장 후 알림으로 충분) */
       .save-status { display: none; }
 
@@ -144,12 +163,25 @@
   </div>
 </div>
 
+<!-- 글 목록 화면 -->
+<div id="list-screen">
+  <div class="top-bar">
+    <h1>📚 내 글 목록</h1>
+    <div class="top-bar-right">
+      <button class="btn-save" onclick="newPost()">+ 새 글 쓰기</button>
+      <button class="btn-logout" onclick="logout()">로그아웃</button>
+    </div>
+  </div>
+  <div class="list-wrap" id="list-wrap">불러오는 중...</div>
+</div>
+
 <!-- 에디터 화면 -->
 <div id="editor-screen">
   <div class="top-bar">
-    <h1>✍️ 새 글 쓰기</h1>
+    <h1 id="editor-title">✍️ 새 글 쓰기</h1>
     <div class="top-bar-right">
       <span class="save-status" id="save-status"></span>
+      <button class="btn-ghost" onclick="showList()">← 목록</button>
       <button class="btn-save" id="btn-save" onclick="savePost()">저장 &amp; 발행</button>
       <button class="btn-logout" onclick="logout()">로그아웃</button>
     </div>
@@ -227,7 +259,9 @@
 <script>
   let pw = '';
   let easyMDE;
-  let uploadedThumbnail = null; // 업로드된 표지 이미지의 공개 경로 (예: /image/xxx.png)
+  let editorReady = false;          // EasyMDE 초기화 여부
+  let editingFilename = null;       // 편집 중인 기존 글의 파일명 (새 글이면 null)
+  let uploadedThumbnail = null;     // 업로드된 표지 이미지의 공개 경로 (예: /image/xxx.png)
 
   // 오늘 날짜 기본값
   const today = new Date().toISOString().slice(0, 10);
@@ -252,13 +286,14 @@
       } else {
         pw = input;
         document.getElementById('login-screen').style.display = 'none';
-        document.getElementById('editor-screen').style.display = 'block';
-        initEditor();
+        showList();
       }
     });
   }
 
-  function initEditor() {
+  // EasyMDE는 한 번만 초기화 (목록에서 글을 열거나 새 글을 쓸 때)
+  function ensureEditor() {
+    if (editorReady) return;
     easyMDE = new EasyMDE({
       element: document.getElementById('body-editor'),
       placeholder: '본문을 여기에 쓰세요...\n\n## 소제목은 ## 으로\n\n> 인용문은 > 로 시작합니다.',
@@ -267,9 +302,157 @@
       toolbar: ['bold', 'italic', '|', 'heading-2', 'quote', '|', 'unordered-list', 'ordered-list', '|', 'link', '|', 'preview'],
       status: false,
     });
-
-    // 표지 이미지 선택 시 곧바로 업로드
     document.getElementById('f-thumb-file').addEventListener('change', uploadThumb);
+    editorReady = true;
+  }
+
+  // ── 글 목록 화면 ──────────────────────────────────────────────
+  function showList() {
+    document.getElementById('editor-screen').style.display = 'none';
+    document.getElementById('list-screen').style.display = 'block';
+    loadList();
+  }
+
+  async function loadList() {
+    const wrap = document.getElementById('list-wrap');
+    wrap.textContent = '불러오는 중...';
+    try {
+      const res = await fetch('/.netlify/functions/cms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: pw, action: 'list' }),
+      });
+      const data = await res.json();
+      if (!res.ok) { wrap.innerHTML = '<div class="list-empty">목록을 불러오지 못했습니다.<br>' + (data.error || '') + '</div>'; return; }
+      if (!data.files || data.files.length === 0) {
+        wrap.innerHTML = '<div class="list-empty">아직 작성한 글이 없습니다.<br>위 "+ 새 글 쓰기"로 첫 글을 써보세요.</div>';
+        return;
+      }
+      wrap.innerHTML = '';
+      data.files.forEach(f => {
+        // 파일명: YYYY-MM-DD-제목.md → 날짜와 제목 분리
+        const m = f.name.replace(/\.md$/, '').match(/^(\d{4}-\d{2}-\d{2})-(.*)$/);
+        const date = m ? m[1] : '';
+        const title = m ? m[2].replace(/-/g, ' ') : f.name.replace(/\.md$/, '');
+        const btn = document.createElement('button');
+        btn.className = 'list-item';
+        btn.innerHTML = '<div class="li-title"></div><div class="li-meta"></div>';
+        btn.querySelector('.li-title').textContent = title;
+        btn.querySelector('.li-meta').textContent = date;
+        btn.onclick = () => openPost(f.name);
+        wrap.appendChild(btn);
+      });
+    } catch (e) {
+      wrap.innerHTML = '<div class="list-empty">네트워크 오류로 목록을 불러오지 못했습니다.</div>';
+    }
+  }
+
+  // 새 글 쓰기
+  function newPost() {
+    ensureEditor();
+    editingFilename = null;
+    resetForm();
+    document.getElementById('editor-title').textContent = '✍️ 새 글 쓰기';
+    document.getElementById('list-screen').style.display = 'none';
+    document.getElementById('editor-screen').style.display = 'block';
+    setTimeout(() => easyMDE.codemirror.refresh(), 0);
+  }
+
+  // 기존 글 불러와 편집
+  async function openPost(name) {
+    ensureEditor();
+    const wrap = document.getElementById('list-wrap');
+    wrap.textContent = '글을 불러오는 중...';
+    try {
+      const res = await fetch('/.netlify/functions/cms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: pw, action: 'get', filename: name }),
+      });
+      const data = await res.json();
+      if (!res.ok) { alert('글을 불러오지 못했습니다: ' + (data.error || '')); loadList(); return; }
+      editingFilename = name;
+      fillForm(data.content);
+      document.getElementById('editor-title').textContent = '✏️ 글 편집';
+      document.getElementById('list-screen').style.display = 'none';
+      document.getElementById('editor-screen').style.display = 'block';
+      setTimeout(() => easyMDE.codemirror.refresh(), 0);
+    } catch (e) {
+      alert('네트워크 오류로 글을 불러오지 못했습니다.');
+      loadList();
+    }
+  }
+
+  function resetForm() {
+    document.getElementById('f-title').value = '';
+    document.getElementById('f-date').value = today;
+    document.getElementById('f-category').value = '에세이';
+    document.getElementById('f-book').value = '';
+    document.getElementById('f-tags').value = '';
+    document.getElementById('f-desc').value = '';
+    document.getElementById('f-draft').checked = false;
+    easyMDE.value('');
+    clearThumb();
+  }
+
+  // 프론트매터(---로 둘러싼 YAML)와 본문을 분리해 폼에 채움
+  function parseFrontmatter(text) {
+    const m = text.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
+    if (!m) return { data: {}, body: text };
+    const lines = m[1].split(/\r?\n/);
+    const data = {};
+    for (let i = 0; i < lines.length; i++) {
+      const km = lines[i].match(/^([a-zA-Z]+):\s*(.*)$/);
+      if (!km) continue;
+      const key = km[1];
+      let val = km[2];
+      if (key === 'tags') {
+        if (val.trim().startsWith('[')) {
+          data.tags = val.trim().replace(/^\[|\]$/g, '').split(',').map(s => s.trim()).filter(Boolean);
+        } else {
+          const arr = [];
+          while (i + 1 < lines.length && /^\s*-\s+/.test(lines[i + 1])) {
+            arr.push(lines[++i].replace(/^\s*-\s+/, '').trim());
+          }
+          data.tags = arr;
+        }
+      } else {
+        data[key] = val.trim();
+      }
+    }
+    return { data, body: m[2].replace(/^\r?\n+/, '') };
+  }
+
+  function fillForm(text) {
+    resetForm();
+    const { data, body } = parseFrontmatter(text);
+    if (data.title) document.getElementById('f-title').value = data.title;
+    if (data.date) document.getElementById('f-date').value = data.date;
+    if (data.category) {
+      const sel = document.getElementById('f-category');
+      // 없는 카테고리면 옵션을 추가
+      if (![...sel.options].some(o => o.value === data.category)) {
+        const opt = document.createElement('option');
+        opt.value = opt.textContent = data.category;
+        sel.appendChild(opt);
+      }
+      sel.value = data.category;
+    }
+    if (data.tags && data.tags.length) {
+      document.getElementById('f-book').value = data.tags[0];
+      document.getElementById('f-tags').value = data.tags.slice(1).join(', ');
+    }
+    if (data.description) document.getElementById('f-desc').value = data.description;
+    document.getElementById('f-draft').checked = (data.draft === 'true');
+    if (data.thumbnail) {
+      uploadedThumbnail = data.thumbnail;
+      document.getElementById('thumb-img').src = data.thumbnail;
+      document.getElementById('thumb-preview').style.display = 'block';
+      document.getElementById('bookcover-row').style.display = 'flex';
+      document.getElementById('bookcover-hint').style.display = 'block';
+      document.getElementById('f-bookcover').checked = (data.bookCover === 'true');
+    }
+    easyMDE.value(body);
   }
 
   function makeImageName(originalName) {
@@ -371,7 +554,8 @@
     frontmatter += `---\n\n`;
 
     const content = frontmatter + body;
-    const filename = `${date}-${makeSlug(title)}.md`;
+    // 편집 중이면 기존 파일명을 그대로 유지(중복 글 생성 방지), 새 글이면 날짜+제목으로 생성
+    const filename = editingFilename || `${date}-${makeSlug(title)}.md`;
 
     const btn = document.getElementById('btn-save');
     const status = document.getElementById('save-status');
@@ -386,8 +570,10 @@
       });
       const data = await res.json();
       if (res.ok) {
+        editingFilename = filename; // 이후 재저장 시 같은 파일 유지
         status.textContent = '✓ 저장 완료! 1~2분 후 블로그에 반영됩니다.';
         status.className = 'save-status success';
+        document.getElementById('editor-title').textContent = '✏️ 글 편집';
       } else {
         status.textContent = '오류: ' + data.error;
         status.className = 'save-status error';
@@ -404,8 +590,10 @@
 
   function logout() {
     pw = '';
+    editingFilename = null;
     clearThumb();
     document.getElementById('editor-screen').style.display = 'none';
+    document.getElementById('list-screen').style.display = 'none';
     document.getElementById('login-screen').style.display = 'flex';
     document.getElementById('pw-input').value = '';
   }

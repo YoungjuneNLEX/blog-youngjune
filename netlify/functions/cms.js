@@ -12,7 +12,7 @@ exports.handler = async (event) => {
   try { body = JSON.parse(event.body); }
   catch { return { statusCode: 400, headers, body: JSON.stringify({ error: '잘못된 요청입니다.' }) }; }
 
-  const { password, filename, content, upload } = body;
+  const { password, filename, content, upload, action } = body;
 
   if (!process.env.ADMIN_PASSWORD || password !== process.env.ADMIN_PASSWORD) {
     return { statusCode: 401, headers, body: JSON.stringify({ error: '비밀번호가 틀렸습니다.' }) };
@@ -20,13 +20,20 @@ exports.handler = async (event) => {
 
   const githubToken = process.env.GITHUB_TOKEN;
   const repo = 'YoungjuneNLEX/blog-youngjune';
+  const apiBase = `https://api.github.com/repos/${repo}/contents`;
+  const ghHeaders = { Authorization: `token ${githubToken}`, Accept: 'application/vnd.github+json' };
+
+  // 권한 부족(404)·인증 실패(401)를 사람이 읽을 수 있는 메시지로 변환
+  function friendlyError(status, raw) {
+    if (status === 401) return 'GitHub 토큰이 유효하지 않습니다. Netlify의 GITHUB_TOKEN 값을 확인해주세요.';
+    if (status === 404) return 'GitHub 토큰에 이 저장소 쓰기 권한이 없습니다. Netlify의 GITHUB_TOKEN을 쓰기(repo/contents) 권한이 있는 토큰으로 교체해주세요.';
+    return raw;
+  }
 
   // GitHub 저장소에 파일을 커밋하는 공통 함수
   async function commitFile(filePath, base64Content, message) {
     let sha;
-    const checkRes = await fetch(`https://api.github.com/repos/${repo}/contents/${filePath}`, {
-      headers: { Authorization: `token ${githubToken}`, Accept: 'application/vnd.github+json' },
-    });
+    const checkRes = await fetch(`${apiBase}/${filePath}`, { headers: ghHeaders });
     if (checkRes.ok) {
       const existing = await checkRes.json();
       sha = existing.sha;
@@ -35,20 +42,43 @@ exports.handler = async (event) => {
     const putBody = { message, content: base64Content, branch: 'main' };
     if (sha) putBody.sha = sha;
 
-    const putRes = await fetch(`https://api.github.com/repos/${repo}/contents/${filePath}`, {
+    const putRes = await fetch(`${apiBase}/${filePath}`, {
       method: 'PUT',
-      headers: {
-        Authorization: `token ${githubToken}`,
-        Accept: 'application/vnd.github+json',
-        'Content-Type': 'application/json',
-      },
+      headers: { ...ghHeaders, 'Content-Type': 'application/json' },
       body: JSON.stringify(putBody),
     });
 
     if (!putRes.ok) {
       const err = await putRes.text();
-      throw new Error(err);
+      const e = new Error(friendlyError(putRes.status, err));
+      throw e;
     }
+  }
+
+  // ── 글 목록 조회 ─────────────────────────────────────────────
+  if (action === 'list') {
+    const res = await fetch(`${apiBase}/src/content/posts?ref=main`, { headers: ghHeaders });
+    if (!res.ok) {
+      return { statusCode: 500, headers, body: JSON.stringify({ error: friendlyError(res.status, await res.text()) }) };
+    }
+    const items = await res.json();
+    const files = (Array.isArray(items) ? items : [])
+      .filter(f => f.type === 'file' && f.name.endsWith('.md') && f.name !== '_template.md')
+      .map(f => ({ name: f.name }))
+      .sort((a, b) => b.name.localeCompare(a.name)); // 최신(파일명 날짜) 먼저
+    return { statusCode: 200, headers, body: JSON.stringify({ files }) };
+  }
+
+  // ── 글 한 편 불러오기 ────────────────────────────────────────
+  if (action === 'get') {
+    const safe = String(filename || '').replace(/[/\\]/g, '');
+    const res = await fetch(`${apiBase}/src/content/posts/${encodeURIComponent(safe)}?ref=main`, { headers: ghHeaders });
+    if (!res.ok) {
+      return { statusCode: 500, headers, body: JSON.stringify({ error: friendlyError(res.status, await res.text()) }) };
+    }
+    const data = await res.json();
+    const text = Buffer.from(data.content || '', 'base64').toString('utf-8');
+    return { statusCode: 200, headers, body: JSON.stringify({ content: text }) };
   }
 
   // ── 이미지 업로드 (썸네일/표지) ──────────────────────────────
