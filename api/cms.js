@@ -72,10 +72,38 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: friendlyError(r.status, await r.text()) });
     }
     const items = await r.json();
-    const files = (Array.isArray(items) ? items : [])
-      .filter(f => f.type === 'file' && f.name.endsWith('.md') && f.name !== '_template.md')
-      .map(f => ({ name: f.name }))
-      .sort((a, b) => b.name.localeCompare(a.name)); // 최신(파일명 날짜) 먼저
+    const mdFiles = (Array.isArray(items) ? items : [])
+      .filter(f => f.type === 'file' && f.name.endsWith('.md') && f.name !== '_template.md');
+
+    // YAML 큰따옴표 해제
+    const unq = v => {
+      v = String(v || '').trim();
+      return (v.startsWith('"') && v.endsWith('"'))
+        ? v.slice(1, -1).replace(/\\n/g, ' ').replace(/\\"/g, '"').replace(/\\\\/g, '\\')
+        : v;
+    };
+    // 각 글의 프론트매터에서 제목·날짜를 읽어옴 (목록에 실제 제목 표시)
+    const files = await Promise.all(mdFiles.map(async f => {
+      let title = '', date = '';
+      try {
+        const fr = await fetch(f.url, { headers: ghHeaders });
+        if (fr.ok) {
+          const data = await fr.json();
+          const text = Buffer.from(data.content || '', 'base64').toString('utf-8');
+          const m = text.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+          if (m) {
+            const t = m[1].match(/^title:\s*(.*)$/m);
+            const d = m[1].match(/^date:\s*(.*)$/m);
+            if (t) title = unq(t[1]);
+            if (d) date = unq(d[1]);
+          }
+        }
+      } catch { /* 제목을 못 읽으면 파일명으로 대체 */ }
+      if (!title) title = f.name.replace(/\.md$/, '');
+      return { name: f.name, title, date };
+    }));
+    // 날짜(없으면 파일명) 기준 최신 먼저
+    files.sort((a, b) => (b.date || b.name).localeCompare(a.date || a.name));
     return res.status(200).json({ files });
   }
 

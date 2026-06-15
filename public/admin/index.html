@@ -425,10 +425,14 @@
       }
       wrap.innerHTML = '';
       data.files.forEach(f => {
-        // 파일명: YYYY-MM-DD-제목.md → 날짜와 제목 분리
-        const m = f.name.replace(/\.md$/, '').match(/^(\d{4}-\d{2}-\d{2})-(.*)$/);
-        const date = m ? m[1] : '';
-        const title = m ? m[2].replace(/-/g, ' ') : f.name.replace(/\.md$/, '');
+        // 서버가 글의 실제 제목·날짜를 내려줌 (없으면 파일명에서 보조 추출)
+        let title = f.title;
+        let date = f.date || '';
+        if (!title) {
+          const m = f.name.replace(/\.md$/, '').match(/^(\d{4}-\d{2}-\d{2})-(.*)$/);
+          if (m) { date = date || m[1]; title = m[2].replace(/-/g, ' '); }
+          else { title = f.name.replace(/\.md$/, ''); }
+        }
         const btn = document.createElement('button');
         btn.className = 'list-item';
         btn.innerHTML = '<div class="li-title"></div><div class="li-meta"></div>';
