@@ -433,6 +433,7 @@ const channels = [
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 1.25rem;
+    align-items: start; /* 카드가 같은 행 높이로 늘어나 빈 공간이 생기는 것 방지 */
   }
 
   /* ── 책꽂이 ── */
@@ -654,8 +655,15 @@ const channels = [
   @media (max-width: 780px) {
     .channels-grid { grid-template-columns: repeat(2, 1fr); }
   }
-  @media (max-width: 480px) {
-    .channels-grid { grid-template-columns: 1fr; }
+  /* 모바일: SNS를 작은 가로형 카드로 (거대 이미지 방지) */
+  @media (max-width: 560px) {
+    .channels-grid { grid-template-columns: 1fr; gap: 0.7rem; }
+    .channel-card { flex-direction: row; align-items: stretch; }
+    .ch-thumb { width: 72px; height: auto; aspect-ratio: auto; flex-shrink: 0; }
+    .ch-thumb img { object-fit: cover; height: 100%; }
+    .ch-body { padding: 0.7rem 0.2rem 0.7rem 0.95rem; display: flex; flex-direction: column; justify-content: center; }
+    .ch-label { margin-bottom: 0.15rem; }
+    .ch-arrow { align-self: center; padding: 0 1rem; }
   }
 
   .channel-card {
@@ -715,5 +723,38 @@ const channels = [
     color: var(--accent);
     font-weight: 600;
     text-align: right;
+  }
+
+  /* ── 모바일 전반 최적화 ───────────────────────────────── */
+  @media (max-width: 640px) {
+    /* 히어로: 여백 축소 */
+    .hero { padding: 2.75rem 0 2.25rem; }
+    .hero-sub { font-size: 0.74rem; margin-bottom: 0.9rem; }
+    .hero-desc { font-size: 0.92rem; line-height: 1.7; }
+
+    /* 섹션 여백 축소 */
+    .section { padding: 2.5rem 0; }
+    .section-title { font-size: 1.25rem; }
+    .section-sub { margin-bottom: 1.25rem; }
+
+    /* 글 카드: 한 열 + 간격 축소 */
+    .posts-grid { grid-template-columns: 1fr; gap: 0.9rem; }
+
+    /* 책꽂이: 가구 여백·선반 간격 축소 */
+    .bookshelf-wrap { padding: 14px 14px 16px; }
+    .shelf-books {
+      gap: 1rem 0.75rem;
+      padding: 1.1rem 0.25rem 0.85rem;
+      min-height: 150px;
+    }
+    /* 좁은 화면에서 좌측 장식은 책과 겹치므로 숨김 */
+    .deco-fern, .deco-spines { display: none; }
+    .deco-ivy { width: 46px; right: 6px; }
+
+    :global(.book-cover-letter) { font-size: 1.8rem; }
+    :global(.book-name) { font-size: 0.82rem; }
+    :global(.book-count) { font-size: 0.65rem; }
+    :global(.book-info) { margin-top: 0.55rem; }
+    :global(.book-item:hover) { transform: translateY(-8px) scale(1.03); }
   }
 </style>
