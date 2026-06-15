@@ -82,6 +82,17 @@
     .EasyMDEContainer { border-radius: 10px; }
     .CodeMirror { border-radius: 0 0 10px 10px; }
 
+    /* 본문에 사진 넣기 버튼 */
+    .editor-tools { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+    .btn-insert-image {
+      padding: 8px 16px; background: #fff; border: 1.5px solid #4a7c59; color: #4a7c59;
+      border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit;
+    }
+    .btn-insert-image:hover { background: #4a7c59; color: #fff; }
+    .img-insert-status { font-size: 13px; }
+    .img-insert-status.uploading { color: #4a7c59; }
+    .img-insert-status.error { color: #c62828; }
+
     .save-status {
       font-size: 13px; padding: 6px 14px; border-radius: 20px;
     }
@@ -250,6 +261,11 @@
 
     <div class="main-editor">
       <input class="title-input" id="f-title" type="text" placeholder="제목을 입력하세요" />
+      <div class="editor-tools">
+        <button type="button" class="btn-insert-image" onclick="document.getElementById('body-image-file').click()">🖼 본문에 사진 넣기</button>
+        <input type="file" id="body-image-file" accept="image/*" style="display:none" />
+        <span class="img-insert-status" id="img-insert-status"></span>
+      </div>
       <textarea id="body-editor"></textarea>
     </div>
   </div>
@@ -303,7 +319,55 @@
       status: false,
     });
     document.getElementById('f-thumb-file').addEventListener('change', uploadThumb);
+    document.getElementById('body-image-file').addEventListener('change', insertBodyImage);
     editorReady = true;
+  }
+
+  // ── 본문 중간에 사진 삽입 ─────────────────────────────────────
+  // 사진을 업로드한 뒤, 에디터 커서 위치에 마크다운 이미지(![](경로))를 넣음
+  async function insertBodyImage(e) {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+
+    const status = document.getElementById('img-insert-status');
+    status.textContent = '사진 업로드 중...';
+    status.className = 'img-insert-status uploading';
+
+    // 파일을 base64로 읽기
+    const dataUrl = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+    const base64 = String(dataUrl).split(',')[1];
+    const filename = makeImageName(file.name);
+
+    try {
+      const res = await fetch('/api/cms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: pw, upload: 'image', filename, content: base64 }),
+      });
+      const data = await res.json();
+      if (res.ok && data.path) {
+        // 커서 위치(또는 글 끝)에 마크다운 이미지 삽입
+        const cm = easyMDE.codemirror;
+        const alt = file.name.replace(/\.[^.]+$/, '');
+        cm.replaceSelection('\n![' + alt + '](' + data.path + ')\n');
+        cm.focus();
+        status.textContent = '✓ 사진이 본문에 삽입되었습니다';
+        status.className = 'img-insert-status uploading';
+      } else {
+        status.textContent = '업로드 실패: ' + (data.error || '알 수 없는 오류');
+        status.className = 'img-insert-status error';
+      }
+    } catch (err) {
+      status.textContent = '네트워크 오류로 업로드에 실패했습니다.';
+      status.className = 'img-insert-status error';
+    }
+    e.target.value = ''; // 같은 사진을 다시 선택할 수 있도록 초기화
+    setTimeout(() => { status.textContent = ''; status.className = 'img-insert-status'; }, 4000);
   }
 
   // ── 글 목록 화면 ──────────────────────────────────────────────

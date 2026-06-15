@@ -136,6 +136,15 @@ const formattedDate = date.toLocaleDateString('ko-KR', {
   }
   .post-body :global(li) { margin-bottom: 0.4rem; }
   .post-body :global(hr) { margin: 2.5rem 0; }
+  /* 본문에 삽입한 사진 — 화면 폭에 맞추고 보기 좋게 */
+  .post-body :global(img) {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin: 1.75rem auto;
+    border-radius: 8px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  }
 
   .post-footer {
     margin-top: 3.5rem;

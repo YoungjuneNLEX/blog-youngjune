@@ -8,6 +8,18 @@ allPosts.sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
 // 최신 글부터 최대 5편 — 한 편씩 페이지를 넘기며 봅니다.
 const recentPosts = allPosts.slice(0, 5);
 
+// 최근 포스팅은 카드가 아니라 본문(썸네일·이미지 포함)을 직접 보여줍니다.
+// 각 글의 렌더링된 본문 컴포넌트와 표시용 날짜를 미리 준비합니다.
+const recentRendered = await Promise.all(
+  recentPosts.map(async (post) => {
+    const { Content } = await post.render();
+    const formattedDate = post.data.date.toLocaleDateString('ko-KR', {
+      year: 'numeric', month: 'long', day: 'numeric',
+    });
+    return { post, Content, formattedDate };
+  })
+);
+
 // 책별 커스텀 색상 — 없으면 자동 배색 (tags[0]이 책 제목)
 const bookMeta: Record<string, { color: string }> = {
   '커피공부':   { color: '#c8956a' },
@@ -83,19 +95,35 @@ const channels = [
     <section class="section">
       <div class="container">
         <h2 class="section-title">최근 포스팅</h2>
-        <!-- 한 편씩 넘겨 보는 페이저 -->
+        <!-- 한 편씩 넘겨 보는 페이저 (본문을 직접 노출) -->
         <div class="recent-pager" id="recent-pager">
           <div class="recent-track" id="recent-track">
-            {recentPosts.map(post => (
+            {recentRendered.map(({ post, Content, formattedDate }) => (
               <div class="recent-slide">
-                <PostCard
-                  title={post.data.title}
-                  date={post.data.date}
-                  category={post.data.category}
-                  slug={post.slug}
-                  description={post.data.description}
-                  tags={post.data.tags}
-                />
+                <article class="recent-post">
+                  <div class="rp-meta">
+                    <a href={`/shelf/${post.data.category}`} class="rp-cat">{post.data.category}</a>
+                    <time>{formattedDate}</time>
+                  </div>
+                  <h3 class="rp-title">
+                    <a href={`/posts/${post.slug}`}>{post.data.title}</a>
+                  </h3>
+                  {post.data.tags.length > 0 && (
+                    <div class="rp-tags">
+                      {post.data.tags.map(t => <a href={`/tag/${t}`} class="rp-tag">#{t}</a>)}
+                    </div>
+                  )}
+                  <div class="rp-content collapsed">
+                    {post.data.thumbnail && (
+                      <img class="rp-thumb" src={post.data.thumbnail} alt={post.data.title} />
+                    )}
+                    <div class="rp-body">
+                      <Content />
+                    </div>
+                    <div class="rp-fade" aria-hidden="true"></div>
+                  </div>
+                  <button class="rp-toggle" type="button">펼쳐서 전체 보기 ▾</button>
+                </article>
               </div>
             ))}
           </div>
@@ -112,6 +140,50 @@ const channels = [
           if (!track) return;
           const slides = Array.prototype.slice.call(track.querySelectorAll('.recent-slide'));
           const dotsWrap = document.getElementById('recent-dots');
+
+          // ── 본문을 전체 높이의 1/3만 보이도록 접기 + 펼치기 토글 ──
+          // (페이저가 슬라이드를 숨기기 전, 모두 보이는 상태에서 높이를 측정)
+          slides.forEach(function(slide) {
+            const content = slide.querySelector('.rp-content');
+            const toggle  = slide.querySelector('.rp-toggle');
+            if (!content || !toggle) return;
+            let collapsedH = 0;
+
+            function measure() {
+              const full = content.scrollHeight;
+              if (full === 0) return;           // 숨겨진 슬라이드(측정 불가)는 건너뜀
+              if (content.classList.contains('expanded')) return;
+              collapsedH = Math.max(160, Math.round(full / 3));
+              // 본문이 짧아 접을 필요가 없으면: 전체 표시 + 버튼 숨김
+              if (full <= collapsedH + 80) {
+                content.classList.remove('collapsed');
+                content.style.maxHeight = 'none';
+                toggle.style.display = 'none';
+              } else {
+                content.classList.add('collapsed');
+                content.style.maxHeight = collapsedH + 'px';
+                toggle.style.display = '';
+              }
+            }
+            measure();
+            // 이미지가 늦게 로드돼 높이가 바뀌면 다시 계산 (접힌 상태일 때만)
+            slide.querySelectorAll('img').forEach(function(img) {
+              if (!img.complete) img.addEventListener('load', measure);
+            });
+
+            toggle.addEventListener('click', function() {
+              const expanded = content.classList.toggle('expanded');
+              content.classList.toggle('collapsed', !expanded);
+              if (expanded) {
+                content.style.maxHeight = content.scrollHeight + 'px';
+                toggle.textContent = '접기 ▴';
+              } else {
+                content.style.maxHeight = collapsedH + 'px';
+                toggle.textContent = '펼쳐서 전체 보기 ▾';
+                slide.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+              }
+            });
+          });
           const prevBtn  = document.getElementById('recent-prev');
           const nextBtn  = document.getElementById('recent-next');
           const pag      = document.getElementById('recent-pagination');
@@ -371,15 +443,10 @@ const channels = [
       <p class="section-sub">블로그, 유튜브, 엑스, 카카오채널</p>
       <div class="channels-grid">
         {channels.map(ch => (
-          <a href={ch.href} target="_blank" rel="noopener noreferrer" class="channel-card">
+          <a href={ch.href} target="_blank" rel="noopener noreferrer" class="channel-card" aria-label={ch.label}>
             <div class="ch-thumb">
               <img src={ch.thumb} alt={ch.label} />
             </div>
-            <div class="ch-body">
-              <p class="ch-label">{ch.label}</p>
-              <p class="ch-desc">{ch.desc}</p>
-            </div>
-            <span class="ch-arrow">→</span>
           </a>
         ))}
       </div>
@@ -484,9 +551,9 @@ const channels = [
     align-items: start; /* 카드가 같은 행 높이로 늘어나 빈 공간이 생기는 것 방지 */
   }
 
-  /* ── 최근 포스팅 페이저 (한 편씩 넘김) ── */
+  /* ── 최근 포스팅 페이저 (한 편씩 넘김 + 본문 노출) ── */
   .recent-track {
-    max-width: 560px;
+    max-width: 680px;
     margin: 0 auto;
   }
   .recent-slide { width: 100%; }
@@ -496,6 +563,116 @@ const channels = [
     justify-content: center;
     gap: 1rem;
     margin-top: 1.5rem;
+  }
+
+  /* 본문을 직접 보여주는 글 블록 */
+  .recent-post {
+    border: 1px solid var(--border-soft);
+    border-radius: 14px;
+    background: var(--bg-mid);
+    box-shadow: var(--shadow-sm);
+    padding: 1.75rem 1.85rem 1.5rem;
+  }
+  .rp-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.7rem;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+  }
+  .rp-cat {
+    color: var(--accent);
+    font-weight: 600;
+    background: var(--accent-bg);
+    padding: 0.1rem 0.55rem;
+    border-radius: 4px;
+    font-size: 0.78rem;
+  }
+  .rp-title {
+    font-size: 1.4rem;
+    line-height: 1.35;
+    color: var(--text-main);
+    margin-bottom: 0.6rem;
+    letter-spacing: -0.01em;
+  }
+  .rp-title a { color: inherit; text-decoration: none; }
+  .rp-title a:hover { color: var(--accent); }
+  .rp-tags {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.1rem;
+  }
+  .rp-tag { font-size: 0.78rem; color: var(--text-muted); text-decoration: none; }
+  .rp-tag:hover { color: var(--accent); }
+
+  /* 접힘/펼침 영역 */
+  .rp-content {
+    position: relative;
+    overflow: hidden;
+    transition: max-height 0.4s ease;
+  }
+  .rp-thumb {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 10px;
+    margin-bottom: 1.25rem;
+  }
+  /* 하단 페이드 (접혀 있을 때만) */
+  .rp-fade {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    height: 5rem;
+    background: linear-gradient(to bottom, rgba(243,237,227,0), var(--bg-mid));
+    pointer-events: none;
+  }
+  .rp-content.expanded .rp-fade { display: none; }
+
+  /* 펼치기/접기 버튼 */
+  .rp-toggle {
+    display: block;
+    width: 100%;
+    margin-top: 1rem;
+    padding: 0.7rem;
+    background: var(--accent-bg);
+    border: 1px solid rgba(176, 90, 58, 0.2);
+    border-radius: 9px;
+    color: var(--accent);
+    font-size: 0.9rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .rp-toggle:hover { background: rgba(176, 90, 58, 0.14); }
+
+  /* 본문 타이포그래피 (PostLayout과 동일 톤) */
+  .rp-body :global(p) { margin-bottom: 1.1rem; color: var(--text-main); line-height: 1.85; }
+  .rp-body :global(h2) { font-size: 1.2rem; margin: 1.8rem 0 0.8rem; color: var(--text-main); }
+  .rp-body :global(h3) { font-size: 1.05rem; margin: 1.4rem 0 0.6rem; color: var(--text-main); }
+  .rp-body :global(img) {
+    display: block; max-width: 100%; height: auto;
+    margin: 1.25rem auto; border-radius: 8px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  }
+  .rp-body :global(blockquote) {
+    border-left: 3px solid var(--accent);
+    margin: 1.2rem 0; padding: 0.6rem 1.1rem;
+    background: var(--bg-light); border-radius: 0 6px 6px 0; color: var(--text-sub);
+  }
+  .rp-body :global(strong) { color: var(--accent-dark); font-weight: 700; }
+  .rp-body :global(a) { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+  .rp-body :global(ul), .rp-body :global(ol) { padding-left: 1.4rem; margin-bottom: 1.1rem; }
+  .rp-body :global(li) { margin-bottom: 0.35rem; }
+
+  @media (max-width: 640px) {
+    .recent-post { padding: 1.2rem 1.15rem 1.1rem; background: #fffdf9; }
+    .rp-title { font-size: 1.2rem; }
+    .rp-body :global(p) { font-size: 0.95rem; line-height: 1.8; }
+    /* 모바일 카드 배경(#fffdf9)에 맞춰 페이드 끝 색 정렬 */
+    .rp-fade { background: linear-gradient(to bottom, rgba(255,253,249,0), #fffdf9); }
   }
 
   /* ── 책꽂이 ── */
@@ -717,40 +894,28 @@ const channels = [
   @media (max-width: 780px) {
     .channels-grid { grid-template-columns: repeat(2, 1fr); }
   }
-  /* 모바일: SNS를 한 줄에 2개씩 작은 카드로 (거대 이미지 방지) */
   @media (max-width: 560px) {
     .channels-grid { grid-template-columns: repeat(2, 1fr); gap: 0.7rem; }
-    .channel-card { flex-direction: column; }
-    .ch-thumb { width: 100%; aspect-ratio: 16/9; }
-    .ch-thumb img { object-fit: cover; }
-    .ch-body { padding: 0.55rem 0.7rem 0.5rem; }
-    .ch-label { font-size: 0.84rem; margin-bottom: 0; }
-    .ch-desc { display: none; }   /* 좁은 화면에선 설명 생략해 깔끔하게 */
-    .ch-arrow { display: none; }
   }
 
+  /* SNS: 아이콘(타일)만 노출 — 링크는 타일 전체에 걸려 있음 */
   .channel-card {
-    display: flex;
-    flex-direction: column;
+    display: block;
     border: 1px solid var(--border-soft);
-    border-radius: 12px;
-    background: var(--bg-mid);
-    box-shadow: var(--shadow-sm);
+    border-radius: 14px;
     overflow: hidden;
-    transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow 0.2s, transform 0.2s;
     text-decoration: none;
   }
   .channel-card:hover {
-    border-color: var(--accent);
     box-shadow: var(--shadow-md);
     transform: translateY(-3px);
   }
-
   .ch-thumb {
     width: 100%;
-    aspect-ratio: 4/3;
+    aspect-ratio: 320 / 180;  /* SVG 아이콘 비율 그대로 */
     overflow: hidden;
-    background: var(--bg-light);
   }
   .ch-thumb img {
     width: 100%;
@@ -761,31 +926,6 @@ const channels = [
   }
   .channel-card:hover .ch-thumb img {
     transform: scale(1.04);
-  }
-
-  .ch-body {
-    padding: 0.9rem 1.1rem 0.75rem;
-    flex: 1;
-  }
-  .ch-label {
-    font-size: 0.95rem;
-    font-weight: 700;
-    color: var(--text-main);
-    margin-bottom: 0.25rem;
-  }
-  .ch-desc {
-    font-size: 0.82rem;
-    color: var(--text-sub);
-    line-height: 1.5;
-  }
-
-  .ch-arrow {
-    display: block;
-    padding: 0.5rem 1.1rem 0.75rem;
-    font-size: 0.85rem;
-    color: var(--accent);
-    font-weight: 600;
-    text-align: right;
   }
 
   /* ── 모바일 전반 최적화 ───────────────────────────────── */
