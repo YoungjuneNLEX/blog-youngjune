@@ -275,7 +275,7 @@
   function login() {
     const input = document.getElementById('pw-input').value;
     // 서버에 검증 (빈 글 전송으로 비밀번호만 확인)
-    fetch('/.netlify/functions/cms', {
+    fetch('/api/cms', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ password: input, filename: '__check__', content: '' }),
@@ -317,7 +317,7 @@
     const wrap = document.getElementById('list-wrap');
     wrap.textContent = '불러오는 중...';
     try {
-      const res = await fetch('/.netlify/functions/cms', {
+      const res = await fetch('/api/cms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password: pw, action: 'list' }),
@@ -364,7 +364,7 @@
     const wrap = document.getElementById('list-wrap');
     wrap.textContent = '글을 불러오는 중...';
     try {
-      const res = await fetch('/.netlify/functions/cms', {
+      const res = await fetch('/api/cms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password: pw, action: 'get', filename: name }),
@@ -487,7 +487,7 @@
     const filename = makeImageName(file.name);
 
     try {
-      const res = await fetch('/.netlify/functions/cms', {
+      const res = await fetch('/api/cms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password: pw, upload: 'image', filename, content: base64 }),
@@ -563,7 +563,7 @@
     btn.textContent = '저장 중...';
 
     try {
-      const res = await fetch('/.netlify/functions/cms', {
+      const res = await fetch('/api/cms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password: pw, filename, content }),
