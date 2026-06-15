@@ -257,6 +257,15 @@
           <label for="f-draft">초안으로 저장 (비공개)</label>
         </div>
       </div>
+
+      <div class="field">
+        <div class="field-row">
+          <input type="checkbox" id="f-schedule" />
+          <label for="f-schedule">⏰ 예약 발행</label>
+        </div>
+        <input type="datetime-local" id="f-publish-at" style="display:none; margin-top:8px;" />
+        <div class="hint" id="schedule-hint" style="display:none;">지정한 시각(한국 시간)이 되면 자동으로 공개됩니다.</div>
+      </div>
     </div>
 
     <div class="main-editor">
@@ -286,6 +295,21 @@
   // Enter 키로 로그인
   document.getElementById('pw-input').addEventListener('keydown', e => {
     if (e.key === 'Enter') login();
+  });
+
+  // 예약 발행 체크 시 날짜·시간 입력칸 표시
+  document.getElementById('f-schedule').addEventListener('change', e => {
+    const on = e.target.checked;
+    const input = document.getElementById('f-publish-at');
+    document.getElementById('schedule-hint').style.display = on ? 'block' : 'none';
+    input.style.display = on ? 'block' : 'none';
+    // 처음 켜면 기본값으로 내일 09:00 제안
+    if (on && !input.value) {
+      const d = new Date(Date.now() + 86400000);
+      input.value = d.getFullYear() + '-' +
+        String(d.getMonth() + 1).padStart(2, '0') + '-' +
+        String(d.getDate()).padStart(2, '0') + 'T09:00';
+    }
   });
 
   function login() {
@@ -455,8 +479,21 @@
     document.getElementById('f-tags').value = '';
     document.getElementById('f-desc').value = '';
     document.getElementById('f-draft').checked = false;
+    document.getElementById('f-schedule').checked = false;
+    document.getElementById('f-publish-at').value = '';
+    document.getElementById('f-publish-at').style.display = 'none';
+    document.getElementById('schedule-hint').style.display = 'none';
     easyMDE.value('');
     clearThumb();
+  }
+
+  // YAML 큰따옴표 값 해제 (저장 시 따옴표로 감쌌으므로 읽을 때 풀어줌)
+  function unquote(v) {
+    v = String(v).trim();
+    if (v.length >= 2 && v[0] === '"' && v[v.length - 1] === '"') {
+      return v.slice(1, -1).replace(/\\"/g, '"').replace(/\\\\/g, '\\');
+    }
+    return v;
   }
 
   // 프론트매터(---로 둘러싼 YAML)와 본문을 분리해 폼에 채움
@@ -472,16 +509,16 @@
       let val = km[2];
       if (key === 'tags') {
         if (val.trim().startsWith('[')) {
-          data.tags = val.trim().replace(/^\[|\]$/g, '').split(',').map(s => s.trim()).filter(Boolean);
+          data.tags = val.trim().replace(/^\[|\]$/g, '').split(',').map(s => unquote(s)).filter(Boolean);
         } else {
           const arr = [];
           while (i + 1 < lines.length && /^\s*-\s+/.test(lines[i + 1])) {
-            arr.push(lines[++i].replace(/^\s*-\s+/, '').trim());
+            arr.push(unquote(lines[++i].replace(/^\s*-\s+/, '')));
           }
           data.tags = arr;
         }
       } else {
-        data[key] = val.trim();
+        data[key] = unquote(val);
       }
     }
     return { data, body: m[2].replace(/^\r?\n+/, '') };
@@ -508,6 +545,13 @@
     }
     if (data.description) document.getElementById('f-desc').value = data.description;
     document.getElementById('f-draft').checked = (data.draft === 'true');
+    // 예약 발행: publishAt(예: 2026-06-20T09:00:00+09:00)이 있으면 체크 + 입력칸 채움
+    if (data.publishAt) {
+      document.getElementById('f-schedule').checked = true;
+      document.getElementById('f-publish-at').value = String(data.publishAt).slice(0, 16); // YYYY-MM-DDTHH:MM
+      document.getElementById('f-publish-at').style.display = 'block';
+      document.getElementById('schedule-hint').style.display = 'block';
+    }
     if (data.thumbnail) {
       uploadedThumbnail = data.thumbnail;
       document.getElementById('thumb-img').src = data.thumbnail;
@@ -605,6 +649,17 @@
     if (!title) { alert('제목을 입력해주세요.'); return; }
     if (!book) { alert('책 제목(첫 번째 태그)을 입력해주세요.'); return; }
 
+    // 예약 발행: 체크 + 시각이 있으면 한국시간(+09:00) 기준 ISO로 저장하고,
+    // 표시 날짜(date)도 예약일로 맞춤
+    const schedule = document.getElementById('f-schedule').checked;
+    const publishAtLocal = document.getElementById('f-publish-at').value; // "YYYY-MM-DDTHH:MM"
+    let publishAtIso = '';
+    let dateForFm = date;
+    if (schedule && publishAtLocal) {
+      publishAtIso = publishAtLocal + ':00+09:00';
+      dateForFm = publishAtLocal.slice(0, 10);
+    }
+
     const tags = [book, ...extraTags];
     // YAML 안전 처리: 값을 큰따옴표로 감싸고 내부 특수문자를 이스케이프.
     // (제목에 [ : # 같은 문자가 있어도 빌드가 깨지지 않도록)
@@ -613,16 +668,17 @@
 
     const bookCover = document.getElementById('f-bookcover').checked;
 
-    let frontmatter = `---\ntitle: ${yamlStr(title)}\ndate: ${date}\ncategory: ${yamlStr(category)}\ntags: ${tagsYaml}\n`;
+    let frontmatter = `---\ntitle: ${yamlStr(title)}\ndate: ${dateForFm}\ncategory: ${yamlStr(category)}\ntags: ${tagsYaml}\n`;
     if (uploadedThumbnail) frontmatter += `thumbnail: ${yamlStr(uploadedThumbnail)}\n`;
     if (uploadedThumbnail && bookCover) frontmatter += `bookCover: true\n`;
     if (desc) frontmatter += `description: ${yamlStr(desc)}\n`;
+    if (publishAtIso) frontmatter += `publishAt: ${yamlStr(publishAtIso)}\n`;
     if (draft) frontmatter += `draft: true\n`;
     frontmatter += `---\n\n`;
 
     const content = frontmatter + body;
     // 편집 중이면 기존 파일명을 그대로 유지(중복 글 생성 방지), 새 글이면 날짜+제목으로 생성
-    const filename = editingFilename || `${date}-${makeSlug(title)}.md`;
+    const filename = editingFilename || `${dateForFm}-${makeSlug(title)}.md`;
 
     const btn = document.getElementById('btn-save');
     const status = document.getElementById('save-status');
@@ -638,11 +694,14 @@
       const data = await res.json();
       if (res.ok) {
         editingFilename = filename; // 이후 재저장 시 같은 파일 유지
-        status.textContent = '✓ 저장 완료! 1~2분 후 블로그에 반영됩니다.';
+        const msg = publishAtIso
+          ? '✓ 저장 완료!\n예약 시각(' + publishAtLocal.replace('T', ' ') + ')이 되면 자동으로 공개됩니다.'
+          : '✓ 저장 완료!\n1~2분 후 블로그에 반영됩니다.';
+        status.textContent = msg.replace(/\n/g, ' ');
         status.className = 'save-status success';
         document.getElementById('editor-title').textContent = '✏️ 글 편집';
         // 모바일에서는 상단 상태 메시지가 숨겨지므로 알림으로 확실히 안내
-        alert('✓ 저장 완료!\n1~2분 후 블로그에 반영됩니다.');
+        alert(msg);
       } else {
         status.textContent = '오류: ' + data.error;
         status.className = 'save-status error';

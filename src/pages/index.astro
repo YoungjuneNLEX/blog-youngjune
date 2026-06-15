@@ -2,8 +2,9 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PostCard from '../components/PostCard.astro';
 import { getCollection } from 'astro:content';
+import { isPublished } from '../lib/posts';
 
-const allPosts = await getCollection('posts', ({ data }) => !data.draft);
+const allPosts = await getCollection('posts', isPublished);
 allPosts.sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
 // 최신 글부터 최대 5편 — 한 편씩 페이지를 넘기며 봅니다.
 const recentPosts = allPosts.slice(0, 5);
@@ -352,10 +353,6 @@ const channels = [
           var d = document.createElement('div');
           d.className = 'book-cover-auto';
           d.style.background = book.color;
-          var s = document.createElement('span');
-          s.className = 'book-cover-letter';
-          s.textContent = Array.from(book.name)[0];
-          d.appendChild(s);
           return d;
         }
         function makeCover(book) {
@@ -402,15 +399,13 @@ const channels = [
               sp.className = 'book-spine';
               sp.style.background = book.color;
               cv.appendChild(sp);
-
-              var info = document.createElement('div');
-              info.className = 'book-info';
-              info.innerHTML =
-                '<p class="book-count">' + book.count + '편</p>' +
-                '<p class="book-name">' + book.name + '</p>';
+              // 표지 위에 책 제목 얹기 (제목만, 길면 최대 2줄)
+              var titleEl = document.createElement('div');
+              titleEl.className = 'book-title-overlay';
+              titleEl.textContent = book.name;
+              cv.appendChild(titleEl);
 
               a.appendChild(cv);
-              a.appendChild(info);
               rowEl.appendChild(a);
             });
             for (var g = rowBooks.length; g < PER_ROW; g++) {
@@ -808,6 +803,25 @@ const channels = [
     height: 100%;
     opacity: 0.75;
   }
+  /* 표지 위에 얹는 책 제목 (하단 그라데이션 + 흰 글씨) */
+  :global(.book-title-overlay) {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    padding: 0.7rem 0.4rem 0.45rem;
+    background: linear-gradient(to top, rgba(20,12,6,0.74), rgba(20,12,6,0));
+    color: #fff;
+    font-family: var(--serif);
+    font-weight: 700;
+    font-size: 0.82rem;
+    line-height: 1.22;
+    text-align: center;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;          /* 최대 2줄 */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    word-break: keep-all;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.55);
+  }
   :global(.book-info) {
     margin-top: 0.85rem;
     text-align: center;
@@ -954,10 +968,7 @@ const channels = [
     .deco-fern, .deco-spines { display: none; }
     .deco-ivy { width: 46px; right: 6px; }
 
-    :global(.book-cover-letter) { font-size: 1.8rem; }
-    :global(.book-name) { font-size: 0.82rem; }
-    :global(.book-count) { font-size: 0.65rem; }
-    :global(.book-info) { margin-top: 0.55rem; }
+    :global(.book-title-overlay) { font-size: 0.68rem; padding: 0.5rem 0.28rem 0.34rem; }
     :global(.book-item:hover) { transform: translateY(-8px) scale(1.03); }
   }
 </style>
