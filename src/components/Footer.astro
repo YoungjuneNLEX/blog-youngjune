@@ -77,4 +77,11 @@ const channels = [
     font-size: 0.8rem;
     color: var(--text-muted);
   }
+
+  /* 모바일: SNS 링크 4개를 한 줄에 아이콘만 표시 */
+  @media (max-width: 560px) {
+    .footer-nav { gap: 0.9rem; flex-wrap: nowrap; }
+    .footer-link { font-size: 0; gap: 0; }   /* 라벨 텍스트 숨김, 아이콘만 */
+    .footer-icon { width: 42px; height: 42px; font-size: 1.1rem; border-radius: 8px; }
+  }
 </style>
