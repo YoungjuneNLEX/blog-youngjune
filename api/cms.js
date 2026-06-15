@@ -23,6 +23,12 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: '비밀번호가 틀렸습니다.' });
   }
 
+  // ── 비밀번호 확인용(로그인) ──────────────────────────────────
+  // 저장소에 아무것도 커밋하지 않고 인증 성공 여부만 반환
+  if (action === 'check') {
+    return res.status(200).json({ success: true });
+  }
+
   const githubToken = process.env.GITHUB_TOKEN;
   const repo = 'YoungjuneNLEX/blog-youngjune';
   const apiBase = `https://api.github.com/repos/${repo}/contents`;

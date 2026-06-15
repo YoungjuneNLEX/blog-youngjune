@@ -5,7 +5,8 @@ import { getCollection } from 'astro:content';
 
 const allPosts = await getCollection('posts', ({ data }) => !data.draft);
 allPosts.sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
-const recentPosts = allPosts.slice(0, 2);
+// 최신 글부터 최대 5편 — 한 편씩 페이지를 넘기며 봅니다.
+const recentPosts = allPosts.slice(0, 5);
 
 // 책별 커스텀 색상 — 없으면 자동 배색 (tags[0]이 책 제목)
 const bookMeta: Record<string, { color: string }> = {
@@ -82,18 +83,65 @@ const channels = [
     <section class="section">
       <div class="container">
         <h2 class="section-title">최근 포스팅</h2>
-        <div class="posts-grid">
-          {recentPosts.map(post => (
-            <PostCard
-              title={post.data.title}
-              date={post.data.date}
-              category={post.data.category}
-              slug={post.slug}
-              description={post.data.description}
-              tags={post.data.tags}
-            />
-          ))}
+        <!-- 한 편씩 넘겨 보는 페이저 -->
+        <div class="recent-pager" id="recent-pager">
+          <div class="recent-track" id="recent-track">
+            {recentPosts.map(post => (
+              <div class="recent-slide">
+                <PostCard
+                  title={post.data.title}
+                  date={post.data.date}
+                  category={post.data.category}
+                  slug={post.slug}
+                  description={post.data.description}
+                  tags={post.data.tags}
+                />
+              </div>
+            ))}
+          </div>
+          <div class="recent-pagination" id="recent-pagination">
+            <button class="page-btn" id="recent-prev" aria-label="이전 글">←</button>
+            <div class="page-dots" id="recent-dots"></div>
+            <button class="page-btn" id="recent-next" aria-label="다음 글">→</button>
+          </div>
         </div>
+
+        <script is:inline>
+        (function() {
+          const track = document.getElementById('recent-track');
+          if (!track) return;
+          const slides = Array.prototype.slice.call(track.querySelectorAll('.recent-slide'));
+          const dotsWrap = document.getElementById('recent-dots');
+          const prevBtn  = document.getElementById('recent-prev');
+          const nextBtn  = document.getElementById('recent-next');
+          const pag      = document.getElementById('recent-pagination');
+          let cur = 0;
+
+          // 글이 1편뿐이면 페이지 컨트롤 숨김
+          if (slides.length <= 1) { if (pag) pag.style.display = 'none'; return; }
+
+          slides.forEach(function(s, i) {
+            const d = document.createElement('button');
+            d.className = 'page-dot';
+            d.setAttribute('aria-label', (i + 1) + '번째 글');
+            d.addEventListener('click', function() { go(i); });
+            dotsWrap.appendChild(d);
+          });
+
+          function render() {
+            slides.forEach(function(s, i) { s.style.display = i === cur ? '' : 'none'; });
+            dotsWrap.querySelectorAll('.page-dot').forEach(function(d, i) {
+              d.classList.toggle('active', i === cur);
+            });
+            prevBtn.disabled = cur === 0;
+            nextBtn.disabled = cur === slides.length - 1;
+          }
+          function go(i) { cur = Math.max(0, Math.min(slides.length - 1, i)); render(); }
+          prevBtn.addEventListener('click', function() { go(cur - 1); });
+          nextBtn.addEventListener('click', function() { go(cur + 1); });
+          render();
+        })();
+        </script>
       </div>
     </section>
   )}
@@ -434,6 +482,20 @@ const channels = [
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 1.25rem;
     align-items: start; /* 카드가 같은 행 높이로 늘어나 빈 공간이 생기는 것 방지 */
+  }
+
+  /* ── 최근 포스팅 페이저 (한 편씩 넘김) ── */
+  .recent-track {
+    max-width: 560px;
+    margin: 0 auto;
+  }
+  .recent-slide { width: 100%; }
+  .recent-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1.5rem;
   }
 
   /* ── 책꽂이 ── */

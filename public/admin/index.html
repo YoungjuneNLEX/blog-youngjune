@@ -274,13 +274,13 @@
 
   function login() {
     const input = document.getElementById('pw-input').value;
-    // 서버에 검증 (빈 글 전송으로 비밀번호만 확인)
+    // 서버에 비밀번호만 검증 (action: 'check' — 저장소에 아무것도 커밋하지 않음)
     fetch('/api/cms', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password: input, filename: '__check__', content: '' }),
+      body: JSON.stringify({ password: input, action: 'check' }),
     }).then(r => {
-      // 401이면 틀린 비번, 그 외는 성공 (파일명 __check__는 저장 안 됨)
+      // 401이면 틀린 비번, 그 외는 성공
       if (r.status === 401) {
         document.getElementById('login-error').style.display = 'block';
       } else {
@@ -542,14 +542,17 @@
     if (!book) { alert('책 제목(첫 번째 태그)을 입력해주세요.'); return; }
 
     const tags = [book, ...extraTags];
-    const tagsYaml = '[' + tags.map(t => t).join(', ') + ']';
+    // YAML 안전 처리: 값을 큰따옴표로 감싸고 내부 특수문자를 이스케이프.
+    // (제목에 [ : # 같은 문자가 있어도 빌드가 깨지지 않도록)
+    const yamlStr = s => '"' + String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"';
+    const tagsYaml = '[' + tags.map(yamlStr).join(', ') + ']';
 
     const bookCover = document.getElementById('f-bookcover').checked;
 
-    let frontmatter = `---\ntitle: ${title}\ndate: ${date}\ncategory: ${category}\ntags: ${tagsYaml}\n`;
-    if (uploadedThumbnail) frontmatter += `thumbnail: ${uploadedThumbnail}\n`;
+    let frontmatter = `---\ntitle: ${yamlStr(title)}\ndate: ${date}\ncategory: ${yamlStr(category)}\ntags: ${tagsYaml}\n`;
+    if (uploadedThumbnail) frontmatter += `thumbnail: ${yamlStr(uploadedThumbnail)}\n`;
     if (uploadedThumbnail && bookCover) frontmatter += `bookCover: true\n`;
-    if (desc) frontmatter += `description: ${desc}\n`;
+    if (desc) frontmatter += `description: ${yamlStr(desc)}\n`;
     if (draft) frontmatter += `draft: true\n`;
     frontmatter += `---\n\n`;
 
@@ -574,13 +577,17 @@
         status.textContent = '✓ 저장 완료! 1~2분 후 블로그에 반영됩니다.';
         status.className = 'save-status success';
         document.getElementById('editor-title').textContent = '✏️ 글 편집';
+        // 모바일에서는 상단 상태 메시지가 숨겨지므로 알림으로 확실히 안내
+        alert('✓ 저장 완료!\n1~2분 후 블로그에 반영됩니다.');
       } else {
         status.textContent = '오류: ' + data.error;
         status.className = 'save-status error';
+        alert('저장 실패: ' + (data.error || '알 수 없는 오류'));
       }
     } catch (e) {
       status.textContent = '네트워크 오류가 발생했습니다.';
       status.className = 'save-status error';
+      alert('네트워크 오류로 저장에 실패했습니다.');
     }
 
     btn.disabled = false;
