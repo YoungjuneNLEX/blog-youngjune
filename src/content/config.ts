@@ -11,6 +11,7 @@ const posts = defineCollection({
     bookCover: z.boolean().optional().default(false), // 켜면 이 글의 thumbnail이 책 대표 표지가 됨
     description: z.string().optional().default(''),
     draft: z.boolean().optional().default(false),
+    publishAt: z.coerce.date().optional(), // 예약 발행 시각 (있고 미래면 그때까지 숨김)
   }),
 });
 

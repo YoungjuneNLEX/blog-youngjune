@@ -1,9 +1,10 @@
 ---
 import { getCollection } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import { isPublished } from '../../lib/posts';
 
 export async function getStaticPaths() {
-  const allPosts = await getCollection('posts', ({ data }) => !data.draft);
+  const allPosts = await getCollection('posts', isPublished);
   const categories = [...new Set(allPosts.map(p => p.data.category))];
   return categories.map(category => {
     const catPosts = allPosts.filter(p => p.data.category === category);
@@ -106,10 +107,6 @@ const books = seriesNames.map((name, i) => {
       var d = document.createElement('div');
       d.className = 'book-cover-auto';
       d.style.background = book.color;
-      var s = document.createElement('span');
-      s.className = 'book-cover-letter';
-      s.textContent = Array.from(book.name)[0];
-      d.appendChild(s);
       return d;
     }
     function makeCover(book) {
@@ -152,12 +149,12 @@ const books = seriesNames.map((name, i) => {
           sp.className = 'book-spine';
           sp.style.background = book.color;
           cv.appendChild(sp);
-          var info = document.createElement('div');
-          info.className = 'book-info';
-          info.innerHTML =
-            '<p class="book-count">' + book.count + '편</p>' +
-            '<p class="book-name">' + book.name + '</p>';
-          a.appendChild(cv); a.appendChild(info);
+          // 표지 위에 책 제목 얹기 (제목만, 길면 최대 2줄)
+          var titleEl = document.createElement('div');
+          titleEl.className = 'book-title-overlay';
+          titleEl.textContent = book.name;
+          cv.appendChild(titleEl);
+          a.appendChild(cv);
           rowEl.appendChild(a);
         });
         for (var g = rowBooks.length; g < PER_ROW; g++) {
@@ -197,10 +194,7 @@ const books = seriesNames.map((name, i) => {
     .page-title { font-size: 1.5rem; }
     .bookshelf-wrap { padding: 14px 14px 16px; }
     .shelf-books { gap: 1rem 0.75rem; padding: 1.1rem 0.25rem 0.85rem; min-height: 150px; }
-    :global(.book-cover-letter) { font-size: 1.8rem; }
-    :global(.book-name) { font-size: 0.82rem; }
-    :global(.book-count) { font-size: 0.65rem; }
-    :global(.book-info) { margin-top: 0.55rem; }
+    :global(.book-title-overlay) { font-size: 0.68rem; padding: 0.5rem 0.28rem 0.34rem; }
     :global(.book-item:hover) { transform: translateY(-8px) scale(1.03); }
   }
 
@@ -282,6 +276,25 @@ const books = seriesNames.map((name, i) => {
     color: rgba(255,255,255,0.88); text-shadow: 0 2px 8px rgba(0,0,0,0.18);
   }
   :global(.book-spine) { position: absolute; left: 0; top: 0; width: 11px; height: 100%; opacity: 0.75; }
+  /* 표지 위에 얹는 책 제목 */
+  :global(.book-title-overlay) {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    padding: 0.7rem 0.4rem 0.45rem;
+    background: linear-gradient(to top, rgba(20,12,6,0.74), rgba(20,12,6,0));
+    color: #fff;
+    font-family: var(--serif);
+    font-weight: 700;
+    font-size: 0.82rem;
+    line-height: 1.22;
+    text-align: center;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    word-break: keep-all;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.55);
+  }
   :global(.book-info) { margin-top: 0.85rem; text-align: center; padding: 0 0.15rem; }
   :global(.book-count) { font-size: 0.7rem; color: var(--text-muted) !important; margin-bottom: 0.15rem; }
   :global(.book-name) { font-family: var(--serif) !important; font-size: 0.95rem; font-weight: 700; color: var(--text-main) !important; margin-bottom: 0.2rem; }
