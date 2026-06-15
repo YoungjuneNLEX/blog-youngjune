@@ -101,6 +101,34 @@
       margin-top: 8px; padding: 5px 12px; background: none; border: 1.5px solid #ddd;
       border-radius: 6px; font-size: 12px; color: #888; cursor: pointer;
     }
+
+    /* ── 모바일 반응형 ─────────────────────────────────────── */
+    @media (max-width: 768px) {
+      /* 상단 바: 칸이 좁으니 패딩·글자·버튼 축소, 줄바꿈 방지 */
+      .top-bar {
+        padding: 0 14px; height: 52px;
+      }
+      .top-bar h1 {
+        font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      }
+      .top-bar-right { gap: 8px; flex-shrink: 0; }
+      .btn-save { padding: 8px 14px; font-size: 13px; }
+      .btn-logout { padding: 8px 10px; font-size: 12px; }
+      /* 저장 상태 메시지는 좁은 화면에서 숨김 (저장 후 알림으로 충분) */
+      .save-status { display: none; }
+
+      /* 사이드바와 에디터를 위아래로 쌓기 */
+      .editor-layout { flex-direction: column; min-height: 0; }
+      .sidebar {
+        width: 100%; border-right: none; border-bottom: 1px solid #e8e4dc;
+        padding: 20px 16px;
+      }
+      .main-editor { padding: 20px 16px; }
+      .title-input { font-size: 22px; margin-bottom: 18px; padding-bottom: 12px; }
+
+      /* 로그인 박스도 화면 폭에 맞춤 */
+      .login-box { width: 100%; max-width: 360px; margin: 0 16px; padding: 40px 28px; }
+    }
   </style>
 </head>
 <body>
