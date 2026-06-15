@@ -52,7 +52,8 @@ const { posts } = Astro.props;
 </BaseLayout>
 
 <style>
-  .list-page { padding: 3.5rem 0 5rem; }
+  /* 좌우 여백은 .container 유지, 상하만 지정 */
+  .list-page { padding-top: 3.5rem; padding-bottom: 5rem; }
   .page-header { margin-bottom: 2.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border-soft); }
   .breadcrumb { font-size: 0.83rem; color: var(--text-muted); margin-bottom: 0.75rem; }
   .breadcrumb a { color: var(--text-muted); }
@@ -75,7 +76,7 @@ const { posts } = Astro.props;
   .series-item > :global(.post-card) { flex: 1; min-width: 0; }
 
   @media (max-width: 640px) {
-    .list-page { padding: 2.25rem 0 3rem; }
+    .list-page { padding-top: 2.25rem; padding-bottom: 3rem; }
     .page-header { margin-bottom: 1.75rem; padding-bottom: 1.1rem; }
     h1 { font-size: 1.5rem; }
     .series-item { gap: 0.5rem; }
