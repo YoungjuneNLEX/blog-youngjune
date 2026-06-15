@@ -52,6 +52,13 @@ collections:
         required: false
         hint: "이 이미지가 메인 책장에서 책 표지로 사용됩니다."
 
+      - label: 책 대표 표지로 지정
+        name: bookCover
+        widget: boolean
+        default: false
+        required: false
+        hint: "켜면 같은 책(첫 번째 태그)의 메인 책장 표지로 이 글의 썸네일을 사용합니다."
+
       - label: 한 줄 설명
         name: description
         widget: string

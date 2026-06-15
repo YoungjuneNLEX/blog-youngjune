@@ -28,8 +28,11 @@ const bookshelf = bookNames.map(name => {
   const postsInBook = allPosts
     .filter(p => p.data.tags[0] === name)
     .sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
-  // 책 표지: 가장 최신 글의 thumbnail, 없으면 null
-  const cover = postsInBook.find(p => p.data.thumbnail)?.data.thumbnail ?? null;
+  // 책 표지: 대표 표지로 지정한 글(bookCover) 우선, 없으면 가장 최신 글의 thumbnail
+  const cover =
+    postsInBook.find(p => p.data.bookCover && p.data.thumbnail)?.data.thumbnail ??
+    postsInBook.find(p => p.data.thumbnail)?.data.thumbnail ??
+    null;
   const color = bookMeta[name]?.color ?? autoPalette[paletteIndex++ % autoPalette.length];
   return { name, color, cover, count: postsInBook.length };
 });

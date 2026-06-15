@@ -29,7 +29,11 @@ const books = seriesNames.map((name, i) => {
   const postsInBook = catPosts
     .filter(p => p.data.tags[0] === name)
     .sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
-  const cover = postsInBook.find(p => p.data.thumbnail)?.data.thumbnail ?? null;
+  // 대표 표지로 지정한 글(bookCover) 우선, 없으면 가장 최신 글의 thumbnail
+  const cover =
+    postsInBook.find(p => p.data.bookCover && p.data.thumbnail)?.data.thumbnail ??
+    postsInBook.find(p => p.data.thumbnail)?.data.thumbnail ??
+    null;
   return {
     name,
     color: bookMeta[name]?.color ?? autoPalette[i % autoPalette.length],

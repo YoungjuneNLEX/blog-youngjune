@@ -87,6 +87,48 @@
     }
     .save-status.success { background: #e8f5e9; color: #388e3c; }
     .save-status.error { background: #fdecea; color: #c62828; }
+
+    /* 썸네일(책 표지) */
+    .thumb-preview { margin-top: 10px; display: none; }
+    .thumb-preview img {
+      width: 100%; max-height: 180px; object-fit: cover;
+      border-radius: 8px; border: 1px solid #e8e4dc;
+    }
+    .thumb-status { font-size: 12px; margin-top: 6px; }
+    .thumb-status.uploading { color: #4a7c59; }
+    .thumb-status.error { color: #c62828; }
+    .btn-thumb-clear {
+      margin-top: 8px; padding: 5px 12px; background: none; border: 1.5px solid #ddd;
+      border-radius: 6px; font-size: 12px; color: #888; cursor: pointer;
+    }
+
+    /* ── 모바일 반응형 ─────────────────────────────────────── */
+    @media (max-width: 768px) {
+      /* 상단 바: 칸이 좁으니 패딩·글자·버튼 축소, 줄바꿈 방지 */
+      .top-bar {
+        padding: 0 14px; height: 52px;
+      }
+      .top-bar h1 {
+        font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      }
+      .top-bar-right { gap: 8px; flex-shrink: 0; }
+      .btn-save { padding: 8px 14px; font-size: 13px; }
+      .btn-logout { padding: 8px 10px; font-size: 12px; }
+      /* 저장 상태 메시지는 좁은 화면에서 숨김 (저장 후 알림으로 충분) */
+      .save-status { display: none; }
+
+      /* 사이드바와 에디터를 위아래로 쌓기 */
+      .editor-layout { flex-direction: column; min-height: 0; }
+      .sidebar {
+        width: 100%; border-right: none; border-bottom: 1px solid #e8e4dc;
+        padding: 20px 16px;
+      }
+      .main-editor { padding: 20px 16px; }
+      .title-input { font-size: 22px; margin-bottom: 18px; padding-bottom: 12px; }
+
+      /* 로그인 박스도 화면 폭에 맞춤 */
+      .login-box { width: 100%; max-width: 360px; margin: 0 16px; padding: 40px 28px; }
+    }
   </style>
 </head>
 <body>
@@ -149,6 +191,24 @@
       </div>
 
       <div class="field">
+        <label>책 표지 이미지 (선택)</label>
+        <input type="file" id="f-thumb-file" accept="image/*" />
+        <div class="hint">이 글의 썸네일이자 책 표지로 쓰입니다</div>
+        <div class="thumb-preview" id="thumb-preview">
+          <img id="thumb-img" alt="표지 미리보기" />
+          <button type="button" class="btn-thumb-clear" onclick="clearThumb()">이미지 제거</button>
+        </div>
+        <div class="thumb-status" id="thumb-status"></div>
+        <div class="field-row" id="bookcover-row" style="display:none; margin-top:12px;">
+          <input type="checkbox" id="f-bookcover" />
+          <label for="f-bookcover">이 이미지를 책 대표 표지로 지정</label>
+        </div>
+        <div class="hint" id="bookcover-hint" style="display:none;">
+          같은 책(첫 번째 태그)의 메인 책장 표지로 이 이미지를 사용합니다.
+        </div>
+      </div>
+
+      <div class="field">
         <div class="field-row">
           <input type="checkbox" id="f-draft" />
           <label for="f-draft">초안으로 저장 (비공개)</label>
@@ -167,6 +227,7 @@
 <script>
   let pw = '';
   let easyMDE;
+  let uploadedThumbnail = null; // 업로드된 표지 이미지의 공개 경로 (예: /image/xxx.png)
 
   // 오늘 날짜 기본값
   const today = new Date().toISOString().slice(0, 10);
@@ -206,6 +267,75 @@
       toolbar: ['bold', 'italic', '|', 'heading-2', 'quote', '|', 'unordered-list', 'ordered-list', '|', 'link', '|', 'preview'],
       status: false,
     });
+
+    // 표지 이미지 선택 시 곧바로 업로드
+    document.getElementById('f-thumb-file').addEventListener('change', uploadThumb);
+  }
+
+  function makeImageName(originalName) {
+    const date = document.getElementById('f-date').value || today;
+    const dot = originalName.lastIndexOf('.');
+    const ext = (dot >= 0 ? originalName.slice(dot + 1) : 'png').toLowerCase();
+    const baseRaw = dot >= 0 ? originalName.slice(0, dot) : originalName;
+    const base = baseRaw
+      .replace(/\s+/g, '-')
+      .replace(/[^\wㄱ-힣가-힣-]/g, '')
+      .slice(0, 30) || 'cover';
+    const rand = Math.random().toString(36).slice(2, 6);
+    return `${date}-${base}-${rand}.${ext}`;
+  }
+
+  async function uploadThumb(e) {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+
+    const status = document.getElementById('thumb-status');
+    status.textContent = '이미지 업로드 중...';
+    status.className = 'thumb-status uploading';
+
+    // 파일을 base64로 읽기
+    const dataUrl = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+    const base64 = String(dataUrl).split(',')[1];
+    const filename = makeImageName(file.name);
+
+    try {
+      const res = await fetch('/.netlify/functions/cms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: pw, upload: 'image', filename, content: base64 }),
+      });
+      const data = await res.json();
+      if (res.ok && data.path) {
+        uploadedThumbnail = data.path;
+        document.getElementById('thumb-img').src = dataUrl; // 미리보기는 로컬 데이터 사용
+        document.getElementById('thumb-preview').style.display = 'block';
+        document.getElementById('bookcover-row').style.display = 'flex';
+        document.getElementById('bookcover-hint').style.display = 'block';
+        status.textContent = '✓ 이미지 업로드 완료';
+        status.className = 'thumb-status uploading';
+      } else {
+        status.textContent = '업로드 실패: ' + (data.error || '알 수 없는 오류');
+        status.className = 'thumb-status error';
+      }
+    } catch (err) {
+      status.textContent = '네트워크 오류로 업로드에 실패했습니다.';
+      status.className = 'thumb-status error';
+    }
+  }
+
+  function clearThumb() {
+    uploadedThumbnail = null;
+    document.getElementById('f-thumb-file').value = '';
+    document.getElementById('thumb-preview').style.display = 'none';
+    document.getElementById('thumb-status').textContent = '';
+    document.getElementById('bookcover-row').style.display = 'none';
+    document.getElementById('bookcover-hint').style.display = 'none';
+    document.getElementById('f-bookcover').checked = false;
   }
 
   function makeSlug(title) {
@@ -231,7 +361,11 @@
     const tags = [book, ...extraTags];
     const tagsYaml = '[' + tags.map(t => t).join(', ') + ']';
 
+    const bookCover = document.getElementById('f-bookcover').checked;
+
     let frontmatter = `---\ntitle: ${title}\ndate: ${date}\ncategory: ${category}\ntags: ${tagsYaml}\n`;
+    if (uploadedThumbnail) frontmatter += `thumbnail: ${uploadedThumbnail}\n`;
+    if (uploadedThumbnail && bookCover) frontmatter += `bookCover: true\n`;
     if (desc) frontmatter += `description: ${desc}\n`;
     if (draft) frontmatter += `draft: true\n`;
     frontmatter += `---\n\n`;
@@ -270,6 +404,7 @@
 
   function logout() {
     pw = '';
+    clearThumb();
     document.getElementById('editor-screen').style.display = 'none';
     document.getElementById('login-screen').style.display = 'flex';
     document.getElementById('pw-input').value = '';
