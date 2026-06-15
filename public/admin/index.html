@@ -223,14 +223,21 @@
       </div>
 
       <div class="field">
+        <label>책 소개 (선택)</label>
+        <textarea id="f-bookintro" rows="2" placeholder="이 책(시리즈) 전체를 소개하는 글"></textarea>
+        <div class="hint">책 페이지 상단에 표시됩니다. ★ 대표 표지로 지정한 글에 적어주세요. (글의 한 줄 소개와는 별개)</div>
+      </div>
+
+      <div class="field">
         <label>추가 태그 (선택)</label>
         <input type="text" id="f-tags" placeholder="예: 커피, 일상" />
         <div class="hint">쉼표로 구분</div>
       </div>
 
       <div class="field">
-        <label>한 줄 소개 (선택)</label>
-        <input type="text" id="f-desc" placeholder="검색·공유 미리보기에 표시됩니다" />
+        <label>글 한 줄 소개 (선택)</label>
+        <input type="text" id="f-desc" placeholder="이 글의 한 줄 소개 (검색·공유 미리보기에 표시)" />
+        <div class="hint">이 글 하나에 대한 소개입니다. (책 소개와 별개)</div>
       </div>
 
       <div class="field">
@@ -478,6 +485,7 @@
     document.getElementById('f-book').value = '';
     document.getElementById('f-tags').value = '';
     document.getElementById('f-desc').value = '';
+    document.getElementById('f-bookintro').value = '';
     document.getElementById('f-draft').checked = false;
     document.getElementById('f-schedule').checked = false;
     document.getElementById('f-publish-at').value = '';
@@ -491,7 +499,7 @@
   function unquote(v) {
     v = String(v).trim();
     if (v.length >= 2 && v[0] === '"' && v[v.length - 1] === '"') {
-      return v.slice(1, -1).replace(/\\"/g, '"').replace(/\\\\/g, '\\');
+      return v.slice(1, -1).replace(/\\n/g, '\n').replace(/\\"/g, '"').replace(/\\\\/g, '\\');
     }
     return v;
   }
@@ -544,6 +552,7 @@
       document.getElementById('f-tags').value = data.tags.slice(1).join(', ');
     }
     if (data.description) document.getElementById('f-desc').value = data.description;
+    if (data.bookIntro) document.getElementById('f-bookintro').value = data.bookIntro;
     document.getElementById('f-draft').checked = (data.draft === 'true');
     // 예약 발행: publishAt(예: 2026-06-20T09:00:00+09:00)이 있으면 체크 + 입력칸 채움
     if (data.publishAt) {
@@ -643,6 +652,7 @@
     const book = document.getElementById('f-book').value.trim();
     const extraTags = document.getElementById('f-tags').value.split(',').map(t => t.trim()).filter(Boolean);
     const desc = document.getElementById('f-desc').value.trim();
+    const bookIntro = document.getElementById('f-bookintro').value.trim();
     const draft = document.getElementById('f-draft').checked;
     const body = easyMDE.value();
 
@@ -663,7 +673,7 @@
     const tags = [book, ...extraTags];
     // YAML 안전 처리: 값을 큰따옴표로 감싸고 내부 특수문자를 이스케이프.
     // (제목에 [ : # 같은 문자가 있어도 빌드가 깨지지 않도록)
-    const yamlStr = s => '"' + String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"';
+    const yamlStr = s => '"' + String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\r?\n/g, '\\n') + '"';
     const tagsYaml = '[' + tags.map(yamlStr).join(', ') + ']';
 
     const bookCover = document.getElementById('f-bookcover').checked;
@@ -672,6 +682,7 @@
     if (uploadedThumbnail) frontmatter += `thumbnail: ${yamlStr(uploadedThumbnail)}\n`;
     if (uploadedThumbnail && bookCover) frontmatter += `bookCover: true\n`;
     if (desc) frontmatter += `description: ${yamlStr(desc)}\n`;
+    if (bookIntro) frontmatter += `bookIntro: ${yamlStr(bookIntro)}\n`;
     if (publishAtIso) frontmatter += `publishAt: ${yamlStr(publishAtIso)}\n`;
     if (draft) frontmatter += `draft: true\n`;
     frontmatter += `---\n\n`;

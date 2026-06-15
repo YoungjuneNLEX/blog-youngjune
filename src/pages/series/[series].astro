@@ -21,10 +21,11 @@ export async function getStaticPaths() {
       seriesPosts.find(p => p.data.bookCover && p.data.thumbnail)?.data.thumbnail ??
       seriesPosts.find(p => p.data.thumbnail)?.data.thumbnail ??
       null;
-    // 소개문구: 대표 표지 글의 설명 우선, 없으면 설명이 있는 첫 글
+    // 책 소개: 대표 글의 bookIntro 우선, 없으면 bookIntro가 있는 글
+    // (포스팅의 한 줄 소개(description)와는 별개 — 서로 겹치지 않음)
     const intro =
-      seriesPosts.find(p => p.data.bookCover && p.data.description)?.data.description ??
-      seriesPosts.find(p => p.data.description)?.data.description ??
+      seriesPosts.find(p => p.data.bookCover && p.data.bookIntro)?.data.bookIntro ??
+      seriesPosts.find(p => p.data.bookIntro)?.data.bookIntro ??
       '';
     const firstDate = seriesPosts[0]?.data.date ?? null;
     const lastDate = seriesPosts[seriesPosts.length - 1]?.data.date ?? null;

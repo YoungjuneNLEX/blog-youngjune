@@ -10,6 +10,7 @@ const posts = defineCollection({
     thumbnail: z.string().optional(), // 책 표지 이미지 경로 (예: /image/cover.png)
     bookCover: z.boolean().optional().default(false), // 켜면 이 글의 thumbnail이 책 대표 표지가 됨
     description: z.string().optional().default(''),
+    bookIntro: z.string().optional(), // 책(시리즈) 전체 소개 — 대표 글에 적으면 책 페이지에 표시
     draft: z.boolean().optional().default(false),
     publishAt: z.coerce.date().optional(), // 예약 발행 시각 (있고 미래면 그때까지 숨김)
   }),
