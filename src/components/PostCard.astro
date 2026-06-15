@@ -101,8 +101,19 @@ const formattedDate = date.toLocaleDateString('ko-KR', {
   }
 
   @media (max-width: 640px) {
-    .card-link { padding: 1.15rem 1.25rem; }
-    .card-title { font-size: 1.08rem; }
-    .card-desc { font-size: 0.86rem; }
+    /* 또렷하고 깔끔한 카드: 흰빛 배경 + 얇은 좌측 강조선 + 위 정렬 */
+    .post-card {
+      align-self: start;
+      background: #fffdf9;
+      border-left-width: 2px;
+      border-radius: 12px;
+    }
+    .card-link { padding: 1.05rem 1.15rem; }
+    .card-meta { margin-bottom: 0.4rem; font-size: 0.76rem; gap: 0.55rem; }
+    .card-cat { font-size: 0.72rem; padding: 0.08rem 0.45rem; }
+    .card-title { font-size: 1.05rem; margin-bottom: 0.35rem; line-height: 1.45; }
+    .card-desc { font-size: 0.85rem; margin-bottom: 0.55rem; line-height: 1.55; }
+    .card-tags { gap: 0.4rem; }
+    .tag { font-size: 0.72rem; }
   }
 </style>

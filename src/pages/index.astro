@@ -655,15 +655,16 @@ const channels = [
   @media (max-width: 780px) {
     .channels-grid { grid-template-columns: repeat(2, 1fr); }
   }
-  /* 모바일: SNS를 작은 가로형 카드로 (거대 이미지 방지) */
+  /* 모바일: SNS를 한 줄에 2개씩 작은 카드로 (거대 이미지 방지) */
   @media (max-width: 560px) {
-    .channels-grid { grid-template-columns: 1fr; gap: 0.7rem; }
-    .channel-card { flex-direction: row; align-items: stretch; }
-    .ch-thumb { width: 72px; height: auto; aspect-ratio: auto; flex-shrink: 0; }
-    .ch-thumb img { object-fit: cover; height: 100%; }
-    .ch-body { padding: 0.7rem 0.2rem 0.7rem 0.95rem; display: flex; flex-direction: column; justify-content: center; }
-    .ch-label { margin-bottom: 0.15rem; }
-    .ch-arrow { align-self: center; padding: 0 1rem; }
+    .channels-grid { grid-template-columns: repeat(2, 1fr); gap: 0.7rem; }
+    .channel-card { flex-direction: column; }
+    .ch-thumb { width: 100%; aspect-ratio: 16/9; }
+    .ch-thumb img { object-fit: cover; }
+    .ch-body { padding: 0.55rem 0.7rem 0.5rem; }
+    .ch-label { font-size: 0.84rem; margin-bottom: 0; }
+    .ch-desc { display: none; }   /* 좁은 화면에선 설명 생략해 깔끔하게 */
+    .ch-arrow { display: none; }
   }
 
   .channel-card {
