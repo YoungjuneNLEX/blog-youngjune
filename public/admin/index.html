@@ -46,6 +46,12 @@
     }
     .btn-save:hover { background: #3d6649; }
     .btn-save:disabled { background: #aaa; cursor: not-allowed; }
+    .btn-draft {
+      padding: 8px 16px; background: #fff; color: #8a6d3b; border: 1.5px solid #d8c08a;
+      border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit;
+    }
+    .btn-draft:hover { background: #fdf6e6; border-color: #c8a46a; }
+    .btn-draft:disabled { color: #aaa; border-color: #ddd; cursor: not-allowed; }
     .btn-logout {
       padding: 8px 16px; background: none; border: 1.5px solid #ddd; border-radius: 8px;
       font-size: 13px; color: #888; cursor: pointer;
@@ -89,7 +95,62 @@
       border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit;
     }
     .btn-insert-image:hover { background: #4a7c59; color: #fff; }
+    .btn-proofread {
+      padding: 8px 16px; background: #fff; border: 1.5px solid #7b5ea7; color: #6a4f96;
+      border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit;
+    }
+    .btn-proofread:hover { background: #f3eefb; }
+    .btn-proofread:disabled { color: #aaa; border-color: #ddd; cursor: not-allowed; }
     .img-insert-status { font-size: 13px; }
+
+    /* AI 맞춤법 검사 모달 */
+    #proof-overlay {
+      display: none; position: fixed; inset: 0; z-index: 1000;
+      background: rgba(0,0,0,0.45); align-items: center; justify-content: center; padding: 20px;
+    }
+    #proof-overlay.open { display: flex; }
+    .proof-modal {
+      background: #fff; border-radius: 14px; width: 100%; max-width: 720px;
+      max-height: 88vh; display: flex; flex-direction: column; overflow: hidden;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+    }
+    .proof-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px; border-bottom: 1px solid #eee;
+    }
+    .proof-head h2 { font-size: 16px; font-weight: 700; }
+    .proof-close {
+      background: none; border: none; font-size: 18px; color: #888; cursor: pointer; line-height: 1;
+    }
+    .proof-body { padding: 18px 20px; overflow-y: auto; }
+    .proof-summary { font-size: 14px; color: #555; margin-bottom: 14px; }
+    .proof-summary b { color: #6a4f96; }
+    .proof-changes { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; }
+    .proof-change {
+      display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px;
+      font-size: 13px; padding: 8px 10px; background: #faf8fd; border: 1px solid #ece4f7; border-radius: 8px;
+    }
+    .proof-change .pc-before { color: #c62828; text-decoration: line-through; }
+    .proof-change .pc-arrow { color: #aaa; }
+    .proof-change .pc-after { color: #2e7d32; font-weight: 600; }
+    .proof-change .pc-reason {
+      margin-left: auto; font-size: 11px; color: #6a4f96; background: #efe8fa;
+      border-radius: 10px; padding: 1px 8px;
+    }
+    .proof-none { font-size: 14px; color: #388e3c; }
+    .proof-preview-wrap label { display: block; font-size: 13px; font-weight: 600; color: #444; margin-bottom: 6px; }
+    #proof-preview {
+      width: 100%; min-height: 180px; max-height: 320px; padding: 12px;
+      border: 1.5px solid #e0e0e0; border-radius: 8px; font-size: 13px;
+      font-family: inherit; line-height: 1.6; resize: vertical;
+    }
+    .proof-foot {
+      display: flex; justify-content: flex-end; gap: 10px;
+      padding: 14px 20px; border-top: 1px solid #eee;
+    }
+    @media (max-width: 768px) {
+      .proof-change .pc-reason { margin-left: 0; }
+    }
     .img-insert-status.uploading { color: #4a7c59; }
     .img-insert-status.error { color: #c62828; }
 
@@ -125,6 +186,33 @@
     .list-item .li-title { font-size: 16px; font-weight: 700; color: #1a1a1a; margin-bottom: 4px; }
     .list-item .li-meta { font-size: 13px; color: #999; }
     .list-empty { text-align: center; color: #999; padding: 40px 0; }
+
+    /* ── 카테고리 → 책(대표 태그)별 그룹 ── */
+    .cat-group { margin-bottom: 22px; }
+    .cat-header {
+      width: 100%; display: flex; align-items: center; gap: 10px;
+      background: #4a7c59; color: #fff; border: none; border-radius: 10px;
+      padding: 13px 18px; cursor: pointer; font-family: inherit; text-align: left;
+    }
+    .cat-header:hover { background: #3d6649; }
+    .cat-arrow { font-size: 12px; width: 14px; flex-shrink: 0; }
+    .cat-name { font-size: 16px; font-weight: 700; flex: 1; }
+    .cat-count { font-size: 13px; opacity: 0.85; font-weight: 600; }
+    .cat-body { padding-top: 12px; }
+    .cat-group.collapsed .cat-body { display: none; }
+
+    .book-group { margin: 0 0 14px 0; }
+    .book-label {
+      display: flex; align-items: baseline; gap: 8px;
+      padding: 4px 4px 8px; margin-bottom: 4px;
+      border-bottom: 1px dashed #e0d9cc;
+    }
+    .book-name { font-size: 14px; font-weight: 700; color: #6b5b45; }
+    .book-count {
+      font-size: 12px; color: #fff; background: #c8a46a;
+      border-radius: 10px; padding: 1px 8px; font-weight: 600;
+    }
+    .book-group .list-item { margin-left: 8px; }
     .btn-ghost {
       padding: 8px 16px; background: none; border: 1.5px solid #ddd; border-radius: 8px;
       font-size: 13px; color: #555; cursor: pointer; font-family: inherit;
@@ -141,6 +229,7 @@
       }
       .top-bar-right { gap: 6px; flex-shrink: 0; }
       .btn-save { padding: 8px 12px; font-size: 13px; }
+      .btn-draft { padding: 8px 10px; font-size: 13px; }
       .btn-logout { padding: 8px 9px; font-size: 12px; }
       .btn-ghost { padding: 8px 9px; font-size: 12px; }
       .list-wrap { padding: 16px 12px; }
@@ -168,9 +257,10 @@
   <div class="login-box">
     <h1>영준의 책장</h1>
     <p>글쓰기 관리자 화면</p>
-    <input type="password" id="pw-input" placeholder="비밀번호 입력" />
+    <input type="text" id="id-input" placeholder="아이디" autocomplete="username" />
+    <input type="password" id="pw-input" placeholder="비밀번호" autocomplete="current-password" />
     <button onclick="login()">로그인</button>
-    <div class="login-error" id="login-error">비밀번호가 틀렸습니다.</div>
+    <div class="login-error" id="login-error">아이디 또는 비밀번호가 틀렸습니다.</div>
   </div>
 </div>
 
@@ -193,7 +283,8 @@
     <div class="top-bar-right">
       <span class="save-status" id="save-status"></span>
       <button class="btn-ghost" onclick="showList()">← 목록</button>
-      <button class="btn-save" id="btn-save" onclick="savePost()">저장 &amp; 발행</button>
+      <button class="btn-draft" id="btn-draft" onclick="savePost('draft')">📝 임시저장</button>
+      <button class="btn-save" id="btn-save" onclick="savePost('publish')">저장 &amp; 발행</button>
       <button class="btn-logout" onclick="logout()">로그아웃</button>
     </div>
   </div>
@@ -280,6 +371,7 @@
       <div class="editor-tools">
         <button type="button" class="btn-insert-image" onclick="document.getElementById('body-image-file').click()">🖼 본문에 사진 넣기</button>
         <input type="file" id="body-image-file" accept="image/*" style="display:none" />
+        <button type="button" class="btn-proofread" id="btn-proofread" onclick="proofread()">✨ AI 맞춤법 검사</button>
         <span class="img-insert-status" id="img-insert-status"></span>
       </div>
       <textarea id="body-editor"></textarea>
@@ -287,10 +379,34 @@
   </div>
 </div>
 
+<!-- AI 맞춤법 검사 결과 모달 -->
+<div id="proof-overlay">
+  <div class="proof-modal">
+    <div class="proof-head">
+      <h2>✨ AI 맞춤법 검사 결과</h2>
+      <button type="button" class="proof-close" onclick="closeProof()">✕</button>
+    </div>
+    <div class="proof-body">
+      <div class="proof-summary" id="proof-summary"></div>
+      <div class="proof-changes" id="proof-changes"></div>
+      <div class="proof-preview-wrap">
+        <label>교정본 미리보기</label>
+        <textarea id="proof-preview" readonly></textarea>
+      </div>
+    </div>
+    <div class="proof-foot">
+      <button type="button" class="btn-ghost" onclick="closeProof()">닫기</button>
+      <button type="button" class="btn-save" id="proof-apply" onclick="applyProof()">교정본 적용하기</button>
+    </div>
+  </div>
+</div>
+
 <script src="https://unpkg.com/easymde/dist/easymde.min.js"></script>
 <script>
   let pw = '';
+  let user = '';
   let easyMDE;
+  let proofCorrected = '';   // AI 교정본 (적용 시 본문에 반영)
   let editorReady = false;          // EasyMDE 초기화 여부
   let editingFilename = null;       // 편집 중인 기존 글의 파일명 (새 글이면 null)
   let uploadedThumbnail = null;     // 업로드된 표지 이미지의 공개 경로 (예: /image/xxx.png)
@@ -299,9 +415,11 @@
   const today = new Date().toISOString().slice(0, 10);
   document.getElementById('f-date').value = today;
 
-  // Enter 키로 로그인
-  document.getElementById('pw-input').addEventListener('keydown', e => {
-    if (e.key === 'Enter') login();
+  // Enter 키로 로그인 (아이디·비밀번호 칸 어디서든)
+  ['id-input', 'pw-input'].forEach(id => {
+    document.getElementById(id).addEventListener('keydown', e => {
+      if (e.key === 'Enter') login();
+    });
   });
 
   // 예약 발행 체크 시 날짜·시간 입력칸 표시
@@ -320,17 +438,19 @@
   });
 
   function login() {
+    const idInput = document.getElementById('id-input').value.trim();
     const input = document.getElementById('pw-input').value;
-    // 서버에 비밀번호만 검증 (action: 'check' — 저장소에 아무것도 커밋하지 않음)
+    // 서버에 아이디·비밀번호 검증 (action: 'check' — 저장소에 아무것도 커밋하지 않음)
     fetch('/api/cms', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password: input, action: 'check' }),
+      body: JSON.stringify({ username: idInput, password: input, action: 'check' }),
     }).then(r => {
-      // 401이면 틀린 비번, 그 외는 성공
+      // 401이면 틀린 아이디/비번, 그 외는 성공
       if (r.status === 401) {
         document.getElementById('login-error').style.display = 'block';
       } else {
+        user = idInput;
         pw = input;
         document.getElementById('login-screen').style.display = 'none';
         showList();
@@ -378,7 +498,7 @@
       const res = await fetch('/api/cms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: pw, upload: 'image', filename, content: base64 }),
+        body: JSON.stringify({ username: user, password: pw, upload: 'image', filename, content: base64 }),
       });
       const data = await res.json();
       if (res.ok && data.path) {
@@ -415,7 +535,7 @@
       const res = await fetch('/api/cms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: pw, action: 'list' }),
+        body: JSON.stringify({ username: user, password: pw, action: 'list' }),
       });
       const data = await res.json();
       if (!res.ok) { wrap.innerHTML = '<div class="list-empty">목록을 불러오지 못했습니다.<br>' + (data.error || '') + '</div>'; return; }
@@ -424,22 +544,78 @@
         return;
       }
       wrap.innerHTML = '';
-      data.files.forEach(f => {
-        // 서버가 글의 실제 제목·날짜를 내려줌 (없으면 파일명에서 보조 추출)
-        let title = f.title;
-        let date = f.date || '';
+
+      // 제목·날짜 보정 (서버 값이 없으면 파일명에서 추출)
+      function titleOf(f) {
+        let title = f.title, date = f.date || '';
         if (!title) {
           const m = f.name.replace(/\.md$/, '').match(/^(\d{4}-\d{2}-\d{2})-(.*)$/);
           if (m) { date = date || m[1]; title = m[2].replace(/-/g, ' '); }
           else { title = f.name.replace(/\.md$/, ''); }
         }
-        const btn = document.createElement('button');
-        btn.className = 'list-item';
-        btn.innerHTML = '<div class="li-title"></div><div class="li-meta"></div>';
-        btn.querySelector('.li-title').textContent = title;
-        btn.querySelector('.li-meta').textContent = date;
-        btn.onclick = () => openPost(f.name);
-        wrap.appendChild(btn);
+        return { title, date };
+      }
+
+      const NO_CAT = '미분류', NO_TAG = '기타';
+
+      // 1단계: 카테고리(서가)별로 묶기
+      const byCat = {};
+      data.files.forEach(f => {
+        const cat = f.category || NO_CAT;
+        (byCat[cat] = byCat[cat] || []).push(f);
+      });
+
+      Object.keys(byCat).sort((a, b) => a.localeCompare(b, 'ko')).forEach(cat => {
+        const group = document.createElement('div');
+        group.className = 'cat-group';
+
+        const header = document.createElement('button');
+        header.className = 'cat-header';
+        header.innerHTML = '<span class="cat-arrow">▾</span><span class="cat-name"></span><span class="cat-count"></span>';
+        header.querySelector('.cat-name').textContent = cat;
+        header.querySelector('.cat-count').textContent = byCat[cat].length + '편';
+        header.onclick = () => {
+          const collapsed = group.classList.toggle('collapsed');
+          header.querySelector('.cat-arrow').textContent = collapsed ? '▸' : '▾';
+        };
+
+        const body = document.createElement('div');
+        body.className = 'cat-body';
+
+        // 2단계: 카테고리 안에서 책 제목(대표 태그)별로 묶기
+        const byTag = {};
+        byCat[cat].forEach(f => {
+          const tag = f.tag || NO_TAG;
+          (byTag[tag] = byTag[tag] || []).push(f);
+        });
+
+        Object.keys(byTag).sort((a, b) => a.localeCompare(b, 'ko')).forEach(tag => {
+          const bookGroup = document.createElement('div');
+          bookGroup.className = 'book-group';
+
+          const label = document.createElement('div');
+          label.className = 'book-label';
+          label.innerHTML = '<span class="book-name"></span><span class="book-count"></span>';
+          label.querySelector('.book-name').textContent = '📖 ' + tag;
+          label.querySelector('.book-count').textContent = byTag[tag].length;
+          bookGroup.appendChild(label);
+
+          byTag[tag].forEach(f => {
+            const { title, date } = titleOf(f);
+            const btn = document.createElement('button');
+            btn.className = 'list-item';
+            btn.innerHTML = '<div class="li-title"></div><div class="li-meta"></div>';
+            btn.querySelector('.li-title').textContent = title;
+            btn.querySelector('.li-meta').textContent = date;
+            btn.onclick = () => openPost(f.name);
+            bookGroup.appendChild(btn);
+          });
+          body.appendChild(bookGroup);
+        });
+
+        group.appendChild(header);
+        group.appendChild(body);
+        wrap.appendChild(group);
       });
     } catch (e) {
       wrap.innerHTML = '<div class="list-empty">네트워크 오류로 목록을 불러오지 못했습니다.</div>';
@@ -466,7 +642,7 @@
       const res = await fetch('/api/cms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: pw, action: 'get', filename: name }),
+        body: JSON.stringify({ username: user, password: pw, action: 'get', filename: name }),
       });
       const data = await res.json();
       if (!res.ok) { alert('글을 불러오지 못했습니다: ' + (data.error || '')); loadList(); return; }
@@ -611,7 +787,7 @@
       const res = await fetch('/api/cms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: pw, upload: 'image', filename, content: base64 }),
+        body: JSON.stringify({ username: user, password: pw, upload: 'image', filename, content: base64 }),
       });
       const data = await res.json();
       if (res.ok && data.path) {
@@ -649,7 +825,7 @@
       .slice(0, 40) || 'untitled';
   }
 
-  async function savePost() {
+  async function savePost(mode) {
     const title = document.getElementById('f-title').value.trim();
     const date = document.getElementById('f-date').value;
     const category = document.getElementById('f-category').value;
@@ -657,7 +833,13 @@
     const extraTags = document.getElementById('f-tags').value.split(',').map(t => t.trim()).filter(Boolean);
     const desc = document.getElementById('f-desc').value.trim();
     const bookIntro = document.getElementById('f-bookintro').value.trim();
-    const draft = document.getElementById('f-draft').checked;
+    // 발행/임시저장 버튼이 공개 여부를 정함. (mode 없이 호출되면 체크박스 값 사용)
+    let draft;
+    if (mode === 'draft') draft = true;
+    else if (mode === 'publish') draft = false;
+    else draft = document.getElementById('f-draft').checked;
+    // 사이드바 체크박스도 현재 상태에 맞춰 동기화
+    document.getElementById('f-draft').checked = draft;
     const body = easyMDE.value();
 
     if (!title) { alert('제목을 입력해주세요.'); return; }
@@ -695,23 +877,28 @@
     // 편집 중이면 기존 파일명을 그대로 유지(중복 글 생성 방지), 새 글이면 날짜+제목으로 생성
     const filename = editingFilename || `${dateForFm}-${makeSlug(title)}.md`;
 
-    const btn = document.getElementById('btn-save');
+    const btnSave = document.getElementById('btn-save');
+    const btnDraft = document.getElementById('btn-draft');
     const status = document.getElementById('save-status');
-    btn.disabled = true;
-    btn.textContent = '저장 중...';
+    const activeBtn = draft ? btnDraft : btnSave;
+    btnSave.disabled = true;
+    btnDraft.disabled = true;
+    activeBtn.textContent = '저장 중...';
 
     try {
       const res = await fetch('/api/cms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: pw, filename, content }),
+        body: JSON.stringify({ username: user, password: pw, filename, content }),
       });
       const data = await res.json();
       if (res.ok) {
         editingFilename = filename; // 이후 재저장 시 같은 파일 유지
-        const msg = publishAtIso
-          ? '✓ 저장 완료!\n예약 시각(' + publishAtLocal.replace('T', ' ') + ')이 되면 자동으로 공개됩니다.'
-          : '✓ 저장 완료!\n1~2분 후 블로그에 반영됩니다.';
+        const msg = draft
+          ? '✓ 임시저장 완료!\n비공개로 저장되어 블로그에는 보이지 않습니다.'
+          : (publishAtIso
+              ? '✓ 저장 완료!\n예약 시각(' + publishAtLocal.replace('T', ' ') + ')이 되면 자동으로 공개됩니다.'
+              : '✓ 저장 완료!\n1~2분 후 블로그에 반영됩니다.');
         status.textContent = msg.replace(/\n/g, ' ');
         status.className = 'save-status success';
         document.getElementById('editor-title').textContent = '✏️ 글 편집';
@@ -728,19 +915,94 @@
       alert('네트워크 오류로 저장에 실패했습니다.');
     }
 
-    btn.disabled = false;
-    btn.textContent = '저장 & 발행';
+    btnSave.disabled = false;
+    btnDraft.disabled = false;
+    btnSave.textContent = '저장 & 발행';
+    btnDraft.textContent = '📝 임시저장';
     setTimeout(() => { status.textContent = ''; status.className = 'save-status'; }, 5000);
+  }
+
+  // ── AI 맞춤법 검사 ──────────────────────────────────────────
+  async function proofread() {
+    const text = easyMDE ? easyMDE.value() : '';
+    if (!text.trim()) { alert('먼저 본문을 작성해주세요.'); return; }
+
+    const btn = document.getElementById('btn-proofread');
+    btn.disabled = true;
+    btn.textContent = '검사 중…';
+    try {
+      const res = await fetch('/api/proofread', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: user, password: pw, text }),
+      });
+      const data = await res.json();
+      if (!res.ok) { alert('맞춤법 검사 실패: ' + (data.error || '알 수 없는 오류')); return; }
+      showProof(data);
+    } catch (e) {
+      alert('네트워크 오류로 맞춤법 검사에 실패했습니다.');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '✨ AI 맞춤법 검사';
+    }
+  }
+
+  function showProof(data) {
+    proofCorrected = data.corrected || '';
+    const changes = data.changes || [];
+    const summary = document.getElementById('proof-summary');
+    const list = document.getElementById('proof-changes');
+    list.innerHTML = '';
+
+    if (changes.length === 0) {
+      summary.innerHTML = '맞춤법·띄어쓰기 오류를 찾지 못했어요. 글이 깔끔합니다! 👍';
+    } else {
+      summary.innerHTML = '고칠 부분 <b>' + changes.length + '곳</b>을 찾았어요. 아래를 확인하고 적용하세요.';
+      changes.forEach(function(c) {
+        const row = document.createElement('div');
+        row.className = 'proof-change';
+        row.innerHTML = '<span class="pc-before"></span><span class="pc-arrow">→</span>'
+          + '<span class="pc-after"></span><span class="pc-reason"></span>';
+        row.querySelector('.pc-before').textContent = c.before || '';
+        row.querySelector('.pc-after').textContent = c.after || '';
+        row.querySelector('.pc-reason').textContent = c.reason || '';
+        list.appendChild(row);
+      });
+    }
+    if (data.truncated) {
+      const warn = document.createElement('div');
+      warn.className = 'proof-none';
+      warn.style.color = '#c62828';
+      warn.textContent = '※ 본문이 길어 일부만 검사됐을 수 있어요. 적용 전에 미리보기를 꼭 확인하세요.';
+      list.appendChild(warn);
+    }
+
+    document.getElementById('proof-preview').value = proofCorrected;
+    document.getElementById('proof-apply').disabled = !proofCorrected;
+    document.getElementById('proof-overlay').classList.add('open');
+  }
+
+  function closeProof() {
+    document.getElementById('proof-overlay').classList.remove('open');
+  }
+
+  function applyProof() {
+    if (proofCorrected && easyMDE) {
+      easyMDE.value(proofCorrected);
+    }
+    closeProof();
   }
 
   function logout() {
     pw = '';
+    user = '';
     editingFilename = null;
     clearThumb();
     document.getElementById('editor-screen').style.display = 'none';
     document.getElementById('list-screen').style.display = 'none';
     document.getElementById('login-screen').style.display = 'flex';
     document.getElementById('pw-input').value = '';
+    document.getElementById('id-input').value = '';
   }
 </script>
 </body>

@@ -51,32 +51,14 @@ const bookshelf = bookNames.map(name => {
   return { name, color, cover, count: postsInBook.length };
 });
 
-const channels = [
-  {
-    label: '네이버 블로그',
-    href: 'https://blog.naver.com/lawyer_youngjune',
-    thumb: '/sns/naver.svg',
-    desc: '현직 사무장의 법무사사무소',
-  },
-  {
-    label: '유튜브',
-    href: 'https://www.youtube.com/@사무장박영준',
-    thumb: '/sns/youtube.svg',
-    desc: '공부하는 법학도 채널',
-  },
-  {
-    label: 'X',
-    href: 'https://x.com/youngjune0529',
-    thumb: '/sns/x.svg',
-    desc: '법률 관련 이슈 스크랩',
-  },
-  {
-    label: '카카오채널',
-    href: 'https://pf.kakao.com/_ExjlsX/chat',
-    thumb: '/sns/kakao.svg',
-    desc: '카카오로 바로 채팅하기',
-  },
-];
+// SNS 링크 — 주소만 바꾸면 카드도 따라갑니다.
+// (네이버·유튜브 '최신글/영상'은 /api/feeds 서버리스 함수가 실시간으로 채웁니다.)
+const social = {
+  naverUrl:   'https://blog.naver.com/lawyer_youngjune',
+  youtubeUrl: 'https://www.youtube.com/@사무장박영준',
+  xHandle:    'youngjune0529',
+  kakaoUrl:   'https://pf.kakao.com/_ExjlsX/chat',
+};
 ---
 
 <BaseLayout>
@@ -435,17 +417,123 @@ const channels = [
   <section class="section channels-section">
     <div class="container">
       <h2 class="section-title">주인장 SNS</h2>
-      <p class="section-sub">블로그, 유튜브, 엑스, 카카오채널</p>
-      <div class="channels-grid">
-        {channels.map(ch => (
-          <a href={ch.href} target="_blank" rel="noopener noreferrer" class="channel-card" aria-label={ch.label}>
-            <div class="ch-thumb">
-              <img src={ch.thumb} alt={ch.label} />
-            </div>
-          </a>
-        ))}
+      <p class="section-sub">블로그·유튜브 최신 소식과 X·카카오 바로가기</p>
+
+      <div class="channels-grid" id="sns-grid" data-x-handle={social.xHandle}>
+
+        <!-- 네이버 블로그: 최신글 자동 미리보기 -->
+        <a class="channel-card feed-card" id="card-naver"
+           href={social.naverUrl} target="_blank" rel="noopener noreferrer" aria-label="네이버 블로그">
+          <div class="cc-head naver">
+            <img class="cc-logo" src="/sns/naver-mark.svg" alt="" />
+            <span class="cc-name">네이버 블로그</span>
+          </div>
+          <div class="cc-preview">
+            <div class="cc-thumb cc-skel"></div>
+            <p class="cc-title">최신 글을 불러오는 중…</p>
+          </div>
+          <span class="cc-btn naver-btn">블로그에서 보기 →</span>
+        </a>
+
+        <!-- 유튜브: 최신영상 썸네일 자동 미리보기 -->
+        <a class="channel-card feed-card" id="card-youtube"
+           href={social.youtubeUrl} target="_blank" rel="noopener noreferrer" aria-label="유튜브">
+          <div class="cc-head youtube">
+            <img class="cc-logo" src="/sns/youtube-mark.svg" alt="" />
+            <span class="cc-name">유튜브</span>
+          </div>
+          <div class="cc-preview">
+            <div class="cc-thumb cc-thumb-video cc-skel"></div>
+            <p class="cc-title">최신 영상을 불러오는 중…</p>
+          </div>
+          <span class="cc-btn youtube-btn">채널에서 보기 →</span>
+        </a>
+
+        <!-- X: 공식 타임라인 임베드 위젯 -->
+        <div class="channel-card embed-card">
+          <div class="cc-head x">
+            <img class="cc-logo" src="/sns/x-mark.svg" alt="" />
+            <span class="cc-name">X</span>
+          </div>
+          <!-- PC: X 공식 타임라인 임베드 -->
+          <div class="cc-embed" id="x-embed">
+            <a class="twitter-timeline"
+               data-height="320"
+               data-chrome="noheader nofooter noborders transparent"
+               data-dnt="true"
+               href={`https://twitter.com/${social.xHandle}`}>@{social.xHandle}</a>
+          </div>
+          <!-- 모바일: 임베드가 차단되는 경우가 많아 정적 카드로 표시 -->
+          <div class="cc-x-static">
+            <img class="x-big" src="/sns/x-mark.svg" alt="" />
+            <p class="cc-kakao-desc">법률 이슈와 생각을<br/>X(트위터)에서 만나보세요.</p>
+          </div>
+          <a class="cc-btn x-btn" href={`https://x.com/${social.xHandle}`}
+             target="_blank" rel="noopener noreferrer">X에서 보기 →</a>
+        </div>
+
+        <!-- 카카오채널: 바로 채팅 -->
+        <a class="channel-card kakao-card"
+           href={social.kakaoUrl} target="_blank" rel="noopener noreferrer" aria-label="카카오채널">
+          <div class="cc-head kakao">
+            <img class="cc-logo" src="/sns/kakao-mark.svg" alt="" />
+            <span class="cc-name">카카오채널</span>
+          </div>
+          <div class="cc-kakao">
+            <img class="kakao-big" src="/sns/kakao-mark.svg" alt="" />
+            <p class="cc-kakao-desc">궁금한 점이 있으신가요?<br/>카카오로 바로 채팅하세요.</p>
+          </div>
+          <span class="cc-btn kakao-btn">채팅하기 →</span>
+        </a>
       </div>
     </div>
+
+    <!-- 네이버·유튜브 최신 소식 채우기 -->
+    <script is:inline>
+    (function() {
+      function setCard(cardId, data, fallbackText) {
+        var card = document.getElementById(cardId);
+        if (!card) return;
+        var thumb = card.querySelector('.cc-thumb');
+        var title = card.querySelector('.cc-title');
+        if (!data) {
+          // 못 가져오면: 스켈레톤만 거두고 안내 문구 — 링크 버튼은 그대로 동작
+          if (thumb) thumb.style.display = 'none';
+          if (title) title.textContent = fallbackText;
+          return;
+        }
+        if (data.link) card.href = data.link;
+        if (title) title.textContent = data.title || fallbackText;
+        if (thumb) {
+          if (data.thumbnail) {
+            var img = document.createElement('img');
+            img.src = data.thumbnail;
+            img.alt = data.title || '';
+            img.loading = 'lazy';
+            img.onerror = function() { thumb.style.display = 'none'; };
+            thumb.classList.remove('cc-skel');
+            thumb.innerHTML = '';
+            thumb.appendChild(img);
+          } else {
+            thumb.style.display = 'none';
+          }
+        }
+      }
+
+      fetch('/api/feeds')
+        .then(function(r) { return r.ok ? r.json() : Promise.reject(); })
+        .then(function(d) {
+          setCard('card-naver', d.naver, '네이버 블로그 바로가기');
+          setCard('card-youtube', d.youtube, '유튜브 채널 바로가기');
+        })
+        .catch(function() {
+          setCard('card-naver', null, '네이버 블로그 바로가기');
+          setCard('card-youtube', null, '유튜브 채널 바로가기');
+        });
+    })();
+    </script>
+    <!-- X 공식 위젯 (최신 트윗 타임라인을 자동으로 갱신) -->
+    <script is:inline async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
   </section>
 </BaseLayout>
 
@@ -903,47 +991,169 @@ const channels = [
   .channels-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 1rem;
-  }
-  @media (max-width: 780px) {
-    .channels-grid { grid-template-columns: repeat(2, 1fr); }
-  }
-  @media (max-width: 560px) {
-    .channels-grid { grid-template-columns: repeat(2, 1fr); gap: 0.7rem; }
+    gap: 1.1rem;
+    align-items: stretch;
   }
 
-  /* SNS: 아이콘(타일)만 노출 — 링크는 타일 전체에 걸려 있음 */
+  /* 카드 공통 — 세로 구조: 헤더 / 본문 / 버튼 */
   .channel-card {
-    display: block;
+    display: flex;
+    flex-direction: column;
     border: 1px solid var(--border-soft);
-    border-radius: 14px;
+    border-radius: 16px;
     overflow: hidden;
+    background: var(--bg-mid);
     box-shadow: var(--shadow-sm);
     transition: box-shadow 0.2s, transform 0.2s;
     text-decoration: none;
+    color: inherit;
   }
-  .channel-card:hover {
+  a.channel-card:hover {
     box-shadow: var(--shadow-md);
     transform: translateY(-3px);
   }
-  .ch-thumb {
-    width: 100%;
-    aspect-ratio: 320 / 180;  /* SVG 아이콘 비율 그대로 */
-    overflow: hidden;
+
+  /* 헤더 (브랜드 마크 + 이름) */
+  .cc-head {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.85rem 0.95rem;
+    border-bottom: 1px solid var(--border-soft);
   }
-  .ch-thumb img {
+  .cc-logo {
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+    flex-shrink: 0;
+    display: block;
+  }
+  .cc-name {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--text-main);
+    letter-spacing: -0.01em;
+  }
+
+  /* 미리보기 본문 (네이버·유튜브 공통) */
+  .cc-preview { padding: 0.85rem 0.95rem; flex: 1; }
+  .cc-thumb {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--bg-light);
+    margin-bottom: 0.7rem;
+  }
+  .cc-thumb-video { aspect-ratio: 16 / 9; }
+  .cc-thumb img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     display: block;
     transition: transform 0.3s;
   }
-  .channel-card:hover .ch-thumb img {
-    transform: scale(1.04);
+  a.channel-card:hover .cc-thumb img { transform: scale(1.04); }
+  .cc-title {
+    font-size: 0.9rem;
+    line-height: 1.45;
+    color: var(--text-main);
+    font-weight: 600;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    word-break: keep-all;
+  }
+
+  /* 로딩 스켈레톤 (불러오는 동안 깜빡임) */
+  .cc-skel {
+    background: linear-gradient(100deg, var(--bg-light) 30%, rgba(0,0,0,0.04) 50%, var(--bg-light) 70%);
+    background-size: 200% 100%;
+    animation: cc-shimmer 1.3s ease-in-out infinite;
+  }
+  @keyframes cc-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* X 임베드 영역 */
+  .cc-embed {
+    flex: 1;
+    padding: 0.5rem 0.7rem;
+    overflow: hidden;
+    max-height: 340px;
+  }
+  /* 위젯이 로드되기 전 빈 공간이 너무 비지 않도록 */
+  .cc-embed:empty::before,
+  .cc-embed .twitter-timeline:not(.twitter-timeline-rendered) {
+    display: block;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    padding: 1rem 0.3rem;
+  }
+  /* X 정적 카드 (모바일 전용) — 기본은 숨김 */
+  .cc-x-static {
+    display: none;
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 1.4rem 0.95rem;
+    gap: 0.9rem;
+  }
+  .x-big { width: 52px; height: 52px; border-radius: 13px; }
+
+  /* 카카오 본문 */
+  .cc-kakao {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 1.4rem 0.95rem;
+    gap: 0.9rem;
+  }
+  .kakao-big { width: 56px; height: 56px; border-radius: 14px; }
+  .cc-kakao-desc {
+    font-size: 0.85rem;
+    line-height: 1.55;
+    color: var(--text-sub);
+  }
+
+  /* 하단 버튼 (카드 전체가 링크라 시각적 버튼 역할) */
+  .cc-btn {
+    display: block;
+    text-align: center;
+    padding: 0.7rem;
+    margin: 0 0.95rem 0.95rem;
+    border-radius: 9px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: filter 0.15s;
+  }
+  .cc-btn:hover { filter: brightness(0.96); }
+  .naver-btn   { background: rgba(3,199,90,0.12);  color: #02a049; }
+  .youtube-btn { background: rgba(255,0,0,0.10);   color: #d30000; }
+  .x-btn       { background: rgba(0,0,0,0.07);     color: #111; }
+  .kakao-btn   { background: #fee500;              color: #3c1e1e; }
+
+  @media (max-width: 860px) {
+    .channels-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 480px) {
+    .channels-grid { grid-template-columns: 1fr; gap: 0.85rem; }
   }
 
   /* ── 모바일 전반 최적화 ───────────────────────────────── */
   @media (max-width: 640px) {
+    /* X: 모바일에서는 임베드 위젯이 차단되는 일이 많아 정적 카드로 교체 */
+    .cc-embed { display: none; }
+    .cc-x-static { display: flex; }
+
     /* 히어로: 여백 축소 */
     .hero { padding: 2.75rem 0 2.25rem; }
     .hero-sub { font-size: 0.74rem; margin-bottom: 0.9rem; }

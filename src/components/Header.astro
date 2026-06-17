@@ -32,9 +32,13 @@ const current = Astro.url.pathname;
             </a>
           </li>
         ))}
+        <li>
+          <a href="/admin" class="nav-link nav-admin">🔒 관리자</a>
+        </li>
       </ul>
     </nav>
 
+    <a href="/admin" class="admin-mobile-btn" aria-label="관리자">🔒 관리자</a>
     <button class="menu-toggle" id="menu-toggle" aria-label="메뉴 열기">☰</button>
   </div>
 
@@ -121,6 +125,25 @@ const current = Astro.url.pathname;
     background: var(--accent-bg);
   }
 
+  /* 관리자 버튼 — 외곽선 강조로 일반 메뉴와 구분 */
+  .nav-admin {
+    margin-left: 0.35rem;
+    border: 1.5px solid var(--border);
+    color: var(--text-muted);
+    font-size: 0.82rem;
+  }
+  .nav-admin:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+    background: var(--accent-bg);
+  }
+  .mobile-nav-admin {
+    margin-top: 0.35rem;
+    border-top: 1px solid var(--border-soft);
+    padding-top: 0.7rem;
+    color: var(--text-muted);
+  }
+
   .menu-toggle {
     display: none;
     background: none;
@@ -129,6 +152,25 @@ const current = Astro.url.pathname;
     font-size: 1.4rem;
     cursor: pointer;
     padding: 0.25rem 0.5rem;
+  }
+
+  /* 모바일 헤더 바에 항상 보이는 관리자 버튼 (데스크톱은 nav에 있어 숨김) */
+  .admin-mobile-btn {
+    display: none;
+    margin-left: auto;
+    margin-right: 0.4rem;
+    align-items: center;
+    padding: 0.35rem 0.7rem;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .admin-mobile-btn:hover {
+    color: var(--accent);
+    border-color: var(--accent);
   }
 
   /* 모바일 드로어 */
@@ -167,5 +209,6 @@ const current = Astro.url.pathname;
     nav { display: none; }
     .menu-toggle { display: block; }
     .mobile-nav { display: block; }
+    .admin-mobile-btn { display: inline-flex; }
   }
 </style>
