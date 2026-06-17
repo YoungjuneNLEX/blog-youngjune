@@ -80,7 +80,7 @@ export default async function handler(req, res) {
         'content-type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'claude-opus-4-8',
+        model: 'claude-haiku-4-5',
         max_tokens: 16000,
         thinking: { type: 'disabled' }, // 단순 교정 작업 — 응답 속도 우선
         system,
