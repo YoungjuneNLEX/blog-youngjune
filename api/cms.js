@@ -84,13 +84,23 @@ export default async function handler(req, res) {
     // YAML 큰따옴표 해제
     const unq = v => {
       v = String(v || '').trim();
-      return (v.startsWith('"') && v.endsWith('"'))
+      return (v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))
         ? v.slice(1, -1).replace(/\\n/g, ' ').replace(/\\"/g, '"').replace(/\\\\/g, '\\')
         : v;
     };
-    // 각 글의 프론트매터에서 제목·날짜를 읽어옴 (목록에 실제 제목 표시)
+    // 프론트매터에서 첫 번째 태그(=책 제목) 추출 — 인라인/블록 두 형식 모두 지원
+    const firstTagOf = fm => {
+      // tags: [커피공부, 원두]  또는  tags: ["커피공부", ...]
+      let mm = fm.match(/^tags:\s*\[([^\]]*)\]/m);
+      if (mm && mm[1].trim()) return unq(mm[1].split(',')[0].trim());
+      // tags:\n  - 커피공부\n  - 원두
+      mm = fm.match(/^tags:\s*\r?\n\s*-\s*(.*)$/m);
+      if (mm) return unq(mm[1].trim());
+      return '';
+    };
+    // 각 글의 프론트매터에서 제목·날짜·카테고리·대표태그를 읽어옴
     const files = await Promise.all(mdFiles.map(async f => {
-      let title = '', date = '';
+      let title = '', date = '', category = '', tag = '';
       try {
         const fr = await fetch(f.url, { headers: ghHeaders });
         if (fr.ok) {
@@ -98,15 +108,19 @@ export default async function handler(req, res) {
           const text = Buffer.from(data.content || '', 'base64').toString('utf-8');
           const m = text.match(/^---\r?\n([\s\S]*?)\r?\n---/);
           if (m) {
-            const t = m[1].match(/^title:\s*(.*)$/m);
-            const d = m[1].match(/^date:\s*(.*)$/m);
+            const fm = m[1];
+            const t = fm.match(/^title:\s*(.*)$/m);
+            const d = fm.match(/^date:\s*(.*)$/m);
+            const c = fm.match(/^category:\s*(.*)$/m);
             if (t) title = unq(t[1]);
             if (d) date = unq(d[1]);
+            if (c) category = unq(c[1]);
+            tag = firstTagOf(fm);
           }
         }
-      } catch { /* 제목을 못 읽으면 파일명으로 대체 */ }
+      } catch { /* 못 읽으면 파일명으로 대체 */ }
       if (!title) title = f.name.replace(/\.md$/, '');
-      return { name: f.name, title, date };
+      return { name: f.name, title, date, category, tag };
     }));
     // 날짜(없으면 파일명) 기준 최신 먼저
     files.sort((a, b) => (b.date || b.name).localeCompare(a.date || a.name));
