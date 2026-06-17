@@ -38,6 +38,7 @@ const current = Astro.url.pathname;
       </ul>
     </nav>
 
+    <a href="/admin" class="admin-mobile-btn" aria-label="관리자">🔒 관리자</a>
     <button class="menu-toggle" id="menu-toggle" aria-label="메뉴 열기">☰</button>
   </div>
 
@@ -49,7 +50,6 @@ const current = Astro.url.pathname;
       {sections.map(section => (
         <li><a href={`/shelf/${section}`} class="mobile-nav-link">{section}</a></li>
       ))}
-      <li><a href="/admin" class="mobile-nav-link mobile-nav-admin">🔒 관리자</a></li>
     </ul>
   </div>
 </header>
@@ -154,6 +154,25 @@ const current = Astro.url.pathname;
     padding: 0.25rem 0.5rem;
   }
 
+  /* 모바일 헤더 바에 항상 보이는 관리자 버튼 (데스크톱은 nav에 있어 숨김) */
+  .admin-mobile-btn {
+    display: none;
+    margin-left: auto;
+    margin-right: 0.4rem;
+    align-items: center;
+    padding: 0.35rem 0.7rem;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .admin-mobile-btn:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+
   /* 모바일 드로어 */
   .mobile-nav {
     display: none;
@@ -190,5 +209,6 @@ const current = Astro.url.pathname;
     nav { display: none; }
     .menu-toggle { display: block; }
     .mobile-nav { display: block; }
+    .admin-mobile-btn { display: inline-flex; }
   }
 </style>
