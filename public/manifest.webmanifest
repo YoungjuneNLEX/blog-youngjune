@@ -1,0 +1,17 @@
+{
+  "name": "작은 책방",
+  "short_name": "작은 책방",
+  "description": "사무장 박영준의 작은 책방. 읽고 쓴 것들을 쌓아두는 곳.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "lang": "ko",
+  "background_color": "#faf7f2",
+  "theme_color": "#b05a3a",
+  "icons": [
+    { "src": "/logo.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/logo.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/logo.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
