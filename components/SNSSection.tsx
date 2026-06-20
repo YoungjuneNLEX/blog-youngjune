@@ -57,10 +57,10 @@ const channels = [
 
 export default function SNSSection() {
   return (
-    <section className="sns-section" style={{ borderTop: '1px solid var(--border)' }}>
+    <section className="sns-section">
       <div style={{ marginBottom: '2rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
-          <div style={{ width: '4px', height: '1.4rem', background: 'var(--accent)', borderRadius: '2px' }} />
+          <div style={{ width: '4px', height: '1.4rem', background: 'var(--accent)', borderRadius: '2px', flexShrink: 0 }} />
           <h2 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-main)' }}>SNS 더보기</h2>
         </div>
         <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', paddingLeft: '14px' }}>
@@ -70,29 +70,14 @@ export default function SNSSection() {
 
       <div className="sns-grid">
         {channels.map(ch => (
-          <a key={ch.label} href={ch.href} target="_blank" rel="noopener noreferrer"
-            className="sns-card"
-            style={{ background: 'var(--bg-card)', border: '1px solid var(--border)',
-              borderRadius: '16px', textDecoration: 'none',
-              display: 'flex', flexDirection: 'column', gap: '10px',
-              transition: 'box-shadow 0.2s, transform 0.2s' }}
-            onMouseEnter={e => {
-              (e.currentTarget as HTMLElement).style.boxShadow = '0 6px 24px rgba(44,26,14,0.1)'
-              ;(e.currentTarget as HTMLElement).style.transform = 'translateY(-3px)'
-            }}
-            onMouseLeave={e => {
-              (e.currentTarget as HTMLElement).style.boxShadow = 'none'
-              ;(e.currentTarget as HTMLElement).style.transform = 'none'
-            }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <a key={ch.label} href={ch.href} target="_blank" rel="noopener noreferrer" className="sns-card">
+            <div className="sns-card-head">
               {ch.icon}
-              <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-main)' }}>{ch.label}</span>
+              <span className="sns-label">{ch.label}</span>
             </div>
-            <p style={{ color: 'var(--text-sub)', fontSize: '0.82rem', lineHeight: 1.6,
-              flex: 1, whiteSpace: 'pre-line' }}>{ch.desc}</p>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px',
-              fontSize: '0.8rem', fontWeight: 600,
-              color: ch.color === '#FEE500' ? '#3A1D1D' : ch.color === '#000000' ? '#555' : ch.color }}>
+            <p className="sns-desc">{ch.desc}</p>
+            <div className="sns-cta"
+              style={{ color: ch.color === '#FEE500' ? '#3A1D1D' : ch.color === '#000000' ? '#555' : ch.color }}>
               {ch.cta} →
             </div>
           </a>

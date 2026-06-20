@@ -33,18 +33,84 @@ body {
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
 /* SNS 더보기 섹션 (모바일 대응) */
-.sns-section { padding: 4rem; }
+.sns-section {
+  padding: 4rem;
+  border-top: 1px solid var(--border);
+  overflow-x: hidden;
+}
 .sns-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 1.25rem;
 }
-.sns-card { padding: 1.5rem; }
+.sns-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.5rem;
+  text-decoration: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.sns-card:hover {
+  box-shadow: 0 6px 24px rgba(44, 26, 14, 0.1);
+  transform: translateY(-3px);
+}
+.sns-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.sns-card-head svg { flex-shrink: 0; }
+.sns-label {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text-main);
+  word-break: keep-all;
+  min-width: 0;
+}
+.sns-desc {
+  color: var(--text-sub);
+  font-size: 0.85rem;
+  line-height: 1.6;
+  white-space: pre-line;
+  word-break: keep-all;
+  flex: 1;
+}
+.sns-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  word-break: keep-all;
+}
 
-@media (max-width: 768px) {
-  .sns-section { padding: 2.5rem 1.25rem; }
-  .sns-grid { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
-  .sns-card { padding: 1.15rem; }
+/* 태블릿: 2열 */
+@media (max-width: 900px) {
+  .sns-section { padding: 3rem 1.5rem; }
+  .sns-grid { grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+  .sns-card { padding: 1.25rem; }
+}
+
+/* 모바일: 1열로 깔끔하게 쌓기 */
+@media (max-width: 520px) {
+  .sns-section { padding: 2.25rem 1.1rem; }
+  .sns-grid { grid-template-columns: 1fr; gap: 0.85rem; }
+  .sns-card {
+    padding: 1.1rem 1.25rem;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+  }
+  .sns-card-head { flex: 0 0 auto; }
+  .sns-desc { flex: 1 1 100%; font-size: 0.88rem; }
+  .sns-cta { flex: 0 0 100%; font-size: 0.85rem; }
 }
 
 /* 글 본문 스타일 */
