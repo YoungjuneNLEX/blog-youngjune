@@ -1,5 +1,5 @@
 // 캐시 버전 — 배포할 때마다 숫자를 올리면 옛 캐시가 모두 비워집니다.
-const CACHE = 'book-shop-v2'
+const CACHE = 'book-shop-v3'
 const OFFLINE_URL = '/'
 
 self.addEventListener('install', e => {
