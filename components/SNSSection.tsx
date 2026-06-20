@@ -57,7 +57,7 @@ const channels = [
 
 export default function SNSSection() {
   return (
-    <section style={{ padding: '4rem 4rem', borderTop: '1px solid var(--border)' }}>
+    <section className="sns-section" style={{ borderTop: '1px solid var(--border)' }}>
       <div style={{ marginBottom: '2rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
           <div style={{ width: '4px', height: '1.4rem', background: 'var(--accent)', borderRadius: '2px' }} />
@@ -68,11 +68,12 @@ export default function SNSSection() {
         </p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.25rem' }}>
+      <div className="sns-grid">
         {channels.map(ch => (
           <a key={ch.label} href={ch.href} target="_blank" rel="noopener noreferrer"
+            className="sns-card"
             style={{ background: 'var(--bg-card)', border: '1px solid var(--border)',
-              borderRadius: '16px', padding: '1.5rem', textDecoration: 'none',
+              borderRadius: '16px', textDecoration: 'none',
               display: 'flex', flexDirection: 'column', gap: '10px',
               transition: 'box-shadow 0.2s, transform 0.2s' }}
             onMouseEnter={e => {

@@ -19,10 +19,32 @@ body {
   background: var(--bg);
   color: var(--text-main);
   font-family: 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+  /* 한글이 글자 단위로 끊어지지 않고 어절(단어) 단위로 줄바꿈되도록 */
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 ::selection {
   background: #e8c9a8;
+}
+
+/* 가로 스크롤 영역의 스크롤바 숨김 */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* SNS 더보기 섹션 (모바일 대응) */
+.sns-section { padding: 4rem; }
+.sns-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.25rem;
+}
+.sns-card { padding: 1.5rem; }
+
+@media (max-width: 768px) {
+  .sns-section { padding: 2.5rem 1.25rem; }
+  .sns-grid { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
+  .sns-card { padding: 1.15rem; }
 }
 
 /* 글 본문 스타일 */
