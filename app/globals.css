@@ -44,6 +44,8 @@ body {
 }
 @media (max-width: 640px) {
   .article-page { padding: 1.75rem 1rem 3rem; }
+  /* 모바일 푸터: SNS 아이콘 옆 이름 텍스트 숨김 */
+  .footer-sns-label { display: none; }
 }
 
 /* 최신 글 슬라이더 카드 — 데스크톱은 고정폭 */

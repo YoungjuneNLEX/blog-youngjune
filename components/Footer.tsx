@@ -20,7 +20,7 @@ export default function Footer({ siteName = '1인 서점' }: { siteName?: string
               onMouseEnter={e => ((e.currentTarget as HTMLElement).style.color = 'var(--accent)')}
               onMouseLeave={e => ((e.currentTarget as HTMLElement).style.color = 'var(--text-muted)')}>
               <span>{link.prefix}</span>
-              <span>{link.label}</span>
+              <span className="footer-sns-label">{link.label}</span>
             </a>
           ))}
         </div>
