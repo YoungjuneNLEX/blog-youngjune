@@ -211,7 +211,7 @@ export default function AboutPage() {
 
   // 보기 모드
   return (
-    <div style={{ maxWidth: '860px', margin: '0 auto', padding: '3rem 4rem' }}>
+    <div className="article-page">
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2.5rem' }}>
         <h1 style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--text-main)', letterSpacing: '-0.03em' }}>
           소개

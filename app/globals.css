@@ -36,6 +36,16 @@ body {
 .home-section { padding: 3rem 4rem 0; }
 .home-section:last-child { padding-bottom: 4rem; }
 
+/* 본문 페이지(글 상세·소개 등) — 데스크톱은 넉넉한 여백, 모바일은 헤더와 같은 너비 */
+.article-page {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 3rem 4rem;
+}
+@media (max-width: 640px) {
+  .article-page { padding: 1.75rem 1rem 3rem; }
+}
+
 /* 최신 글 슬라이더 카드 — 데스크톱은 고정폭 */
 .slider-card { min-width: 280px; max-width: 280px; }
 

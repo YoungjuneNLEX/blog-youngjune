@@ -37,7 +37,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
   }
 
   return (
-    <div style={{ maxWidth: '860px', margin: '0 auto', padding: '3rem 4rem' }}>
+    <div className="article-page">
 
       {/* 뒤로가기 */}
       <Link href="/" style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}
