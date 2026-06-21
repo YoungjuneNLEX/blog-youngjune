@@ -20,6 +20,21 @@ interface Post {
   content: string | null
 }
 
+// HTML 본문에서 태그를 제거하고 미리보기용 평문으로 변환
+function toPlainText(html: string | null): string {
+  if (!html) return ''
+  return html
+    .replace(/<[^>]*>/g, ' ')            // 태그 제거
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\s+/g, ' ')                // 연속 공백 정리
+    .trim()
+}
+
 export default function BookShelf({ books, postsByBook, title = '책장' }: {
   books: Book[]
   postsByBook: Record<string, Post[]>
@@ -161,10 +176,10 @@ export default function BookShelf({ books, postsByBook, title = '책장' }: {
                     <div className="p-3 flex-1 min-w-0">
                       <p style={{ color: 'var(--text-main)', fontWeight: 600, fontSize: '0.875rem',
                         lineHeight: 1.3 }} className="line-clamp-2">{post.title}</p>
-                      {(post.excerpt || post.content) && (
+                      {(post.excerpt || toPlainText(post.content)) && (
                         <p style={{ color: 'var(--text-sub)', fontSize: '0.75rem', marginTop: '4px',
                           lineHeight: 1.5 }} className="line-clamp-2">
-                          {post.excerpt || post.content?.slice(0, 60)}
+                          {post.excerpt || toPlainText(post.content).slice(0, 80)}
                         </p>
                       )}
                       <p style={{ color: 'var(--text-muted)', fontSize: '0.7rem', marginTop: '6px' }}>
