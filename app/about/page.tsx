@@ -69,7 +69,7 @@ export default function AboutPage() {
   // 수정 모드 — 글쓰기와 동일한 분할 UI
   if (editing) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 64px)' }}>
+      <div className="write-shell">
 
         {/* 상단 툴바 */}
         <div style={{ background: 'var(--bg-card)', borderBottom: '1px solid var(--border)',
@@ -105,7 +105,7 @@ export default function AboutPage() {
         </div>
 
         {/* 분할 화면 */}
-        <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+        <div className="write-split">
 
           {/* 모바일 미리보기 */}
           <div className="hidden md:flex"
@@ -129,21 +129,20 @@ export default function AboutPage() {
           </div>
 
           {/* 에디터 */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: '20px' }}>
+          <div className="write-main">
             <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-main)',
               letterSpacing: '-0.02em', marginBottom: '16px',
               borderBottom: '2px solid var(--border-soft)', paddingBottom: '12px' }}>
               소개
             </h2>
-            <div style={{ flex: 1, overflow: 'hidden' }}>
+            <div className="write-editor">
               <RichEditor content={content} onChange={setContent} highlightWord={highlightWord} />
             </div>
           </div>
 
           {/* 사서 제안 패널 */}
           {showReview && (
-            <div style={{ width: '320px', flexShrink: 0, borderLeft: '1px solid var(--border)',
-              background: '#fdf8ff', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+            <div className="write-review">
               <div style={{ padding: '16px 18px', borderBottom: '1px solid var(--border)',
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div>
