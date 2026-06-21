@@ -3,10 +3,12 @@ import { supabaseAdmin } from '@/lib/supabase'
 import PostSlider from '@/components/PostSlider'
 import BookShelf from '@/components/BookShelf'
 import SNSSection from '@/components/SNSSection'
+import { getSiteConfig, SectionId } from '@/lib/settings'
 
 export default async function HomePage() {
   const session = await auth()
   const isLoggedIn = !!session
+  const config = await getSiteConfig()
 
   // 최신 글 5개 (슬라이더)
   let sliderQuery = supabaseAdmin
@@ -53,29 +55,42 @@ export default async function HomePage() {
     postCount: postsByBook[title].length,
   }))
 
+  // 관리자 설정에 따라 섹션을 순서대로 렌더링 (숨긴 섹션 제외)
+  const sectionNodes: Record<SectionId, React.ReactNode> = {
+    latest: (
+      <div className="home-section" key="latest">
+        <PostSlider posts={latestPosts || []} title={config.latestTitle} />
+      </div>
+    ),
+    bookshelf: (
+      <div className="home-section" key="bookshelf">
+        <BookShelf books={books} postsByBook={postsByBook} title={config.bookshelfTitle} />
+      </div>
+    ),
+    sns: <SNSSection key="sns" />,
+  }
+
+  const visibleSections = config.sectionOrder.filter(s => !config.hiddenSections.includes(s))
+
   return (
     <div>
       {/* 히어로 */}
       <div className="relative overflow-hidden"
         style={{ height: '340px' }}>
-        <img src="/hero.png" alt="1인 서점"
+        <img src={config.heroImage} alt={config.heroTitle}
           className="w-full h-full object-cover object-center" />
         <div className="absolute inset-0"
-          style={{ background: 'linear-gradient(to bottom, rgba(250,246,240,0) 30%, rgba(250,246,240,0.7) 70%, rgba(250,246,240,1) 100%)' }} />
+          style={{ background: 'linear-gradient(to bottom, color-mix(in srgb, var(--bg) 0%, transparent) 30%, color-mix(in srgb, var(--bg) 70%, transparent) 70%, var(--bg) 100%)' }} />
         <div className="absolute bottom-0 left-0 right-0 px-10 pb-6">
           <p style={{ color: 'var(--text-muted)', fontSize: '0.72rem', letterSpacing: '0.15em' }}
-            className="uppercase mb-1">Young June&apos;s</p>
+            className="uppercase mb-1">{config.siteEyebrow}</p>
           <h1 style={{ color: 'var(--text-main)', fontSize: '2rem', fontWeight: 800,
-            letterSpacing: '-0.03em', lineHeight: 1.2 }}>1인 서점</h1>
+            letterSpacing: '-0.03em', lineHeight: 1.2 }}>{config.heroTitle}</h1>
         </div>
       </div>
 
-      {/* 콘텐츠 */}
-      <div style={{ padding: '3rem 4rem 4rem' }}>
-        <PostSlider posts={latestPosts || []} />
-        <BookShelf books={books} postsByBook={postsByBook} />
-      </div>
-      <SNSSection />
+      {/* 콘텐츠 (관리자 설정 순서대로) */}
+      {visibleSections.map(s => sectionNodes[s])}
     </div>
   )
 }

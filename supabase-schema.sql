@@ -22,6 +22,13 @@ create table if not exists posts (
   updated_at timestamptz default now()
 );
 
+-- 사이트 설정 (key/value) 테이블 — 소개글, 사이트 커스터마이즈(site_config) 등 저장
+create table if not exists site_settings (
+  key text primary key,
+  value text,
+  updated_at timestamptz default now()
+);
+
 -- updated_at 자동 갱신 트리거
 create or replace function update_updated_at()
 returns trigger as $$

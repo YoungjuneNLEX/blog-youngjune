@@ -5,10 +5,11 @@ import { useSession, signIn, signOut } from 'next-auth/react'
 import Image from 'next/image'
 import { useState } from 'react'
 
-export default function Header() {
+export default function Header({ siteName, siteEyebrow }: { siteName: string; siteEyebrow: string }) {
   const { data: session } = useSession()
   const role = session?.user?.role
   const canWrite = role === 'admin' || role === 'writer'
+  const isAdmin = role === 'admin'
   const [open, setOpen] = useState(false)
 
   const linkStyle = { color: 'var(--text-sub)', fontSize: '0.875rem' }
@@ -19,9 +20,9 @@ export default function Header() {
       <div className="px-4 sm:px-10 h-16 flex items-center justify-between gap-3">
         <Link href="/" onClick={() => setOpen(false)} className="flex flex-col leading-tight shrink-0">
           <span style={{ color: 'var(--accent)', fontSize: '0.65rem', letterSpacing: '0.15em' }}
-            className="uppercase font-semibold">Young June&apos;s</span>
+            className="uppercase font-semibold">{siteEyebrow}</span>
           <span style={{ color: 'var(--text-main)', fontSize: '1.15rem', fontWeight: 800, letterSpacing: '-0.02em' }}>
-            1인 서점
+            {siteName}
           </span>
         </Link>
 
@@ -33,6 +34,12 @@ export default function Header() {
             <>
               <Link href="/write" style={linkStyle} className="whitespace-nowrap hover:opacity-70 transition">글쓰기</Link>
               <Link href="/manage" style={linkStyle} className="whitespace-nowrap hover:opacity-70 transition">서재관리</Link>
+            </>
+          )}
+          {isAdmin && (
+            <>
+              <Link href="/admin/settings" style={linkStyle} className="whitespace-nowrap hover:opacity-70 transition">사이트 설정</Link>
+              <Link href="/admin" style={linkStyle} className="whitespace-nowrap hover:opacity-70 transition">회원관리</Link>
             </>
           )}
           {session ? (
@@ -87,6 +94,14 @@ export default function Header() {
                       className="block px-4 py-3 hover:opacity-70 transition">글쓰기</Link>
                     <Link href="/manage" onClick={() => setOpen(false)} style={linkStyle}
                       className="block px-4 py-3 hover:opacity-70 transition">서재관리</Link>
+                  </>
+                )}
+                {isAdmin && (
+                  <>
+                    <Link href="/admin/settings" onClick={() => setOpen(false)} style={linkStyle}
+                      className="block px-4 py-3 hover:opacity-70 transition">사이트 설정</Link>
+                    <Link href="/admin" onClick={() => setOpen(false)} style={linkStyle}
+                      className="block px-4 py-3 hover:opacity-70 transition">회원관리</Link>
                   </>
                 )}
                 {session ? (

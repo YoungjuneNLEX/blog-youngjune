@@ -20,9 +20,10 @@ interface Post {
   content: string | null
 }
 
-export default function BookShelf({ books, postsByBook }: {
+export default function BookShelf({ books, postsByBook, title = '책장' }: {
   books: Book[]
   postsByBook: Record<string, Post[]>
+  title?: string
 }) {
   const [selected, setSelected] = useState<Book | null>(null)
   const [order, setOrder] = useState<'desc' | 'asc'>('desc')
@@ -39,7 +40,7 @@ export default function BookShelf({ books, postsByBook }: {
     <section>
       <h2 style={{ color: 'var(--text-main)', fontSize: '1.1rem', fontWeight: 700,
         letterSpacing: '-0.01em', marginBottom: '1.25rem' }}>
-        책장
+        {title}
       </h2>
 
       {books.length === 0 ? (

@@ -4,21 +4,23 @@ import { useRef } from 'react'
 import Link from 'next/link'
 import { Post } from '@/lib/types'
 
-export default function PostSlider({ posts }: { posts: Post[] }) {
+export default function PostSlider({ posts, title = '최신 글' }: { posts: Post[]; title?: string }) {
   const ref = useRef<HTMLDivElement>(null)
 
   function scroll(dir: 'left' | 'right') {
     if (!ref.current) return
-    ref.current.scrollBy({ left: dir === 'right' ? 320 : -320, behavior: 'smooth' })
+    const card = ref.current.querySelector<HTMLElement>('.slider-card')
+    const amount = card ? card.offsetWidth + 16 : 320
+    ref.current.scrollBy({ left: dir === 'right' ? amount : -amount, behavior: 'smooth' })
   }
 
   if (!posts.length) return null
 
   return (
-    <section className="mb-16">
+    <section>
       <div className="flex items-center justify-between mb-5">
         <h2 style={{ color: 'var(--text-main)', fontSize: '1.1rem', fontWeight: 700, letterSpacing: '-0.01em' }}>
-          최신 글
+          {title}
         </h2>
         <div className="flex gap-2">
           <button onClick={() => scroll('left')}
@@ -35,16 +37,16 @@ export default function PostSlider({ posts }: { posts: Post[] }) {
       </div>
 
       <div ref={ref}
-        className="flex gap-4 overflow-x-auto pb-3"
+        className="flex gap-4 overflow-x-auto pb-3 no-scrollbar"
         style={{ scrollSnapType: 'x mandatory', scrollbarWidth: 'none' }}>
         {posts.map(post => (
           <div key={post.id}
             style={{
-              minWidth: '280px', maxWidth: '280px', background: 'var(--bg-card)',
+              background: 'var(--bg-card)',
               border: '1px solid var(--border)', borderRadius: '14px',
               scrollSnapAlign: 'start', flexShrink: 0
             }}
-            className="overflow-hidden hover:shadow-md transition-shadow">
+            className="slider-card overflow-hidden hover:shadow-md transition-shadow">
 
             {/* 썸네일 */}
             <div style={{ height: '160px', background: 'var(--border-soft)', overflow: 'hidden' }}>

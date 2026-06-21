@@ -1,11 +1,11 @@
 'use client'
 
-export default function Footer() {
+export default function Footer({ siteName = '1인 서점' }: { siteName?: string }) {
   return (
     <footer style={{ background: 'var(--bg-card)', borderTop: '1px solid var(--border)',
       padding: '2rem 4rem', marginTop: '2rem' }}>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
-        <span style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--text-main)' }}>1인 서점</span>
+        <span style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--text-main)' }}>{siteName}</span>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
           {[

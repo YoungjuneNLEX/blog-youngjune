@@ -1,6 +1,7 @@
 import { auth } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
 import RoleSelector from '@/components/RoleSelector'
 
 export default async function AdminPage() {
@@ -14,7 +15,13 @@ export default async function AdminPage() {
 
   return (
     <div style={{ padding: '2.5rem 4rem' }}>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">회원 관리</h1>
+      <div className="flex items-center justify-between mb-6 gap-3 flex-wrap">
+        <h1 className="text-2xl font-bold text-gray-900">회원 관리</h1>
+        <Link href="/admin/settings"
+          style={{ fontSize: '0.85rem', border: '1px solid var(--border)', borderRadius: '8px',
+            padding: '8px 16px', background: 'var(--bg-card)', color: 'var(--text-sub)' }}
+          className="hover:opacity-80 transition">⚙️ 사이트 설정</Link>
+      </div>
 
       <div className="bg-white rounded-xl shadow-sm overflow-hidden">
         <table className="w-full text-sm">

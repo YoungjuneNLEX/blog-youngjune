@@ -32,6 +32,21 @@ body {
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
+/* 홈 콘텐츠 섹션 (최신 글 / 책장) */
+.home-section { padding: 3rem 4rem 0; }
+.home-section:last-child { padding-bottom: 4rem; }
+
+/* 최신 글 슬라이더 카드 — 데스크톱은 고정폭 */
+.slider-card { min-width: 280px; max-width: 280px; }
+
+/* 모바일: 콘텐츠 여백을 줄이고, 카드 한 장이 온전히 보이도록 */
+@media (max-width: 640px) {
+  .home-section { padding: 2rem 1.1rem 0; }
+  .home-section:last-child { padding-bottom: 2.5rem; }
+  /* 카드 한 장이 화면에 꽉 차게 + 다음 카드 살짝 보이게 */
+  .slider-card { min-width: 80vw; max-width: 80vw; }
+}
+
 /* SNS 더보기 섹션 (모바일 대응) */
 .sns-section {
   padding: 4rem;
