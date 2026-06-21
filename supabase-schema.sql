@@ -29,6 +29,18 @@ create table if not exists site_settings (
   updated_at timestamptz default now()
 );
 
+-- 댓글 테이블 (로그인한 사용자가 글에 댓글 작성)
+create table if not exists comments (
+  id uuid default gen_random_uuid() primary key,
+  post_id uuid references posts(id) on delete cascade not null,
+  author_id uuid references profiles(id) on delete set null,
+  author_name text,
+  author_avatar text,
+  content text not null,
+  created_at timestamptz default now()
+);
+create index if not exists comments_post_id_idx on comments(post_id, created_at);
+
 -- updated_at 자동 갱신 트리거
 create or replace function update_updated_at()
 returns trigger as $$

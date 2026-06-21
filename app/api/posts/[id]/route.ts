@@ -22,6 +22,15 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const session = await auth()
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  // 작성자 본인 또는 관리자만 수정 가능
+  if (session.user?.role !== 'admin') {
+    const { data: existing } = await supabaseAdmin
+      .from('posts').select('author_id').eq('id', id).single()
+    if (!existing || existing.author_id !== session.user?.id) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+  }
+
   const body = await req.json()
 
   const { data, error } = await supabaseAdmin

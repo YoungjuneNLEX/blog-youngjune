@@ -2,6 +2,8 @@ import { auth } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
+import PostActions from '@/components/PostActions'
+import Comments from '@/components/Comments'
 
 export default async function PostPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -16,6 +18,9 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
 
   if (!post) notFound()
   if (post.visibility === 'members' && !session) redirect('/')
+
+  // 작성자 본인이거나 관리자면 수정/삭제 가능
+  const canManage = session?.user?.role === 'admin' || session?.user?.id === post.author_id
 
   // 같은 책(첫 태그) 내 이전글/다음글
   const bookTag = post.tags?.[0]
@@ -39,11 +44,14 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
   return (
     <div className="article-page">
 
-      {/* 뒤로가기 */}
-      <Link href="/" style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}
-        className="hover:opacity-70 transition inline-flex items-center gap-1 mb-10">
-        ← 책방으로
-      </Link>
+      {/* 상단: 뒤로가기 + 액션(공유·수정·삭제) */}
+      <div className="flex items-center justify-between gap-3 mb-10 flex-wrap">
+        <Link href="/" style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}
+          className="hover:opacity-70 transition inline-flex items-center gap-1">
+          ← 책방으로
+        </Link>
+        <PostActions postId={post.id} title={post.title} canManage={canManage} />
+      </div>
 
       <article>
         {/* 태그/카테고리 */}
@@ -118,6 +126,9 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
           )}
         </div>
       )}
+
+      {/* 댓글 */}
+      <Comments postId={post.id} />
     </div>
   )
 }
