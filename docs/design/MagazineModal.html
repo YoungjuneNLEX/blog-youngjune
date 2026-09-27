@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>글 요약 창</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700&amp;family=IBM+Plex+Sans+KR:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'IBM Plex Sans KR',sans-serif;background:#faf6f0;color:#2c1a0e}
+a{color:#2c1a0e;text-decoration:none}a:hover{color:#8b5e3c}
+</style>
+</helmet>
+<div style="width: 1280px; height: 820px; box-sizing: border-box; background: rgba(44, 26, 14, 0.55); display: flex; align-items: center; justify-content: center;">
+
+<div role="dialog" aria-label="글 요약" style="width: 860px; box-sizing: border-box; background: #fffdf9; border-radius: 12px; display: grid; grid-template-columns: 300px minmax(0, 1fr); overflow: hidden;">
+
+<div style="background: #3d2a1c; color: #f5ead9; display: flex; flex-direction: column; justify-content: space-between; padding: 32px 28px; min-height: 520px; box-sizing: border-box;">
+<span style="font-size: 12px; letter-spacing: 2px;">일하며 배운 것</span>
+<span style="font-family: 'Noto Serif KR', serif; font-size: 28px; font-weight: 700; line-height: 1.4;">[긴 글 제목]</span>
+<span style="font-size: 13px; color: #d8c4a8;">적바림 · 9월 25일</span>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 22px; padding: 36px 40px;">
+<div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px;">
+<div style="display: flex; flex-direction: column; gap: 6px;">
+<h2 style="margin: 0; font-family: 'Noto Serif KR', serif; font-size: 24px; font-weight: 700; line-height: 1.4;">[긴 글 제목]</h2>
+<span style="font-size: 14px; color: #6b4f3a;">일하며 배운 것 · 6분 · 9월 25일</span>
+</div>
+<a href="Magazine.dc.html" aria-label="닫기" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 22px; flex-shrink: 0;">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+</a>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 10px; padding: 20px; background: #f5ede2; border-radius: 10px;">
+<span style="font-size: 12px; font-weight: 600; letter-spacing: 1px; color: #6b4f3a;">세 줄 요약 · AI 작성</span>
+<ol style="margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; font-size: 15px; line-height: 1.7;">
+<li>[요약 1]</li>
+<li>[요약 2]</li>
+<li>[요약 3]</li>
+</ol>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 8px;">
+<span style="font-size: 12px; font-weight: 600; letter-spacing: 1px; color: #8a6f58;">이 글이 나온 메모</span>
+<span style="font-size: 14px; line-height: 1.7; color: #4a3322;">[이 글로 자란 짧은 노트 2–3개 링크]</span>
+</div>
+
+<div style="display: flex; gap: 12px; margin-top: auto;">
+<a href="#" style="min-height: 48px; padding: 0 24px; display: flex; align-items: center; border-radius: 12px; background: #2c1a0e; color: #faf6f0; font-size: 15px; font-weight: 600;">전문 읽기</a>
+<a href="#" style="min-height: 48px; padding: 0 20px; display: flex; align-items: center; border-radius: 12px; border: 1px solid #d6c7b6; font-size: 15px;">같은 주제 더 보기</a>
+</div>
+</div>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":820}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>노트 창고</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700&amp;family=IBM+Plex+Sans+KR:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'IBM Plex Sans KR',sans-serif;background:#faf6f0;color:#2c1a0e}
+a{color:#2c1a0e;text-decoration:none}a:hover{color:#8b5e3c}
+</style>
+</helmet>
+<div style="width: 1280px; height: 900px; box-sizing: border-box; background: #faf6f0; display: flex; flex-direction: column;">
+
+<header style="display: flex; justify-content: space-between; align-items: center; padding: 22px 48px; border-bottom: 1px solid #e8ddd0;">
+<div style="display: flex; align-items: baseline; gap: 16px;">
+<span style="font-family: 'Noto Serif KR', serif; font-size: 22px; font-weight: 700;">적바림</span>
+<span style="font-size: 14px; color: #6b4f3a;">내 창고</span>
+</div>
+<div style="display: flex; gap: 12px; align-items: center;">
+<a href="#" style="font-size: 14px;">사이트 보기</a>
+<button type="button" style="min-height: 44px; padding: 0 20px; border-radius: 12px; border: none; background: #8b5e3c; color: #fffdf9; font-family: inherit; font-size: 15px; font-weight: 600;">새 긴 글</button>
+</div>
+</header>
+
+<div style="display: grid; grid-template-columns: 220px minmax(0, 1fr) 360px; flex-grow: 1; min-height: 0;">
+
+<nav style="display: flex; flex-direction: column; gap: 4px; padding: 28px 20px; border-right: 1px solid #e8ddd0;">
+<div style="font-size: 12px; font-weight: 600; letter-spacing: 1px; color: #8a6f58; margin: 0 0 8px 12px;">보기</div>
+<a href="#" style="padding: 10px 12px; border-radius: 8px; background: #2c1a0e; color: #faf6f0; font-size: 15px;">모든 노트</a>
+<a href="#" style="padding: 10px 12px; border-radius: 8px; font-size: 15px;">분류 전</a>
+<a href="#" style="padding: 10px 12px; border-radius: 8px; font-size: 15px;">공개한 것</a>
+<a href="#" style="padding: 10px 12px; border-radius: 8px; font-size: 15px;">키우는 중</a>
+<div style="font-size: 12px; font-weight: 600; letter-spacing: 1px; color: #8a6f58; margin: 24px 0 8px 12px;">주제</div>
+<a href="#" style="padding: 10px 12px; border-radius: 8px; font-size: 15px;">생각</a>
+<a href="#" style="padding: 10px 12px; border-radius: 8px; font-size: 15px;">일하며 배운 것</a>
+<a href="#" style="padding: 10px 12px; border-radius: 8px; font-size: 15px;">오늘의 배움</a>
+<a href="#" style="padding: 10px 12px; border-radius: 8px; font-size: 15px;">말씀 묵상</a>
+<a href="#" style="padding: 10px 12px; border-radius: 8px; font-size: 15px;">독서</a>
+<a href="#" style="padding: 10px 12px; border-radius: 8px; font-size: 15px;">상상</a>
+</nav>
+
+<main style="display: flex; flex-direction: column; padding: 28px 40px; gap: 0;">
+<div style="font-size: 13px; color: #6b4f3a; padding-bottom: 12px;">9월 27일 · 일요일</div>
+
+<div style="display: flex; gap: 14px; align-items: flex-start; padding: 16px 0; border-bottom: 1px solid #e8ddd0;">
+<input type="checkbox" id="n1" checked style="width: 20px; height: 20px; margin-top: 3px; accent-color: #8b5e3c;">
+<label for="n1" style="display: flex; flex-direction: column; gap: 6px; flex-grow: 1;">
+<span style="font-family: 'Noto Serif KR', serif; font-size: 17px; line-height: 1.6;">[메모]</span>
+<span style="font-size: 12px; color: #8a6f58;">오후 6:36 · 생각 · 나만 보기</span>
+</label>
+</div>
+
+<div style="display: flex; gap: 14px; align-items: flex-start; padding: 16px 0; border-bottom: 1px solid #e8ddd0;">
+<input type="checkbox" id="n2" checked style="width: 20px; height: 20px; margin-top: 3px; accent-color: #8b5e3c;">
+<label for="n2" style="display: flex; flex-direction: column; gap: 6px; flex-grow: 1;">
+<span style="font-family: 'Noto Serif KR', serif; font-size: 17px; line-height: 1.6;">[메모]</span>
+<span style="font-size: 12px; color: #8a6f58;">오후 2:14 · 생각 · 나만 보기</span>
+</label>
+</div>
+
+<div style="display: flex; gap: 14px; align-items: flex-start; padding: 16px 0; border-bottom: 1px solid #e8ddd0;">
+<input type="checkbox" id="n3" style="width: 20px; height: 20px; margin-top: 3px; accent-color: #8b5e3c;">
+<label for="n3" style="display: flex; flex-direction: column; gap: 6px; flex-grow: 1;">
+<span style="font-family: 'Noto Serif KR', serif; font-size: 17px; line-height: 1.6;">[메모]</span>
+<span style="font-size: 12px; color: #8a6f58;">오전 8:40 · 묵상 · 공개됨</span>
+</label>
+</div>
+
+<div style="font-size: 13px; color: #6b4f3a; padding: 28px 0 12px;">9월 26일 · 토요일</div>
+
+<div style="display: flex; gap: 14px; align-items: flex-start; padding: 16px 0; border-bottom: 1px solid #e8ddd0;">
+<input type="checkbox" id="n4" checked style="width: 20px; height: 20px; margin-top: 3px; accent-color: #8b5e3c;">
+<label for="n4" style="display: flex; flex-direction: column; gap: 6px; flex-grow: 1;">
+<span style="font-family: 'Noto Serif KR', serif; font-size: 17px; line-height: 1.6;">[메모]</span>
+<span style="font-size: 12px; color: #8a6f58;">오후 9:02 · 생각 · 나만 보기</span>
+</label>
+</div>
+
+<div style="display: flex; gap: 14px; align-items: flex-start; padding: 16px 0;">
+<input type="checkbox" id="n5" style="width: 20px; height: 20px; margin-top: 3px; accent-color: #8b5e3c;">
+<label for="n5" style="display: flex; flex-direction: column; gap: 6px; flex-grow: 1;">
+<span style="font-family: 'Noto Serif KR', serif; font-size: 17px; line-height: 1.6;">[메모]</span>
+<span style="font-size: 12px; color: #8a6f58;">오전 11:30 · 분류 전 · 나만 보기</span>
+</label>
+</div>
+</main>
+
+<aside style="display: flex; flex-direction: column; gap: 20px; padding: 28px 32px; border-left: 1px solid #e8ddd0; background: #fffdf9;">
+<div style="display: flex; flex-direction: column; gap: 6px;">
+<div style="font-size: 12px; font-weight: 600; letter-spacing: 1px; color: #8a6f58;">선택한 메모 3개</div>
+<p style="margin: 0; font-size: 14px; line-height: 1.7; color: #4a3322;">같은 흐름의 메모를 골라 한 편의 글로 키웁니다.</p>
+</div>
+
+<button type="button" style="min-height: 48px; border-radius: 12px; border: none; background: #2c1a0e; color: #faf6f0; font-family: inherit; font-size: 15px; font-weight: 600;">묶어서 글 초안 만들기</button>
+<button type="button" style="min-height: 44px; border-radius: 12px; border: 1px solid #d6c7b6; background: transparent; color: #2c1a0e; font-family: inherit; font-size: 15px;">선택한 것 공개하기</button>
+<button type="button" style="min-height: 44px; border-radius: 12px; border: 1px solid #d6c7b6; background: transparent; color: #2c1a0e; font-family: inherit; font-size: 15px;">주제 바꾸기</button>
+
+<div style="display: flex; flex-direction: column; gap: 8px; padding-top: 20px; border-top: 1px solid #f0e8de;">
+<div style="font-size: 12px; font-weight: 600; letter-spacing: 1px; color: #8a6f58;">규칙</div>
+<p style="margin: 0; font-size: 13px; line-height: 1.7; color: #4a3322;">모든 메모는 나만 보기로 저장됩니다. 공개는 여기서 직접 고를 때만 일어납니다. 초안 만들기는 Claude가 돕고, 초안도 나만 보기로 들어옵니다.</p>
+</div>
+</aside>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":900}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
