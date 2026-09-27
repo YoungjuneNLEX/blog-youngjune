@@ -24,6 +24,8 @@ export default function AboutPage() {
     review: string
   } | null>(null)
   const [highlightWord, setHighlightWord] = useState<string | undefined>(undefined)
+  // 서재 주인 — 관리자 설정에서 가져온다
+  const [profile, setProfile] = useState({ name: '', bio: '', avatarUrl: '' })
 
   async function handleReview() {
     if (!content.trim()) { alert('본문을 먼저 작성해주세요.'); return }
@@ -39,6 +41,12 @@ export default function AboutPage() {
     setReviewData(data)
     setReviewing(false)
   }
+
+  useEffect(() => {
+    fetch('/api/settings').then(r => r.json())
+      .then(d => d.profile && setProfile(d.profile))
+      .catch(() => {})
+  }, [])
 
   useEffect(() => {
     fetch('/api/about')
@@ -211,6 +219,28 @@ export default function AboutPage() {
   // 보기 모드
   return (
     <div className="article-page">
+      {/* 서재 주인 */}
+      {(profile.name || profile.bio || profile.avatarUrl) && (
+        <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginBottom: '2rem',
+          paddingBottom: '2rem', borderBottom: '1px solid var(--border)' }}>
+          {profile.avatarUrl && (
+            <img src={profile.avatarUrl} alt=""
+              style={{ width: '72px', height: '72px', borderRadius: '50%', objectFit: 'cover',
+                flexShrink: 0 }} />
+          )}
+          <div style={{ minWidth: 0 }}>
+            {profile.name && (
+              <p className="serif" style={{ fontSize: '20px', fontWeight: 700, margin: '0 0 4px' }}>
+                {profile.name}
+              </p>
+            )}
+            {profile.bio && (
+              <p className="meta-sub" style={{ margin: 0, lineHeight: 1.7 }}>{profile.bio}</p>
+            )}
+          </div>
+        </div>
+      )}
+
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2.5rem' }}>
         <h1 style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--text-main)', letterSpacing: '-0.03em' }}>
           소개

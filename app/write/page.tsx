@@ -25,6 +25,9 @@ export default function WritePage() {
   const [topics, setTopics] = useState<{ name: string; short: string; color: string }[]>([])
   const [summary, setSummary] = useState('')
   const [summarizing, setSummarizing] = useState(false)
+  const [templates, setTemplates] = useState<{ id: string; name: string; body: string }[]>([])
+  // 템플릿을 넣으면 에디터를 새로 만들어 본문을 갈아끼운다
+  const [editorKey, setEditorKey] = useState(0)
   const [content, setContent] = useState('')
   const [scheduledAt, setScheduledAt] = useState('')
   const [saving, setSaving] = useState(false)
@@ -48,7 +51,21 @@ export default function WritePage() {
     fetch('/api/settings').then(r => r.json())
       .then(d => setTopics(d.topics || []))
       .catch(() => {})
+    fetch('/api/templates').then(r => r.json())
+      .then(d => setTemplates(d.templates || []))
+      .catch(() => {})
   }, [])
+
+  // 템플릿 불러오기 — 이미 쓴 것이 있으면 덮어쓸지 묻는다
+  function applyTemplate(id: string) {
+    const t = templates.find(x => x.id === id)
+    if (!t) return
+    const written = content.replace(/<[^>]*>/g, '').trim()
+    if (written && !confirm('지금 쓴 본문을 템플릿으로 덮어쓸까요?')) return
+    setContent(t.body)
+    setEditorKey(k => k + 1)
+  }
+
 
   // 세 줄 요약 만들기 — 만들어 주기만 하고, 저장은 글을 저장할 때 함께 된다
   async function makeSummary() {
@@ -219,6 +236,18 @@ export default function WritePage() {
           </div>
 
 
+          {/* 템플릿 불러오기 */}
+          {templates.length > 0 && (
+            <div>
+              <label style={labelStyle}>템플릿</label>
+              <select value="" style={inputStyle}
+                onChange={e => { applyTemplate(e.target.value); e.target.value = '' }}>
+                <option value="">불러오기…</option>
+                {templates.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+              </select>
+            </div>
+          )}
+
           {/* 주제 — 적바림의 분류. 표지 색과 주제 페이지가 이 값을 쓴다. */}
           <div>
             <label style={labelStyle}>주제</label>
@@ -345,7 +374,7 @@ export default function WritePage() {
               marginBottom: '16px', width: '100%',
               borderBottom: '2px solid var(--border-soft)', paddingBottom: '12px' }} />
           <div className="write-editor">
-            <RichEditor content={content} onChange={setContent} highlightWord={highlightWord} />
+            <RichEditor key={editorKey} content={content} onChange={setContent} highlightWord={highlightWord} />
           </div>
         </div>
 

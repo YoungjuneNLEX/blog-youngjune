@@ -1,290 +1,393 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { useSession } from 'next-auth/react'
 import {
-  SiteConfig, ThemeColors, SectionId,
-  DEFAULT_CONFIG, THEME_PRESETS, THEME_FIELD_LABELS, SECTION_LABELS,
-  themeToCssVars,
+  SiteConfig, ThemeColors, Topic,
+  DEFAULT_CONFIG, DEFAULT_THEME, THEME_FIELD_LABELS, themeToCssVars,
 } from '@/lib/site-config'
+import { DEFAULT_TEMPLATES, PostTemplate } from '@/lib/templates'
+import { coverInk } from '@/lib/cover'
 
-const TEXT_FIELDS: { key: keyof SiteConfig; label: string; placeholder?: string; hint?: string }[] = [
-  { key: 'siteName', label: '사이트 이름', hint: '헤더·푸터·브라우저 탭에 표시됩니다' },
-  { key: 'siteEyebrow', label: '이름 위 영문 문구', placeholder: "Young June's" },
-  { key: 'heroTitle', label: '메인 큰 제목 (히어로)' },
-  { key: 'heroImage', label: '히어로 배경 이미지 경로', placeholder: '/hero.png' },
-  { key: 'latestTitle', label: '최신 글 섹션 제목' },
+const TEXT_FIELDS: { key: keyof SiteConfig; label: string; hint?: string }[] = [
+  { key: 'siteName', label: '제호 (사이트 이름)', hint: '머리글·푸터·브라우저 탭에 쓰입니다' },
+  { key: 'heroTitle', label: '한 줄 소개', hint: '검색 결과의 설명문에 쓰입니다' },
+  { key: 'latestTitle', label: '최근 글 섹션 제목' },
   { key: 'bookshelfTitle', label: '책장 섹션 제목' },
   { key: 'footerName', label: '푸터 이름' },
+  { key: 'footerNote', label: '푸터 한 줄' },
 ]
 
 export default function SettingsPage() {
   const router = useRouter()
   const { data: session, status } = useSession()
   const [config, setConfig] = useState<SiteConfig>(DEFAULT_CONFIG)
+  const [before, setBefore] = useState<SiteConfig | null>(null)
+  const [templates, setTemplates] = useState<PostTemplate[]>([])
+  const [usage, setUsage] = useState<Record<string, number>>({})
   const [loaded, setLoaded] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
+  const [saved, setSaved] = useState('')
+  const fileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    if (status === 'authenticated' && session?.user?.role !== 'admin') {
-      router.replace('/')
-    }
+    if (status === 'authenticated' && session?.user?.role !== 'admin') router.replace('/')
   }, [status, session, router])
 
   useEffect(() => {
-    fetch('/api/settings')
-      .then(r => r.json())
-      .then((d: SiteConfig) => { setConfig(d); setLoaded(true) })
-      .catch(() => setLoaded(true))
+    Promise.all([
+      fetch('/api/settings').then(r => r.json()),
+      fetch('/api/templates').then(r => r.json()).catch(() => ({ templates: [] })),
+      fetch('/api/topics').then(r => r.json()).catch(() => ({ usage: {} })),
+    ]).then(([c, t, u]) => {
+      setConfig(c); setBefore(c)
+      setTemplates(t.templates || [])
+      setUsage(u.usage || {})
+      setLoaded(true)
+    }).catch(() => setLoaded(true))
   }, [])
 
-  function setField<K extends keyof SiteConfig>(key: K, value: SiteConfig[K]) {
-    setConfig(c => ({ ...c, [key]: value }))
-    setSaved(false)
+  function set<K extends keyof SiteConfig>(key: K, value: SiteConfig[K]) {
+    setConfig(c => ({ ...c, [key]: value })); setSaved('')
   }
-
-  function setThemeColor(key: keyof ThemeColors, value: string) {
-    setConfig(c => ({ ...c, theme: { ...c.theme, [key]: value } }))
-    setSaved(false)
+  function setTopic(i: number, patch: Partial<Topic>) {
+    setConfig(c => ({ ...c, topics: c.topics.map((t, n) => n === i ? { ...t, ...patch } : t) }))
+    setSaved('')
   }
-
-  function applyPreset(theme: ThemeColors) {
-    setConfig(c => ({ ...c, theme }))
-    setSaved(false)
-  }
-
-  function moveSection(id: SectionId, dir: -1 | 1) {
+  function moveTopic(i: number, dir: -1 | 1) {
     setConfig(c => {
-      const order = [...c.sectionOrder]
-      const i = order.indexOf(id)
+      const next = [...c.topics]
       const j = i + dir
-      if (i < 0 || j < 0 || j >= order.length) return c
-      ;[order[i], order[j]] = [order[j], order[i]]
-      return { ...c, sectionOrder: order }
+      if (j < 0 || j >= next.length) return c
+      ;[next[i], next[j]] = [next[j], next[i]]
+      return { ...c, topics: next }
     })
-    setSaved(false)
+    setSaved('')
+  }
+  function addTopic() {
+    setConfig(c => ({
+      ...c,
+      topics: [...c.topics, { id: `t${Date.now()}`, name: '새 주제', short: '새', color: '#8b5e3c' }],
+    }))
+    setSaved('')
+  }
+  function removeTopic(i: number) {
+    const t = config.topics[i]
+    const n = usage[t.name] || 0
+    const msg = n > 0
+      ? `"${t.name}" 을 지울까요?\n이 주제의 글 ${n}편은 '분류 전'으로 옮겨집니다.`
+      : `"${t.name}" 을 지울까요?`
+    if (!confirm(msg)) return
+    setConfig(c => ({ ...c, topics: c.topics.filter((_, n2) => n2 !== i) }))
+    setSaved('')
   }
 
-  function toggleSection(id: SectionId) {
-    setConfig(c => {
-      const hidden = c.hiddenSections.includes(id)
-        ? c.hiddenSections.filter(s => s !== id)
-        : [...c.hiddenSections, id]
-      return { ...c, hiddenSections: hidden }
-    })
-    setSaved(false)
+  async function uploadAvatar(file: File) {
+    const form = new FormData()
+    form.append('file', file)
+    const res = await fetch('/api/upload', { method: 'POST', body: form })
+    if (!res.ok) { alert('사진을 올리지 못했습니다.'); return }
+    const d = await res.json()
+    set('profile', { ...config.profile, avatarUrl: d.url })
   }
 
-  async function handleSave() {
+  /** 저장 전에 주제 이름 변경·삭제로 몇 편이 함께 바뀌는지 알려준다 */
+  function confirmTopicChanges(): boolean {
+    if (!before) return true
+    const lines: string[] = []
+    for (const t of config.topics) {
+      const old = before.topics.find(o => o.id === t.id)
+      if (old && old.name !== t.name) {
+        const n = usage[old.name] || 0
+        lines.push(`· "${old.name}" → "${t.name}"${n > 0 ? ` (글 ${n}편이 함께 바뀝니다)` : ''}`)
+      }
+    }
+    for (const old of before.topics) {
+      if (config.topics.some(t => t.id === old.id)) continue
+      const n = usage[old.name] || 0
+      lines.push(`· "${old.name}" 삭제${n > 0 ? ` (글 ${n}편이 '분류 전'으로 갑니다)` : ''}`)
+    }
+    if (lines.length === 0) return true
+    return confirm(`주제가 이렇게 바뀝니다.\n\n${lines.join('\n')}\n\n저장할까요?`)
+  }
+
+  async function save() {
+    if (!confirmTopicChanges()) return
     setSaving(true)
+
     const res = await fetch('/api/settings', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(config),
     })
+    const tRes = await fetch('/api/templates', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ templates }),
+    })
     setSaving(false)
-    if (res.ok) {
-      setSaved(true)
-      router.refresh()
-      setTimeout(() => setSaved(false), 2500)
-    } else {
-      alert('저장에 실패했습니다. 다시 시도해주세요.')
-    }
+
+    if (!res.ok || !tRes.ok) { alert('저장에 실패했습니다. 다시 시도해주세요.'); return }
+    const d = await res.json()
+    setBefore(d.config)
+    setSaved(d.moved > 0 ? `저장했습니다. 글 ${d.moved}편의 주제를 함께 옮겼습니다.` : '저장했습니다.')
+    router.refresh()
   }
 
-  function resetDefault() {
-    if (confirm('모든 설정을 기본값으로 되돌릴까요? (저장 전까지는 반영되지 않습니다)')) {
-      setConfig(DEFAULT_CONFIG)
-      setSaved(false)
-    }
-  }
-
-  const cardStyle: React.CSSProperties = {
+  const card: React.CSSProperties = {
     background: 'var(--bg-card)', border: '1px solid var(--border)',
-    borderRadius: '16px', padding: '1.5rem', marginBottom: '1.25rem',
+    borderRadius: '16px', padding: '20px', marginBottom: '16px',
   }
-  const sectionTitle: React.CSSProperties = {
-    fontSize: '1rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.35rem',
-  }
-  const sectionDesc: React.CSSProperties = {
-    fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '1.1rem',
-  }
-  const inputStyle: React.CSSProperties = {
-    width: '100%', padding: '8px 12px', fontSize: '0.875rem',
-    border: '1px solid var(--border)', borderRadius: '8px',
+  const input: React.CSSProperties = {
+    width: '100%', minHeight: '44px', padding: '10px 12px', fontSize: '15px',
+    border: '1px solid var(--border)', borderRadius: '10px',
     background: 'var(--bg)', color: 'var(--text-main)', outline: 'none',
+    fontFamily: 'inherit',
   }
 
   if (!loaded) {
-    return (
-      <div style={{ maxWidth: '760px', margin: '0 auto', padding: '3rem 1.25rem', color: 'var(--text-muted)' }}>
-        불러오는 중...
-      </div>
-    )
+    return <div className="wrap" style={{ padding: '32px 0' }}><p className="meta-sub">불러오는 중…</p></div>
   }
 
   return (
-    <div style={{ maxWidth: '760px', margin: '0 auto', padding: '2.5rem 1.25rem 5rem' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        gap: '12px', marginBottom: '1.75rem', flexWrap: 'wrap' }}>
-        <div>
-          <h1 style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
-            사이트 설정
-          </h1>
-          <p style={{ fontSize: '0.83rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-            홈페이지의 문구·테마(스킨)·섹션 위치를 직접 수정할 수 있어요.
-          </p>
-        </div>
-        <button onClick={resetDefault}
-          style={{ fontSize: '0.8rem', border: '1px solid var(--border)', borderRadius: '8px',
-            padding: '7px 14px', background: 'var(--bg-card)', color: 'var(--text-sub)', cursor: 'pointer' }}>
-          기본값으로
-        </button>
-      </div>
+    <div style={{ maxWidth: '760px', margin: '0 auto', padding: '24px 20px 80px' }}>
 
-      {/* 미리보기 */}
-      <div style={{ ...cardStyle }}>
-        <div style={sectionTitle}>미리보기</div>
-        <p style={sectionDesc}>선택한 테마와 문구가 아래처럼 보여요. (저장해야 실제 사이트에 반영됩니다)</p>
-        <div style={{ ...themeToCssVars(config.theme), background: 'var(--bg)',
-          border: '1px solid var(--border)', borderRadius: '12px', padding: '1.25rem' } as React.CSSProperties}>
-          <p style={{ color: 'var(--accent)', fontSize: '0.6rem', letterSpacing: '0.15em',
-            textTransform: 'uppercase', fontWeight: 600 }}>{config.siteEyebrow || ' '}</p>
-          <h3 style={{ color: 'var(--text-main)', fontSize: '1.3rem', fontWeight: 800,
-            letterSpacing: '-0.02em', marginBottom: '12px' }}>{config.heroTitle || config.siteName}</h3>
-          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)',
-            borderRadius: '12px', padding: '14px' }}>
-            <span style={{ fontSize: '0.65rem', color: 'var(--accent)', background: 'var(--border-soft)',
-              padding: '2px 8px', borderRadius: '999px', fontWeight: 600 }}>카테고리</span>
-            <p style={{ color: 'var(--text-main)', fontWeight: 700, fontSize: '0.9rem', margin: '8px 0 4px' }}>
-              {config.latestTitle} 카드 제목 예시
-            </p>
-            <p style={{ color: 'var(--text-sub)', fontSize: '0.78rem' }}>본문 미리보기 문장입니다.</p>
-            <div style={{ marginTop: '12px' }}>
-              <span style={{ display: 'inline-block', background: 'var(--accent)', color: '#fff',
-                fontSize: '0.75rem', fontWeight: 600, padding: '6px 14px', borderRadius: '999px' }}>강조 버튼</span>
-            </div>
-          </div>
-        </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
+        gap: '12px', marginBottom: '20px', flexWrap: 'wrap' }}>
+        <h1 className="wordmark">설정</h1>
+        <Link href="/admin" className="meta-sub">회원 관리 →</Link>
       </div>
 
       {/* 문구 */}
-      <div style={cardStyle}>
-        <div style={sectionTitle}>문구 (텍스트)</div>
-        <p style={sectionDesc}>사이트 이름과 각 섹션 제목 등을 바꿀 수 있어요.</p>
+      <section style={card}>
+        <h2 className="sec-title" style={{ marginBottom: '14px' }}>문구</h2>
         <div style={{ display: 'grid', gap: '14px' }}>
           {TEXT_FIELDS.map(f => (
             <label key={f.key} style={{ display: 'block' }}>
-              <span style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600,
-                color: 'var(--text-sub)', marginBottom: '5px' }}>{f.label}</span>
-              <input
-                value={String(config[f.key] ?? '')}
-                placeholder={f.placeholder}
-                onChange={e => setField(f.key, e.target.value as SiteConfig[typeof f.key])}
-                style={inputStyle} />
-              {f.hint && (
-                <span style={{ display: 'block', fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-                  {f.hint}
-                </span>
-              )}
+              <span className="meta-sub" style={{ display: 'block', marginBottom: '6px' }}>{f.label}</span>
+              <input value={String(config[f.key] ?? '')} style={input}
+                onChange={e => set(f.key, e.target.value as SiteConfig[typeof f.key])} />
+              {f.hint && <span className="meta" style={{ display: 'block', marginTop: '4px' }}>{f.hint}</span>}
             </label>
           ))}
         </div>
-      </div>
+      </section>
 
-      {/* 테마 / 스킨 */}
-      <div style={cardStyle}>
-        <div style={sectionTitle}>테마 (스킨)</div>
-        <p style={sectionDesc}>아래 프리셋을 누르면 한 번에 색상이 바뀌고, 개별 색상도 직접 고를 수 있어요.</p>
+      {/* 주제 */}
+      <section style={card}>
+        <h2 className="sec-title" style={{ marginBottom: '4px' }}>주제</h2>
+        <p className="meta" style={{ marginBottom: '14px' }}>
+          이름을 바꾸면 그 주제로 쓴 글도 함께 옮겨집니다. 저장 전에 몇 편인지 알려드립니다.
+        </p>
 
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '1.25rem' }}>
-          {THEME_PRESETS.map(p => (
-            <button key={p.id} onClick={() => applyPreset(p.theme)}
-              style={{ display: 'flex', alignItems: 'center', gap: '8px',
-                border: '1px solid var(--border)', borderRadius: '999px',
-                padding: '6px 12px 6px 8px', background: 'var(--bg)', cursor: 'pointer',
-                fontSize: '0.8rem', color: 'var(--text-sub)' }}>
-              <span style={{ display: 'flex' }}>
-                <span style={{ width: '14px', height: '14px', borderRadius: '50%', background: p.theme.accent }} />
-                <span style={{ width: '14px', height: '14px', borderRadius: '50%', background: p.theme.bg,
-                  border: '1px solid var(--border)', marginLeft: '-5px' }} />
-              </span>
-              {p.label}
-            </button>
-          ))}
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '10px' }}>
-          {(Object.keys(THEME_FIELD_LABELS) as (keyof ThemeColors)[]).map(key => (
-            <label key={key} style={{ display: 'flex', alignItems: 'center', gap: '8px',
-              border: '1px solid var(--border)', borderRadius: '10px', padding: '6px 8px', background: 'var(--bg)' }}>
-              <input type="color" value={config.theme[key]}
-                onChange={e => setThemeColor(key, e.target.value)}
-                style={{ width: '28px', height: '28px', border: 'none', background: 'none',
-                  padding: 0, cursor: 'pointer', flexShrink: 0 }} />
-              <span style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-sub)' }}>
-                  {THEME_FIELD_LABELS[key]}
-                </span>
-                <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>
-                  {config.theme[key]}
-                </span>
-              </span>
-            </label>
-          ))}
-        </div>
-      </div>
-
-      {/* 섹션 위치 / 표시 */}
-      <div style={cardStyle}>
-        <div style={sectionTitle}>섹션 위치 / 표시</div>
-        <p style={sectionDesc}>홈페이지 섹션의 순서를 바꾸거나 숨길 수 있어요.</p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {config.sectionOrder.map((id, idx) => {
-            const hidden = config.hiddenSections.includes(id)
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {config.topics.map((t, i) => {
+            const ink = coverInk(t.color)
             return (
-              <div key={id} style={{ display: 'flex', alignItems: 'center', gap: '10px',
-                border: '1px solid var(--border)', borderRadius: '10px', padding: '10px 12px',
-                background: 'var(--bg)', opacity: hidden ? 0.55 : 1 }}>
-                <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem', width: '20px' }}>{idx + 1}</span>
-                <span style={{ flex: 1, fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-main)' }}>
-                  {SECTION_LABELS[id]}
-                </span>
-                <button onClick={() => moveSection(id, -1)} disabled={idx === 0}
-                  title="위로" style={{ border: '1px solid var(--border)', borderRadius: '6px',
-                    width: '30px', height: '30px', background: 'var(--bg-card)', color: 'var(--text-sub)',
-                    cursor: idx === 0 ? 'not-allowed' : 'pointer', opacity: idx === 0 ? 0.4 : 1 }}>↑</button>
-                <button onClick={() => moveSection(id, 1)} disabled={idx === config.sectionOrder.length - 1}
-                  title="아래로" style={{ border: '1px solid var(--border)', borderRadius: '6px',
-                    width: '30px', height: '30px', background: 'var(--bg-card)', color: 'var(--text-sub)',
-                    cursor: idx === config.sectionOrder.length - 1 ? 'not-allowed' : 'pointer',
-                    opacity: idx === config.sectionOrder.length - 1 ? 0.4 : 1 }}>↓</button>
-                <button onClick={() => toggleSection(id)}
-                  style={{ border: '1px solid var(--border)', borderRadius: '6px',
-                    padding: '0 12px', height: '30px', background: 'var(--bg-card)',
-                    color: hidden ? 'var(--text-muted)' : 'var(--accent)', cursor: 'pointer',
-                    fontSize: '0.78rem', fontWeight: 600, whiteSpace: 'nowrap' }}>
-                  {hidden ? '숨김' : '표시'}
-                </button>
+              <div key={t.id} style={{ border: '1px solid var(--border)', borderRadius: '12px',
+                padding: '12px', display: 'flex', gap: '12px', alignItems: 'flex-start',
+                flexWrap: 'wrap', background: 'var(--bg)' }}>
+
+                {/* 표지 미리보기 — 글자가 읽히는지 바로 보인다 */}
+                <div style={{ width: '64px', height: '86px', borderRadius: '6px', flexShrink: 0,
+                  background: t.color, color: ink.fg, display: 'flex', alignItems: 'flex-end',
+                  padding: '8px', fontSize: '11px', fontWeight: 700, lineHeight: 1.3 }}
+                  className="serif">
+                  {t.short || t.name}
+                </div>
+
+                <div style={{ flex: 1, minWidth: '180px', display: 'grid', gap: '8px' }}>
+                  <label>
+                    <span className="meta" style={{ display: 'block', marginBottom: '4px' }}>이름</span>
+                    <input value={t.name} style={input}
+                      onChange={e => setTopic(i, { name: e.target.value })} />
+                  </label>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <label style={{ flex: 1 }}>
+                      <span className="meta" style={{ display: 'block', marginBottom: '4px' }}>짧은 이름</span>
+                      <input value={t.short} style={input}
+                        onChange={e => setTopic(i, { short: e.target.value })} />
+                    </label>
+                    <label style={{ width: '96px' }}>
+                      <span className="meta" style={{ display: 'block', marginBottom: '4px' }}>색</span>
+                      <input type="color" value={t.color} style={{ ...input, padding: '4px' }}
+                        onChange={e => setTopic(i, { color: e.target.value })} />
+                    </label>
+                  </div>
+                  <span className="meta">글 {usage[t.name] || 0}편</span>
+                </div>
+
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  <button onClick={() => moveTopic(i, -1)} disabled={i === 0}
+                    className="btn" style={{ minHeight: '44px', padding: '0 12px' }}>↑</button>
+                  <button onClick={() => moveTopic(i, 1)} disabled={i === config.topics.length - 1}
+                    className="btn" style={{ minHeight: '44px', padding: '0 12px' }}>↓</button>
+                  <button onClick={() => removeTopic(i)}
+                    className="btn" style={{ minHeight: '44px', padding: '0 12px', color: '#a33' }}>지움</button>
+                </div>
               </div>
             )
           })}
         </div>
-      </div>
+        <button onClick={addTopic} className="btn" style={{ marginTop: '12px' }}>+ 주제 추가</button>
+      </section>
 
-      {/* 저장 바 */}
-      <div style={{ position: 'sticky', bottom: '0', paddingTop: '1rem',
+      {/* 프로필 */}
+      <section style={card}>
+        <h2 className="sec-title" style={{ marginBottom: '4px' }}>서재 주인</h2>
+        <p className="meta" style={{ marginBottom: '14px' }}>소개 페이지 맨 위와 푸터에 보입니다.</p>
+
+        <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center' }}>
+            <div style={{ width: '72px', height: '72px', borderRadius: '50%', overflow: 'hidden',
+              background: 'var(--border-soft)', display: 'flex', alignItems: 'center',
+              justifyContent: 'center', color: 'var(--text-muted)', fontSize: '12px' }}>
+              {config.profile.avatarUrl
+                ? <img src={config.profile.avatarUrl} alt=""
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                : '사진 없음'}
+            </div>
+            <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }}
+              onChange={e => { const f = e.target.files?.[0]; if (f) uploadAvatar(f); e.target.value = '' }} />
+            <button onClick={() => fileRef.current?.click()} className="btn"
+              style={{ minHeight: '44px', padding: '0 12px', fontSize: '14px' }}>사진 고르기</button>
+            {config.profile.avatarUrl && (
+              <button onClick={() => set('profile', { ...config.profile, avatarUrl: '' })}
+                className="meta" style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+                사진 빼기
+              </button>
+            )}
+          </div>
+
+          <div style={{ flex: 1, minWidth: '200px', display: 'grid', gap: '12px' }}>
+            <label>
+              <span className="meta-sub" style={{ display: 'block', marginBottom: '6px' }}>닉네임</span>
+              <input value={config.profile.name} style={input}
+                onChange={e => set('profile', { ...config.profile, name: e.target.value })} />
+            </label>
+            <label>
+              <span className="meta-sub" style={{ display: 'block', marginBottom: '6px' }}>한 줄 소개</span>
+              <textarea value={config.profile.bio} rows={2}
+                style={{ ...input, resize: 'vertical', lineHeight: 1.7 }}
+                onChange={e => set('profile', { ...config.profile, bio: e.target.value })} />
+            </label>
+          </div>
+        </div>
+      </section>
+
+      {/* 표시 */}
+      <section style={card}>
+        <h2 className="sec-title" style={{ marginBottom: '4px' }}>홈에 보일 것</h2>
+        <p className="meta" style={{ marginBottom: '14px' }}>
+          최근 글은 항상 보입니다. 아래 둘만 켜고 끌 수 있습니다.
+        </p>
+        {([
+          ['showShortNotes', '짧은 노트'],
+          ['showBookshelf', '책장'],
+        ] as const).map(([key, label]) => (
+          <label key={key} style={{ display: 'flex', alignItems: 'center', gap: '10px',
+            minHeight: '44px', cursor: 'pointer' }}>
+            <input type="checkbox" checked={config[key]} onChange={e => set(key, e.target.checked)}
+              style={{ width: '20px', height: '20px', accentColor: 'var(--accent)' }} />
+            <span style={{ fontSize: '15px' }}>{label}</span>
+          </label>
+        ))}
+      </section>
+
+      {/* 테마 */}
+      <section style={card}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
+          gap: '12px', flexWrap: 'wrap', marginBottom: '4px' }}>
+          <h2 className="sec-title">색</h2>
+          <button onClick={() => { set('theme', DEFAULT_THEME); }} className="btn"
+            style={{ minHeight: '44px', fontSize: '14px' }}>시안 색으로 되돌리기</button>
+        </div>
+        <p className="meta" style={{ marginBottom: '14px' }}>
+          잘못 만지면 글자가 안 보일 수 있습니다. 그럴 땐 위 버튼으로 되돌리세요.
+        </p>
+
+        <div style={{ ...themeToCssVars(config.theme), background: 'var(--bg)',
+          border: '1px solid var(--border)', borderRadius: '12px', padding: '16px',
+          marginBottom: '14px' } as React.CSSProperties}>
+          <p className="serif" style={{ color: 'var(--text-main)', fontSize: '18px',
+            fontWeight: 700, margin: '0 0 4px' }}>{config.siteName}</p>
+          <p style={{ color: 'var(--text-sub)', fontSize: '14px', margin: '0 0 2px' }}>보조 글자</p>
+          <p style={{ color: 'var(--text-muted)', fontSize: '13px', margin: 0 }}>흐린 글자</p>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
+          gap: '10px' }}>
+          {(Object.keys(THEME_FIELD_LABELS) as (keyof ThemeColors)[]).map(key => (
+            <label key={key} style={{ display: 'flex', alignItems: 'center', gap: '8px',
+              border: '1px solid var(--border)', borderRadius: '10px', padding: '6px 8px',
+              background: 'var(--bg)', minHeight: '44px' }}>
+              <input type="color" value={config.theme[key]}
+                onChange={e => set('theme', { ...config.theme, [key]: e.target.value })}
+                style={{ width: '28px', height: '28px', border: 'none', background: 'none',
+                  padding: 0, cursor: 'pointer', flexShrink: 0 }} />
+              <span style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                <span className="meta-sub">{THEME_FIELD_LABELS[key]}</span>
+                <span className="meta" style={{ fontFamily: 'monospace' }}>{config.theme[key]}</span>
+              </span>
+            </label>
+          ))}
+        </div>
+      </section>
+
+      {/* 템플릿 */}
+      <section style={card}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
+          gap: '12px', flexWrap: 'wrap', marginBottom: '4px' }}>
+          <h2 className="sec-title">글 템플릿</h2>
+          <button onClick={() => setTemplates(t => [...t, ...DEFAULT_TEMPLATES.filter(
+            d => !t.some(x => x.name === d.name))])}
+            className="btn" style={{ minHeight: '44px', fontSize: '14px' }}>기본 템플릿 넣기</button>
+        </div>
+        <p className="meta" style={{ marginBottom: '14px' }}>
+          글쓰기 화면에서 불러다 씁니다. 본문은 HTML 로 저장됩니다.
+        </p>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {templates.length === 0 && (
+            <p className="meta-sub">아직 템플릿이 없습니다. 위 버튼으로 기본 3개를 넣어보세요.</p>
+          )}
+          {templates.map((t, i) => (
+            <div key={t.id} style={{ border: '1px solid var(--border)', borderRadius: '12px',
+              padding: '12px', background: 'var(--bg)', display: 'grid', gap: '8px' }}>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end' }}>
+                <label style={{ flex: 1 }}>
+                  <span className="meta" style={{ display: 'block', marginBottom: '4px' }}>이름</span>
+                  <input value={t.name} style={input}
+                    onChange={e => setTemplates(list => list.map((x, n) =>
+                      n === i ? { ...x, name: e.target.value } : x))} />
+                </label>
+                <button onClick={() => { if (confirm(`"${t.name}" 템플릿을 지울까요?`))
+                    setTemplates(list => list.filter((_, n) => n !== i)) }}
+                  className="btn" style={{ minHeight: '44px', padding: '0 12px', color: '#a33' }}>지움</button>
+              </div>
+              <label>
+                <span className="meta" style={{ display: 'block', marginBottom: '4px' }}>본문</span>
+                <textarea value={t.body} rows={4}
+                  style={{ ...input, resize: 'vertical', fontFamily: 'monospace', fontSize: '13px' }}
+                  onChange={e => setTemplates(list => list.map((x, n) =>
+                    n === i ? { ...x, body: e.target.value } : x))} />
+              </label>
+            </div>
+          ))}
+        </div>
+        <button onClick={() => setTemplates(t => [...t,
+          { id: `t${Date.now()}`, name: '새 템플릿', body: '<p></p>' }])}
+          className="btn" style={{ marginTop: '12px' }}>+ 템플릿 추가</button>
+      </section>
+
+      {/* 저장 */}
+      <div style={{ position: 'sticky', bottom: 0, paddingTop: '12px', paddingBottom: '12px',
+        background: 'linear-gradient(to top, var(--bg) 70%, transparent)',
         display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '12px' }}>
-        {saved && (
-          <span style={{ color: '#4a7c59', fontSize: '0.85rem', fontWeight: 600 }}>✓ 저장되었습니다</span>
-        )}
-        <button onClick={handleSave} disabled={saving}
-          style={{ fontSize: '0.9rem', fontWeight: 700, background: 'var(--accent)', color: '#fff',
-            border: 'none', borderRadius: '10px', padding: '11px 28px', cursor: 'pointer',
-            boxShadow: '0 6px 18px rgba(44,26,14,0.18)', opacity: saving ? 0.6 : 1 }}>
-          {saving ? '저장 중...' : '저장하기'}
+        {saved && <span className="meta-sub">{saved}</span>}
+        <button onClick={save} disabled={saving} className="btn btn-accent"
+          style={{ minHeight: '48px', padding: '0 28px' }}>
+          {saving ? '저장 중…' : '저장하기'}
         </button>
       </div>
     </div>

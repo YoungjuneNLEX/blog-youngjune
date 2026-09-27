@@ -63,7 +63,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <SessionProvider>
           <Header siteName={config.siteName} topics={config.topics} />
           <main>{children}</main>
-          <Footer siteName={config.footerName} />
+          <Footer
+            siteName={config.footerName}
+            note={config.footerNote}
+            authorName={config.profile.name}
+          />
         </SessionProvider>
       </body>
     </html>

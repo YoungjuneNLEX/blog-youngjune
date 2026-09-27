@@ -64,7 +64,8 @@ export default async function HomePage() {
       <HomeStories title={config.latestTitle} cards={cards} topics={config.topics} />
 
       <div className="wrap home-below" style={{ paddingTop: '36px' }}>
-        {/* 짧은 노트 — 표지 없이 본문 그대로 */}
+        {/* 짧은 노트 — 표지 없이 본문 그대로. 설정에서 끌 수 있다. */}
+        {config.showShortNotes && (
         <section>
           <h2 className="sec-title" style={{ marginBottom: '4px' }}>짧은 노트</h2>
           {(notes || []).length === 0 ? (
@@ -78,8 +79,11 @@ export default async function HomePage() {
             ))
           )}
         </section>
+        )}
 
-        <BookShelf title={config.bookshelfTitle} books={books} topics={config.topics} />
+        {config.showBookshelf && (
+          <BookShelf title={config.bookshelfTitle} books={books} topics={config.topics} />
+        )}
       </div>
     </div>
   )

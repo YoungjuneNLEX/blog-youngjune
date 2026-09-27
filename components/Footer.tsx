@@ -3,7 +3,9 @@
 import { usePathname } from 'next/navigation'
 import { useSession, signIn } from 'next-auth/react'
 
-export default function Footer({ siteName = '적바림' }: { siteName?: string }) {
+export default function Footer({
+  siteName = '적바림', note = '', authorName = '',
+}: { siteName?: string; note?: string; authorName?: string }) {
   const pathname = usePathname()
   const { data: session } = useSession()
 
@@ -16,7 +18,8 @@ export default function Footer({ siteName = '적바림' }: { siteName?: string }
         display: 'flex', flexDirection: 'column', gap: '6px',
         fontSize: '13px', color: 'var(--text-sub)' }}>
       <span className="serif" style={{ fontSize: '15px', color: 'var(--text-main)' }}>{siteName}</span>
-      <span>나중에 참고하려고 간단히 글로 적어 둠.</span>
+      {note && <span>{note}</span>}
+      {authorName && <span>{authorName}</span>}
       {!session && (
         <button onClick={() => signIn('google')}
           style={{ alignSelf: 'flex-start', marginTop: '6px', background: 'none', border: 'none',
