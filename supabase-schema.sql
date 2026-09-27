@@ -1,3 +1,16 @@
+-- ⚠️ 이 파일은 초기 설계안이며, 실제 Supabase DB 와 다릅니다.
+--    (2026-09 확인) 실제 DB 를 기준으로 삼으세요. 이 파일은 참고용 기록입니다.
+--
+--    실제 DB 와 다른 점
+--      · comments 테이블 : 실제 DB에 **없음**. 이 파일에만 있다.
+--                          적바림에서는 댓글 기능을 쓰지 않으므로 앱에서도 제거했다.
+--      · books 테이블    : 실제 DB에는 **있지만** 이 파일에는 없다.
+--      · posts 컬럼      : 실제 DB에는 thumbnail_url, excerpt 가 더 있다.
+--      · RLS 정책        : 아래 정책들은 모두 제거되었다. 현재 public 스키마 정책 0개.
+--                          supabase/fix-rls.sql 참고.
+--
+--    앞으로 DB 변경 SQL 은 이 파일이 아니라 실제 DB 상태를 조회해서 만든다.
+
 -- 회원 프로필 테이블
 create table if not exists profiles (
   id uuid default gen_random_uuid() primary key,
@@ -29,6 +42,7 @@ create table if not exists site_settings (
   updated_at timestamptz default now()
 );
 
+-- 댓글 테이블 — 실제 DB에 생성된 적이 없고, 적바림에서 댓글 기능을 제거했으므로 사용하지 않는다.
 -- 댓글 테이블 (로그인한 사용자가 글에 댓글 작성)
 create table if not exists comments (
   id uuid default gen_random_uuid() primary key,
