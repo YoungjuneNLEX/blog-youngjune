@@ -64,7 +64,11 @@ export default function QuickMemo({ topics, today }: { topics: Topic[]; today: M
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <span className="wordmark">적바림</span>
-        <Link href="/notes" style={{ fontSize: '14px' }}>창고 보기</Link>
+        {/* 쓰는 공간에는 사이트 헤더가 없으므로 나가는 길을 여기 둔다 (노트 창고와 같은 방식) */}
+        <nav style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+          <Link href="/notes" style={{ fontSize: '14px', padding: '12px 0' }}>창고 보기</Link>
+          <Link href="/" style={{ fontSize: '14px', padding: '12px 0' }}>사이트 보기</Link>
+        </nav>
       </div>
 
       <div className="memo-card">
