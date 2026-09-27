@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>적바림 매거진 홈</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700&amp;family=IBM+Plex+Sans+KR:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'IBM Plex Sans KR',sans-serif;background:#faf6f0;color:#2c1a0e}
+a{color:#2c1a0e;text-decoration:none}a:hover{color:#8b5e3c}
+</style>
+</helmet>
+<div style="width: 1280px; height: 1400px; box-sizing: border-box; background: #faf6f0; display: flex; flex-direction: column;">
+
+<header style="display: flex; justify-content: space-between; align-items: center; padding: 28px 120px; border-bottom: 1px solid #e8ddd0;">
+<a href="#" style="font-family: 'Noto Serif KR', serif; font-size: 26px; font-weight: 700;">적바림</a>
+<nav style="display: flex; gap: 28px; font-size: 15px;">
+<a href="#">전체</a>
+<a href="#">생각</a>
+<a href="#">일</a>
+<a href="#">배움</a>
+<a href="#">묵상</a>
+<a href="#">독서</a>
+<a href="#">상상</a>
+<a href="#" style="color: #6b4f3a;">소개</a>
+</nav>
+</header>
+
+<section style="display: flex; flex-direction: column; gap: 24px; padding: 48px 120px 0;">
+<div style="display: flex; justify-content: space-between; align-items: baseline;">
+<h2 style="margin: 0; font-family: 'Noto Serif KR', serif; font-size: 24px; font-weight: 700;">최근 글</h2>
+<a href="#" style="font-size: 14px; color: #6b4f3a;">모든 글</a>
+</div>
+
+<div style="display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr); gap: 24px;">
+
+<a href="MagazineModal.dc.html" style="display: flex; flex-direction: column; gap: 14px;">
+<div style="height: 360px; border-radius: 6px; background: #3d2a1c; color: #f5ead9; display: flex; flex-direction: column; justify-content: space-between; padding: 32px; box-sizing: border-box;">
+<span style="font-size: 12px; letter-spacing: 2px;">일하며 배운 것</span>
+<span style="font-family: 'Noto Serif KR', serif; font-size: 34px; font-weight: 700; line-height: 1.35;">[긴 글 제목 — 표지에 제목이 그대로 찍힙니다]</span>
+<span style="font-size: 13px; color: #d8c4a8;">적바림 · 9월 25일</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px;">
+<span style="font-family: 'Noto Serif KR', serif; font-size: 20px; font-weight: 700;">[긴 글 제목]</span>
+<span style="font-size: 14px; color: #6b4f3a;">일하며 배운 것 · 6분</span>
+</div>
+</a>
+
+<a href="MagazineModal.dc.html" style="display: flex; flex-direction: column; gap: 14px;">
+<div style="height: 360px; border-radius: 6px; background: #e9dcc8; display: flex; flex-direction: column; justify-content: space-between; padding: 24px; box-sizing: border-box;">
+<span style="font-size: 12px; letter-spacing: 2px; color: #6b4f3a;">독서</span>
+<span style="font-family: 'Noto Serif KR', serif; font-size: 24px; font-weight: 700; line-height: 1.4;">[독후감 제목]</span>
+<span style="font-size: 13px; color: #6b4f3a;">[책 제목 · 저자]</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px;">
+<span style="font-family: 'Noto Serif KR', serif; font-size: 18px; font-weight: 700;">[독후감 제목]</span>
+<span style="font-size: 14px; color: #6b4f3a;">독서 · 9분</span>
+</div>
+</a>
+
+<a href="MagazineModal.dc.html" style="display: flex; flex-direction: column; gap: 14px;">
+<div style="height: 360px; border-radius: 6px; background: #5a6b55; color: #eef1e8; display: flex; flex-direction: column; justify-content: space-between; padding: 24px; box-sizing: border-box;">
+<span style="font-size: 12px; letter-spacing: 2px;">상상</span>
+<span style="font-family: 'Noto Serif KR', serif; font-size: 24px; font-weight: 700; line-height: 1.4;">[단편·연재 제목]</span>
+<span style="font-size: 13px; color: #d3dccb;">[연재 회차]</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px;">
+<span style="font-family: 'Noto Serif KR', serif; font-size: 18px; font-weight: 700;">[단편·연재 제목]</span>
+<span style="font-size: 14px; color: #6b4f3a;">상상 · 12분</span>
+</div>
+</a>
+
+</div>
+</section>
+
+<section style="display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 64px; padding: 64px 120px 0;">
+
+<div style="display: flex; flex-direction: column;">
+<h2 style="margin: 0 0 8px; font-family: 'Noto Serif KR', serif; font-size: 24px; font-weight: 700;">짧은 노트</h2>
+
+<article style="display: flex; flex-direction: column; gap: 8px; padding: 24px 0; border-bottom: 1px solid #e8ddd0;">
+<span style="font-size: 13px; color: #8a6f58;">9월 27일 · 생각</span>
+<p style="margin: 0; font-family: 'Noto Serif KR', serif; font-size: 18px; line-height: 1.7;">[짧은 메모 본문이 그대로 보입니다]</p>
+</article>
+<article style="display: flex; flex-direction: column; gap: 8px; padding: 24px 0; border-bottom: 1px solid #e8ddd0;">
+<span style="font-size: 13px; color: #8a6f58;">9월 24일 · 묵상</span>
+<p style="margin: 0; font-family: 'Noto Serif KR', serif; font-size: 18px; line-height: 1.7;">[짧은 메모 본문]</p>
+</article>
+<article style="display: flex; flex-direction: column; gap: 8px; padding: 24px 0;">
+<span style="font-size: 13px; color: #8a6f58;">9월 22일 · 배움</span>
+<p style="margin: 0; font-family: 'Noto Serif KR', serif; font-size: 18px; line-height: 1.7;">[짧은 메모 본문]</p>
+</article>
+</div>
+
+<aside style="display: flex; flex-direction: column; gap: 16px;">
+<h2 style="margin: 0 0 8px; font-family: 'Noto Serif KR', serif; font-size: 24px; font-weight: 700;">책장</h2>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px;">
+<a href="MagazineModal.dc.html" style="height: 130px; border-radius: 4px; background: #c9b08e;" aria-label="[책 1]"></a>
+<a href="MagazineModal.dc.html" style="height: 130px; border-radius: 4px; background: #7c5a3e;" aria-label="[책 2]"></a>
+<a href="MagazineModal.dc.html" style="height: 130px; border-radius: 4px; background: #9fae93;" aria-label="[책 3]"></a>
+<a href="MagazineModal.dc.html" style="height: 130px; border-radius: 4px; background: #d9c7ae;" aria-label="[책 4]"></a>
+<a href="MagazineModal.dc.html" style="height: 130px; border-radius: 4px; background: #5c4636;" aria-label="[책 5]"></a>
+<a href="MagazineModal.dc.html" style="height: 130px; border-radius: 4px; background: #b89a74;" aria-label="[책 6]"></a>
+</div>
+<p style="margin: 0; font-size: 13px; line-height: 1.7; color: #6b4f3a;">독후감을 쓴 책의 표지가 꽂힙니다. 누르면 요약이 뜹니다.</p>
+</aside>
+
+</section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1400}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

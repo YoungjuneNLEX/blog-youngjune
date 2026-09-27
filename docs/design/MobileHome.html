@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>적바림 모바일 첫 화면</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700&amp;family=IBM+Plex+Sans+KR:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'IBM Plex Sans KR',sans-serif;background:#faf6f0;color:#2c1a0e}
+a{color:#2c1a0e;text-decoration:none}a:hover{color:#8b5e3c}
+</style>
+</helmet>
+<div style="width: 390px; height: 1640px; box-sizing: border-box; background: #faf6f0; display: flex; flex-direction: column; overflow: hidden;">
+
+<header style="display: flex; justify-content: space-between; align-items: center; padding: 16px 16px 12px;">
+<a href="#" style="font-family: 'Noto Serif KR', serif; font-size: 22px; font-weight: 700;">적바림</a>
+<a href="#" aria-label="소개" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"></path></svg>
+</a>
+</header>
+
+<nav aria-label="주제" style="display: flex; gap: 8px; padding: 0 16px 16px; overflow: hidden; border-bottom: 1px solid #e8ddd0;">
+<a href="#" style="flex-shrink: 0; min-height: 36px; padding: 0 14px; display: flex; align-items: center; border-radius: 999px; background: #2c1a0e; color: #faf6f0; font-size: 14px;">전체</a>
+<a href="#" style="flex-shrink: 0; min-height: 36px; padding: 0 14px; display: flex; align-items: center; border-radius: 999px; border: 1px solid #d6c7b6; font-size: 14px;">생각</a>
+<a href="#" style="flex-shrink: 0; min-height: 36px; padding: 0 14px; display: flex; align-items: center; border-radius: 999px; border: 1px solid #d6c7b6; font-size: 14px;">일</a>
+<a href="#" style="flex-shrink: 0; min-height: 36px; padding: 0 14px; display: flex; align-items: center; border-radius: 999px; border: 1px solid #d6c7b6; font-size: 14px;">배움</a>
+<a href="#" style="flex-shrink: 0; min-height: 36px; padding: 0 14px; display: flex; align-items: center; border-radius: 999px; border: 1px solid #d6c7b6; font-size: 14px;">묵상</a>
+<a href="#" style="flex-shrink: 0; min-height: 36px; padding: 0 14px; display: flex; align-items: center; border-radius: 999px; border: 1px solid #d6c7b6; font-size: 14px;">독서</a>
+<a href="#" style="flex-shrink: 0; min-height: 36px; padding: 0 14px; display: flex; align-items: center; border-radius: 999px; border: 1px solid #d6c7b6; font-size: 14px;">상상</a>
+</nav>
+
+<section style="display: flex; flex-direction: column; gap: 16px; padding: 24px 16px 0;">
+<a href="MobileSheet.dc.html" style="display: flex; flex-direction: column; gap: 12px;">
+<div style="height: 420px; border-radius: 8px; background: #3d2a1c; color: #f5ead9; display: flex; flex-direction: column; justify-content: space-between; padding: 28px 24px; box-sizing: border-box;">
+<span style="font-size: 12px; letter-spacing: 2px;">일하며 배운 것</span>
+<span style="font-family: 'Noto Serif KR', serif; font-size: 30px; font-weight: 700; line-height: 1.35;">[긴 글 제목 — 표지에 제목이 찍힙니다]</span>
+<span style="font-size: 13px; color: #d8c4a8;">적바림 · 9월 25일</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 4px;">
+<span style="font-family: 'Noto Serif KR', serif; font-size: 19px; font-weight: 700; line-height: 1.4;">[긴 글 제목]</span>
+<span style="font-size: 13px; color: #6b4f3a;">일하며 배운 것 · 6분</span>
+</div>
+</a>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 12px; padding: 32px 0 0;">
+<div style="display: flex; justify-content: space-between; align-items: baseline; padding: 0 16px;">
+<h2 style="margin: 0; font-family: 'Noto Serif KR', serif; font-size: 20px; font-weight: 700;">최근 글</h2>
+<a href="#" style="font-size: 13px; color: #6b4f3a;">모두 보기</a>
+</div>
+<div style="display: flex; gap: 12px; padding: 0 16px; overflow: hidden;">
+<a href="MobileSheet.dc.html" style="flex-shrink: 0; width: 200px; display: flex; flex-direction: column; gap: 10px;">
+<div style="height: 260px; border-radius: 8px; background: #e9dcc8; display: flex; flex-direction: column; justify-content: space-between; padding: 18px; box-sizing: border-box;">
+<span style="font-size: 11px; letter-spacing: 2px; color: #6b4f3a;">독서</span>
+<span style="font-family: 'Noto Serif KR', serif; font-size: 20px; font-weight: 700; line-height: 1.4;">[독후감 제목]</span>
+<span style="font-size: 12px; color: #6b4f3a;">[책 · 저자]</span>
+</div>
+<span style="font-size: 13px; color: #6b4f3a;">독서 · 9분</span>
+</a>
+<a href="MobileSheet.dc.html" style="flex-shrink: 0; width: 200px; display: flex; flex-direction: column; gap: 10px;">
+<div style="height: 260px; border-radius: 8px; background: #5a6b55; color: #eef1e8; display: flex; flex-direction: column; justify-content: space-between; padding: 18px; box-sizing: border-box;">
+<span style="font-size: 11px; letter-spacing: 2px;">상상</span>
+<span style="font-family: 'Noto Serif KR', serif; font-size: 20px; font-weight: 700; line-height: 1.4;">[단편·연재 제목]</span>
+<span style="font-size: 12px; color: #d3dccb;">[연재 회차]</span>
+</div>
+<span style="font-size: 13px; color: #6b4f3a;">상상 · 12분</span>
+</a>
+</div>
+</section>
+
+<section style="display: flex; flex-direction: column; padding: 36px 16px 0;">
+<h2 style="margin: 0 0 4px; font-family: 'Noto Serif KR', serif; font-size: 20px; font-weight: 700;">짧은 노트</h2>
+<article style="display: flex; flex-direction: column; gap: 8px; padding: 20px 0; border-bottom: 1px solid #e8ddd0;">
+<span style="font-size: 12px; color: #8a6f58;">9월 27일 · 생각</span>
+<p style="margin: 0; font-family: 'Noto Serif KR', serif; font-size: 17px; line-height: 1.75;">[짧은 메모 본문이 그대로 보입니다]</p>
+</article>
+<article style="display: flex; flex-direction: column; gap: 8px; padding: 20px 0; border-bottom: 1px solid #e8ddd0;">
+<span style="font-size: 12px; color: #8a6f58;">9월 24일 · 묵상</span>
+<p style="margin: 0; font-family: 'Noto Serif KR', serif; font-size: 17px; line-height: 1.75;">[짧은 메모 본문]</p>
+</article>
+<article style="display: flex; flex-direction: column; gap: 8px; padding: 20px 0;">
+<span style="font-size: 12px; color: #8a6f58;">9월 22일 · 배움</span>
+<p style="margin: 0; font-family: 'Noto Serif KR', serif; font-size: 17px; line-height: 1.75;">[짧은 메모 본문]</p>
+</article>
+</section>
+
+<section style="display: flex; flex-direction: column; gap: 12px; padding: 28px 0 0;">
+<h2 style="margin: 0; padding: 0 16px; font-family: 'Noto Serif KR', serif; font-size: 20px; font-weight: 700;">책장</h2>
+<div style="display: flex; gap: 10px; padding: 0 16px; overflow: hidden;">
+<a href="MobileSheet.dc.html" aria-label="[책 1]" style="flex-shrink: 0; width: 88px; height: 128px; border-radius: 4px; background: #c9b08e;"></a>
+<a href="MobileSheet.dc.html" aria-label="[책 2]" style="flex-shrink: 0; width: 88px; height: 128px; border-radius: 4px; background: #7c5a3e;"></a>
+<a href="MobileSheet.dc.html" aria-label="[책 3]" style="flex-shrink: 0; width: 88px; height: 128px; border-radius: 4px; background: #9fae93;"></a>
+<a href="MobileSheet.dc.html" aria-label="[책 4]" style="flex-shrink: 0; width: 88px; height: 128px; border-radius: 4px; background: #d9c7ae;"></a>
+</div>
+</section>
+
+<footer style="margin-top: auto; padding: 32px 16px 28px; display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #6b4f3a;">
+<span style="font-family: 'Noto Serif KR', serif; font-size: 15px; color: #2c1a0e;">적바림</span>
+<span>나중에 참고하려고 간단히 글로 적어 둠.</span>
+</footer>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1640}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
