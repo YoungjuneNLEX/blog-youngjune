@@ -2,6 +2,7 @@ import { auth } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
 import { getSiteConfig, mergeConfig } from '@/lib/settings'
 import { NextResponse } from 'next/server'
+import { revalidatePublicPages } from '@/lib/revalidate'
 
 export async function GET() {
   const config = await getSiteConfig()
@@ -22,5 +23,7 @@ export async function POST(req: Request) {
     .upsert({ key: 'site_config', value: JSON.stringify(config) }, { onConflict: 'key' })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  revalidatePublicPages()
   return NextResponse.json({ ok: true, config })
 }

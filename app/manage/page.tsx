@@ -4,6 +4,9 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import ManageClient from '@/components/ManageClient'
 
+// 관리 화면은 캐시하지 않는다. 항상 지금 DB 상태를 본다.
+export const dynamic = 'force-dynamic'
+
 export default async function ManagePage() {
   const session = await auth()
   if (!session) redirect('/')

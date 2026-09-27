@@ -1,37 +1,55 @@
-import { auth } from '@/lib/auth'
-import { supabaseAdmin } from '@/lib/supabase'
-import { notFound, redirect } from 'next/navigation'
+import { supabaseAdmin, assertDbOk } from '@/lib/supabase'
+import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import PostActions from '@/components/PostActions'
 
+// 홈과 같은 규칙. 캐시해 두고 5분마다, 글이 바뀌면 즉시 다시 만든다.
+export const revalidate = 300
+
+/**
+ * 공개된 글을 빌드 때 미리 만들어 둔다.
+ * 이래야 각 글 페이지도 캐시에 남아, DB 가 잠시 멈춰도 계속 읽을 수 있다.
+ * 목록에 없는 새 글은 첫 요청 때 만들어져 캐시된다. (dynamicParams 기본값)
+ * 빌드 환경에 DB 자격증명이 없으면 빈 목록으로 두고 넘어간다.
+ */
+export async function generateStaticParams() {
+  const { data } = await supabaseAdmin
+    .from('posts')
+    .select('id')
+    .eq('published', true)
+    .eq('visibility', 'public')
+
+  return (data || []).map(p => ({ id: p.id as string }))
+}
+
 export default async function PostPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const session = await auth()
 
-  const { data: post } = await supabaseAdmin
+  // 캐시되는 페이지라 로그인 여부를 알 수 없다. 공개된 글만 싣는다.
+  const { data: post, error } = await supabaseAdmin
     .from('posts')
     .select('*, author:profiles(name)')
     .eq('id', id)
     .eq('published', true)
-    .single()
+    .eq('visibility', 'public')
+    .maybeSingle()
 
+  assertDbOk(error, '글 상세')
   if (!post) notFound()
-  if (post.visibility === 'members' && !session) redirect('/')
-
-  // 작성자 본인이거나 관리자면 수정/삭제 가능
-  const canManage = session?.user?.role === 'admin' || session?.user?.id === post.author_id
 
   // 같은 책(첫 태그) 내 이전글/다음글
   const bookTag = post.tags?.[0]
   let prev = null, next = null
 
   if (bookTag) {
-    const { data: siblings } = await supabaseAdmin
+    const { data: siblings, error: siblingError } = await supabaseAdmin
       .from('posts')
       .select('id, title, created_at')
       .eq('published', true)
+      .eq('visibility', 'public')
       .contains('tags', [bookTag])
       .order('created_at', { ascending: true })
+    assertDbOk(siblingError, '글 상세/앞뒤글')
 
     if (siblings) {
       const idx = siblings.findIndex(p => p.id === id)
@@ -49,7 +67,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
           className="hover:opacity-70 transition inline-flex items-center gap-1">
           ← 책방으로
         </Link>
-        <PostActions postId={post.id} title={post.title} canManage={canManage} />
+        <PostActions postId={post.id} title={post.title} authorId={post.author_id} />
       </div>
 
       <article>

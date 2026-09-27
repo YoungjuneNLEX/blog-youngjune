@@ -1,6 +1,7 @@
 import { auth } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
 import { NextResponse } from 'next/server'
+import { revalidatePublicPages } from '@/lib/revalidate'
 
 export async function POST(req: Request) {
   // 책 정보 수정은 관리자만
@@ -16,5 +17,7 @@ export async function POST(req: Request) {
     .upsert({ title, cover_url, genre, description }, { onConflict: 'title' })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  revalidatePublicPages()
   return NextResponse.json({ ok: true })
 }

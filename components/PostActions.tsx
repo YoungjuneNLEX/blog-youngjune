@@ -2,13 +2,20 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 
-export default function PostActions({ postId, title, canManage }: {
+// 글 상세는 캐시되는 정적 페이지라, 수정·삭제 버튼 노출 여부를 서버에서 정할 수 없다.
+// 브라우저에서 세션을 보고 판단한다. (실제 권한은 API 가 다시 검사한다)
+export default function PostActions({ postId, title, authorId }: {
   postId: string
   title: string
-  canManage: boolean
+  authorId: string | null
 }) {
+  const { data: session } = useSession()
+  const canManage =
+    session?.user?.role === 'admin' ||
+    (!!session?.user?.id && session.user.id === authorId)
   const router = useRouter()
   const [copied, setCopied] = useState(false)
   const [deleting, setDeleting] = useState(false)

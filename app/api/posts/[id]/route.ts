@@ -1,6 +1,7 @@
 import { auth } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
 import { NextResponse } from 'next/server'
+import { revalidatePublicPages } from '@/lib/revalidate'
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -59,5 +60,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     console.error('[PATCH posts] error:', JSON.stringify(error))
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
+
+  revalidatePublicPages()
   return NextResponse.json(data)
 }

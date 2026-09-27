@@ -4,7 +4,6 @@ import './globals.css'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import { SessionProvider } from 'next-auth/react'
-import { auth } from '@/lib/auth'
 import { getSiteConfig, themeToCssVars } from '@/lib/settings'
 
 const geist = Geist({ subsets: ['latin'] })
@@ -36,7 +35,9 @@ export async function generateViewport(): Promise<Viewport> {
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const session = await auth()
+  // 여기서 auth() 를 부르면 쿠키를 읽게 되어 모든 페이지가 매 요청 동적 렌더링된다.
+  // 로그인 상태는 SessionProvider 가 브라우저에서 /api/auth/session 으로 받아온다.
+  // (헤더가 아주 잠깐 로그아웃 상태로 보였다가 채워진다)
   const config = await getSiteConfig()
   const themeVars = themeToCssVars(config.theme)
 
@@ -54,7 +55,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body className={`${geist.className} min-h-screen`}
         style={{ background: 'var(--bg)', ...themeVars } as React.CSSProperties}>
-        <SessionProvider session={session}>
+        <SessionProvider>
           <Header siteName={config.siteName} siteEyebrow={config.siteEyebrow} />
           <main>{children}</main>
           <Footer siteName={config.footerName} />
