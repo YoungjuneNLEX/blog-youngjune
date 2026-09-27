@@ -30,13 +30,20 @@ const X_TEXT_LIMIT = 250
  * 옛 서재관리(/manage)를 여기로 합쳤다.
  */
 export default function NotesWarehouse({
-  rows, topics,
-}: { rows: WarehouseRow[]; topics: Topic[] }) {
+  rows, topics, templates, grown,
+}: {
+  rows: WarehouseRow[]
+  topics: Topic[]
+  templates: { id: string; name: string }[]
+  grown: string[]          // 이미 초안으로 자란 메모
+}) {
   const router = useRouter()
   const [filter, setFilter] = useState<Filter>({ type: 'all' })
   const [picked, setPicked] = useState<Set<string>>(new Set())
   const [busy, setBusy] = useState(false)
   const [topicOpen, setTopicOpen] = useState(false)
+  const [templateId, setTemplateId] = useState('')
+  const grownSet = useMemo(() => new Set(grown), [grown])
 
   const shown = useMemo(() => rows.filter(r => {
     switch (filter.type) {
@@ -83,6 +90,35 @@ export default function NotesWarehouse({
     }
     setPicked(new Set())
     router.refresh()
+  }
+
+  /**
+   * 고른 메모를 묶어 긴 글 초안 한 편을 만든다.
+   * 원본 메모는 그대로 남는다. 새 초안은 비공개로 들어가고, 바로 손볼 수 있게 글쓰기 화면으로 간다.
+   */
+  async function compose() {
+    const picks = Array.from(picked)
+    const onlyNotes = picks.filter(id => rows.find(r => r.id === id)?.kind === 'note')
+    if (onlyNotes.length === 0) { alert('메모를 하나 이상 골라주세요. 긴 글은 묶을 수 없습니다.'); return }
+    if (onlyNotes.length !== picks.length
+      && !confirm('고른 것 중 긴 글은 빼고 메모만 묶습니다. 계속할까요?')) return
+
+    setBusy(true)
+    const res = await fetch('/api/compose', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: onlyNotes, templateId: templateId || undefined }),
+    })
+    setBusy(false)
+
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}))
+      alert(d.error || '초안을 만들지 못했습니다.')
+      return
+    }
+    const d = await res.json()
+    setPicked(new Set())
+    router.push(`/write/${d.id}`)
   }
 
   /**
@@ -225,6 +261,7 @@ export default function NotesWarehouse({
                         {formatTime(r.created_at)} · {r.topic || '분류 전'} ·{' '}
                         {r.published ? '공개됨' : '나만 보기'}
                         {r.kind === 'article' && ' · 긴 글'}
+                        {grownSet.has(r.id) && ' · 초안으로 자람'}
                       </span>
                     </label>
                   </div>
@@ -243,8 +280,20 @@ export default function NotesWarehouse({
             </p>
           </div>
 
-          <button className="btn btn-ink" disabled title="5단계에서 만듭니다">
-            묶어서 글 초안 만들기
+          {templates.length > 0 && (
+            <label style={{ display: 'block' }}>
+              <span className="meta" style={{ display: 'block', marginBottom: '4px' }}>템플릿 (선택)</span>
+              <select value={templateId} onChange={e => setTemplateId(e.target.value)}
+                style={{ width: '100%', minHeight: '44px', padding: '0 10px', fontSize: '15px',
+                  border: '1px solid var(--border)', borderRadius: '10px',
+                  background: 'var(--bg)', color: 'var(--text-main)', fontFamily: 'inherit' }}>
+                <option value="">뼈대 없이</option>
+                {templates.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+              </select>
+            </label>
+          )}
+          <button onClick={compose} className="btn btn-ink" disabled={busy || picked.size === 0}>
+            {busy ? '엮는 중…' : '묶어서 글 초안 만들기'}
           </button>
           {actions}
 
@@ -266,6 +315,11 @@ export default function NotesWarehouse({
             <span style={{ fontSize: '14px', fontWeight: 700, marginRight: 'auto' }}>
               {picked.size}개 고름
             </span>
+            <button onClick={compose} disabled={busy} className="btn"
+              style={{ background: 'var(--text-main)', borderColor: 'var(--text-main)',
+                color: 'var(--on-ink)' }}>
+              {busy ? '엮는 중…' : '묶어서 초안'}
+            </button>
             {actions}
             <button onClick={() => setPicked(new Set())} disabled={busy} className="btn"
               style={{ border: 'none' }}>해제</button>

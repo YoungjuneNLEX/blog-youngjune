@@ -108,7 +108,7 @@ export default function SummarySheet({
             </div>
           )}
 
-          {/* 이 글이 나온 메모 — 5단계에서 채워진다. 값이 있을 때만 보인다. */}
+          {/* 이 글이 나온 메모 — 공개한 메모가 있을 때만 보인다 */}
           {data.sourceNotes.length > 0 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               <span className="label">이 글이 나온 메모</span>

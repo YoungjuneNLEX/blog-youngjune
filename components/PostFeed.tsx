@@ -35,7 +35,7 @@ export default function PostFeed({
                 metaText: `${e.topicLabel} · ${e.minutes}분 · ${e.dateText}`,
                 coverMeta: `적바림 · ${e.dateText}`,
                 summary: e.summary.length > 0 ? e.summary : e.excerpt ? [e.excerpt] : [],
-                sourceNotes: [],
+                sourceNotes: e.sourceNotes,
                 items: [],
               })}>
               <Cover title={e.title} topic={e.topic} topics={topics} image={e.image} />

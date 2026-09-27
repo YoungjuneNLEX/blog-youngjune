@@ -3,6 +3,7 @@ import { supabaseAdmin, assertDbOk } from '@/lib/supabase'
 import { getSiteConfig } from '@/lib/settings'
 import { coverImage, toPlainText } from '@/lib/cover'
 import { shortDate, toStoryCard, StoryCard } from '@/lib/public'
+import { loadSourceNotes } from '@/lib/source-notes'
 import HomeStories from '@/components/HomeStories'
 import BookShelf, { ShelfBook } from '@/components/BookShelf'
 
@@ -19,7 +20,7 @@ export default async function HomePage() {
   // 긴 글 — 대표 글 1편 + 가로로 넘길 카드들
   const { data: articles, error: articleError } = await supabaseAdmin
     .from('posts')
-    .select('id, title, topic, content, thumbnail_url, excerpt, summary, created_at, tags')
+    .select('id, title, topic, content, thumbnail_url, excerpt, summary, created_at, tags, source_note_ids')
     .match(PUBLIC).eq('kind', 'article')
     .order('created_at', { ascending: false })
     .limit(5)
@@ -39,7 +40,10 @@ export default async function HomePage() {
     .from('books').select('title, cover_url')
   assertDbOk(bookError, '홈/책')
 
-  const cards: StoryCard[] = (articles || []).map(p => toStoryCard(p, coverImage(p)))
+  // 요약 창의 "이 글이 나온 메모" — 공개한 메모만 읽어 온다
+  const sourceNotes = await loadSourceNotes(articles || [], '홈/나온 메모')
+
+  const cards: StoryCard[] = (articles || []).map(p => toStoryCard(p, coverImage(p), sourceNotes))
 
   const bookCover = new Map((bookRows || []).map(b => [b.title as string, b.cover_url as string | null]))
   const grouped = new Map<string, ShelfBook>()

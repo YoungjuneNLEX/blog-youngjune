@@ -25,7 +25,7 @@ export default function HomeStories({
       metaText: `${label} · ${c.minutes}분 · ${c.dateText}`,
       coverMeta: `적바림 · ${c.dateText}`,
       summary: c.summary.length > 0 ? c.summary : c.excerpt ? [c.excerpt] : [],
-      sourceNotes: [],
+      sourceNotes: c.sourceNotes,
       items: [],
     }
   }

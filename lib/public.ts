@@ -11,6 +11,7 @@ export interface StoryCard {
   minutes: number         // 읽는 데 걸리는 시간(분)
   summary: string[]       // 세 줄 요약 (없으면 빈 배열)
   excerpt: string
+  sourceNotes: { id: string; text: string }[]   // 이 글이 나온 메모 (공개된 것만)
 }
 
 /** 요약 창에 들어가는 내용. 글에도 책에도 쓴다. */
@@ -22,7 +23,7 @@ export interface SheetData {
   metaText: string                                 // 주제 · N분 · 날짜
   coverMeta: string                                // 표지 아래 줄
   summary: string[]
-  sourceNotes: { id: string; text: string }[]      // 이 글이 나온 메모 (5단계에서 채워짐)
+  sourceNotes: { id: string; text: string }[]      // 이 글이 나온 메모 (공개된 것만)
   items: { id: string; title: string; dateText: string }[]  // 책에 묶인 글 목록
 }
 
@@ -54,9 +55,10 @@ export function toStoryCard(
   post: {
     id: string; title: string; topic: string | null; content: string | null
     thumbnail_url: string | null; excerpt: string | null; summary: string | null
-    created_at: string
+    created_at: string; source_note_ids?: string[] | null
   },
   image: string | null,
+  notes?: Map<string, string>,
 ): StoryCard {
   return {
     id: post.id,
@@ -67,5 +69,17 @@ export function toStoryCard(
     minutes: readingMinutes(post.content),
     summary: summaryLines(post.summary),
     excerpt: excerptOf(post, 120),
+    sourceNotes: sourceNotesOf(post.source_note_ids, notes),
   }
+}
+
+/** 초안의 밑이 된 메모 중 "공개된 것"만 추린다. 비공개 메모가 새어 나가면 안 된다. */
+export function sourceNotesOf(
+  ids: string[] | null | undefined,
+  notes?: Map<string, string>,
+): { id: string; text: string }[] {
+  if (!ids?.length || !notes) return []
+  return ids
+    .filter(id => notes.has(id))
+    .map(id => ({ id, text: notes.get(id)! }))
 }

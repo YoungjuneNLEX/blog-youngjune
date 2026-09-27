@@ -1,6 +1,6 @@
 import { coverImage, excerptOf, toPlainText } from './cover'
 import { Topic } from './site-config'
-import { readingMinutes, shortDate, summaryLines } from './public'
+import { readingMinutes, shortDate, sourceNotesOf, summaryLines } from './public'
 
 /** 주제·보관함 목록에 쓰는 한 줄 */
 export interface FeedEntry {
@@ -15,6 +15,7 @@ export interface FeedEntry {
   summary: string[]
   excerpt: string
   text: string          // 메모 본문 (kind='note' 일 때)
+  sourceNotes: { id: string; text: string }[]
 }
 
 interface Row {
@@ -27,9 +28,10 @@ interface Row {
   excerpt: string | null
   summary: string | null
   created_at: string
+  source_note_ids?: string[] | null
 }
 
-export function toFeed(rows: Row[], topics: Topic[]): FeedEntry[] {
+export function toFeed(rows: Row[], topics: Topic[], notes?: Map<string, string>): FeedEntry[] {
   return rows.map(p => ({
     id: p.id,
     kind: p.kind === 'note' ? 'note' : 'article',
@@ -42,5 +44,6 @@ export function toFeed(rows: Row[], topics: Topic[]): FeedEntry[] {
     summary: summaryLines(p.summary),
     excerpt: excerptOf(p, 120),
     text: toPlainText(p.content),
+    sourceNotes: sourceNotesOf(p.source_note_ids, notes),
   }))
 }
