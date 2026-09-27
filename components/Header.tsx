@@ -1,131 +1,114 @@
 'use client'
 
 import Link from 'next/link'
-import { useSession, signIn, signOut } from 'next-auth/react'
-import Image from 'next/image'
 import { useState } from 'react'
+import { usePathname } from 'next/navigation'
+import { useSession, signOut } from 'next-auth/react'
+import { Topic } from '@/lib/site-config'
+import { topicSlug } from '@/lib/cover'
 
-export default function Header({ siteName, siteEyebrow }: { siteName: string; siteEyebrow: string }) {
+/** 관리자에게만 보이는 네 곳 */
+const ADMIN_LINKS = [
+  { href: '/memo', label: '적바림' },
+  { href: '/notes', label: '노트 창고' },
+  { href: '/write', label: '글쓰기' },
+  { href: '/admin/settings', label: '설정' },
+]
+
+export default function Header({ siteName, topics }: { siteName: string; topics: Topic[] }) {
   const { data: session } = useSession()
-  const role = session?.user?.role
-  const canWrite = role === 'admin' || role === 'writer'
-  const isAdmin = role === 'admin'
+  const pathname = usePathname()
+  const isAdmin = session?.user?.role === 'admin'
   const [open, setOpen] = useState(false)
 
-  const linkStyle = { color: 'var(--text-sub)', fontSize: '0.875rem' }
+  // 쓰는 공간은 자체 머리글을 쓴다
+  if (pathname?.startsWith('/memo') || pathname?.startsWith('/notes')) return null
+
+  const onArchive = pathname === '/archive'
+  const current = pathname?.startsWith('/topics/')
+    ? decodeURIComponent(pathname.split('/')[2] || '')
+    : null
 
   return (
-    <header style={{ background: 'var(--bg-header)', borderBottom: '1px solid var(--border)' }}
-      className="sticky top-0 z-50 shadow-sm">
-      <div className="px-4 sm:px-10 h-16 flex items-center justify-between gap-3">
-        <Link href="/" onClick={() => setOpen(false)} className="flex flex-col leading-tight shrink-0">
-          <span style={{ color: 'var(--accent)', fontSize: '0.65rem', letterSpacing: '0.15em' }}
-            className="uppercase font-semibold">{siteEyebrow}</span>
-          <span style={{ color: 'var(--text-main)', fontSize: '1.15rem', fontWeight: 800, letterSpacing: '-0.02em' }}>
-            {siteName}
-          </span>
-        </Link>
+    <header style={{ borderBottom: '1px solid var(--border)' }}>
+      {/* 제호 + 메뉴 */}
+      <div className="wrap"
+        style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          paddingTop: '16px', paddingBottom: '12px' }}>
+        <Link href="/" className="wordmark">{siteName}</Link>
 
-        {/* 데스크톱: 전체 메뉴 가로 나열 */}
-        <nav className="hidden sm:flex items-center gap-5">
-          <Link href="/" style={linkStyle} className="whitespace-nowrap hover:opacity-70 transition">홈</Link>
-          <Link href="/about" style={linkStyle} className="whitespace-nowrap hover:opacity-70 transition">소개</Link>
-          {canWrite && (
-            <>
-              <Link href="/write" style={linkStyle} className="whitespace-nowrap hover:opacity-70 transition">글쓰기</Link>
-              <Link href="/manage" style={linkStyle} className="whitespace-nowrap hover:opacity-70 transition">서재관리</Link>
-            </>
-          )}
+        {/* PC: 주제를 그대로 펼친다 */}
+        <nav className="only-pc" style={{ gap: '28px', fontSize: '15px', alignItems: 'center' }}>
+          <Link href="/archive" style={onArchive ? { color: 'var(--accent)' } : undefined}>전체</Link>
+          {topics.map(t => (
+            <Link key={t.name} href={`/topics/${topicSlug(t.name)}`}
+              style={current === t.name ? { color: 'var(--accent)' } : undefined}>
+              {t.short}
+            </Link>
+          ))}
+          <Link href="/about" style={{ color: 'var(--text-sub)' }}>소개</Link>
           {isAdmin && (
             <>
-              <Link href="/memo" style={linkStyle} className="whitespace-nowrap hover:opacity-70 transition">적바림</Link>
-              <Link href="/notes" style={linkStyle} className="whitespace-nowrap hover:opacity-70 transition">노트 창고</Link>
-              <Link href="/admin/settings" style={linkStyle} className="whitespace-nowrap hover:opacity-70 transition">사이트 설정</Link>
-              <Link href="/admin" style={linkStyle} className="whitespace-nowrap hover:opacity-70 transition">회원관리</Link>
+              <span style={{ width: '1px', height: '14px', background: 'var(--border)' }} />
+              {ADMIN_LINKS.map(l => (
+                <Link key={l.href} href={l.href} style={{ color: 'var(--text-sub)' }}>{l.label}</Link>
+              ))}
+              <button onClick={() => signOut()} className="meta-sub"
+                style={{ background: 'none', border: 'none', cursor: 'pointer' }}>로그아웃</button>
             </>
-          )}
-          {session ? (
-            <div className="flex items-center gap-3">
-              {session.user?.image && (
-                <Image src={session.user.image} alt="프로필" width={30} height={30} className="rounded-full" />
-              )}
-              <button onClick={() => signOut()} style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}
-                className="whitespace-nowrap hover:opacity-70 transition">로그아웃</button>
-            </div>
-          ) : (
-            <button onClick={() => signIn('google')}
-              style={{ background: 'var(--accent)', color: '#fff', fontSize: '0.8rem' }}
-              className="whitespace-nowrap px-4 py-1.5 rounded-full hover:opacity-80 transition font-medium">
-              로그인
-            </button>
           )}
         </nav>
 
-        {/* 모바일: 홈 + 메뉴 버튼(드롭다운) */}
-        <div className="flex sm:hidden items-center gap-1 relative">
-          <Link href="/" onClick={() => setOpen(false)} style={linkStyle}
-            className="whitespace-nowrap px-2 py-1.5 hover:opacity-70 transition">홈</Link>
-          <button onClick={() => setOpen(v => !v)} aria-expanded={open} aria-label="메뉴"
-            style={{ color: 'var(--text-sub)', fontSize: '0.875rem' }}
-            className="whitespace-nowrap px-2 py-1.5 flex items-center gap-1 hover:opacity-70 transition">
-            메뉴
-            <span style={{ fontSize: '0.7rem', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>▾</span>
-          </button>
+        {/* 모바일: 소개(사람 아이콘) + 관리자면 쓰기 메뉴 */}
+        <div className="only-mobile" style={{ position: 'relative', alignItems: 'center' }}>
+          {isAdmin && (
+            <button onClick={() => setOpen(v => !v)} aria-label="쓰는 공간" aria-expanded={open}
+              className="icon-btn">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                strokeWidth="1.8" strokeLinecap="round" aria-hidden>
+                <path d="M4 20h4l10-10-4-4L4 16v4z" /><path d="M13.5 6.5l4 4" />
+              </svg>
+            </button>
+          )}
+          <Link href="/about" aria-label="소개" className="icon-btn">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              strokeWidth="1.8" strokeLinecap="round" aria-hidden>
+              <circle cx="12" cy="8" r="4" /><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" />
+            </svg>
+          </Link>
 
-          {open && (
+          {open && isAdmin && (
             <>
-              {/* 바깥 클릭 시 닫기 */}
-              <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-              <div className="absolute right-0 top-full mt-2 z-50 min-w-[150px] overflow-hidden"
-                style={{ background: 'var(--bg-card)', border: '1px solid var(--border)',
-                  borderRadius: '12px', boxShadow: '0 8px 28px rgba(44,26,14,0.14)' }}>
-                {session?.user?.image && (
-                  <div className="flex items-center gap-2 px-4 py-3"
-                    style={{ borderBottom: '1px solid var(--border-soft)' }}>
-                    <Image src={session.user.image} alt="프로필" width={28} height={28} className="rounded-full" />
-                    <span style={{ color: 'var(--text-main)', fontSize: '0.85rem', fontWeight: 600 }} className="truncate">
-                      {session.user?.name ?? ''}
-                    </span>
-                  </div>
-                )}
-                <Link href="/about" onClick={() => setOpen(false)} style={linkStyle}
-                  className="block px-4 py-3 hover:opacity-70 transition">소개</Link>
-                {canWrite && (
-                  <>
-                    <Link href="/write" onClick={() => setOpen(false)} style={linkStyle}
-                      className="block px-4 py-3 hover:opacity-70 transition">글쓰기</Link>
-                    <Link href="/manage" onClick={() => setOpen(false)} style={linkStyle}
-                      className="block px-4 py-3 hover:opacity-70 transition">서재관리</Link>
-                  </>
-                )}
-                {isAdmin && (
-                  <>
-                    <Link href="/memo" onClick={() => setOpen(false)} style={linkStyle}
-                      className="block px-4 py-3 hover:opacity-70 transition">적바림</Link>
-                    <Link href="/notes" onClick={() => setOpen(false)} style={linkStyle}
-                      className="block px-4 py-3 hover:opacity-70 transition">노트 창고</Link>
-                    <Link href="/admin/settings" onClick={() => setOpen(false)} style={linkStyle}
-                      className="block px-4 py-3 hover:opacity-70 transition">사이트 설정</Link>
-                    <Link href="/admin" onClick={() => setOpen(false)} style={linkStyle}
-                      className="block px-4 py-3 hover:opacity-70 transition">회원관리</Link>
-                  </>
-                )}
-                {session ? (
-                  <button onClick={() => { setOpen(false); signOut() }}
-                    style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}
-                    className="block w-full text-left px-4 py-3 hover:opacity-70 transition"
-                    >로그아웃</button>
-                ) : (
-                  <button onClick={() => { setOpen(false); signIn('google') }}
-                    style={{ color: 'var(--accent)', fontSize: '0.85rem', fontWeight: 600 }}
-                    className="block w-full text-left px-4 py-3 hover:opacity-70 transition"
-                    >로그인</button>
-                )}
+              <div className="fixed inset-0" style={{ zIndex: 40 }} onClick={() => setOpen(false)} />
+              <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 50, minWidth: '11rem',
+                background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '12px',
+                overflow: 'hidden', boxShadow: '0 8px 24px rgba(44,26,14,0.15)' }}>
+                {ADMIN_LINKS.map(l => (
+                  <Link key={l.href} href={l.href} onClick={() => setOpen(false)}
+                    style={{ display: 'block', padding: '12px 16px', fontSize: '15px',
+                      borderBottom: '1px solid var(--border-soft)' }}>{l.label}</Link>
+                ))}
+                <button onClick={() => { setOpen(false); signOut() }}
+                  style={{ display: 'block', width: '100%', textAlign: 'left', padding: '12px 16px',
+                    fontSize: '15px', background: 'none', border: 'none', cursor: 'pointer',
+                    color: 'var(--text-sub)', fontFamily: 'inherit' }}>로그아웃</button>
               </div>
             </>
           )}
         </div>
       </div>
+
+      {/* 모바일: 주제 칩 */}
+      <nav aria-label="주제" className="only-mobile wrap bleed no-scrollbar chip-row"
+        style={{ paddingBottom: '12px' }}>
+        <Link href="/archive" className={`chip${onArchive ? ' chip-on' : ''}`}>전체</Link>
+        {topics.map(t => (
+          <Link key={t.name} href={`/topics/${topicSlug(t.name)}`}
+            className={`chip${current === t.name ? ' chip-on' : ''}`}>
+            {t.short}
+          </Link>
+        ))}
+      </nav>
     </header>
   )
 }

@@ -53,3 +53,24 @@ export function topicSlug(name: string): string {
 export function topicFromSlug(slug: string): string {
   try { return decodeURIComponent(slug) } catch { return slug }
 }
+
+/**
+ * 배경색이 밝은지 판단한다. (독서 #e9dcc8 처럼 밝은 표지에는 어두운 글자를 쓴다)
+ * sRGB 상대 휘도 근사값.
+ */
+export function isLightColor(hex: string): boolean {
+  const h = hex.replace('#', '')
+  const full = h.length === 3 ? h.split('').map(c => c + c).join('') : h
+  const r = parseInt(full.slice(0, 2), 16) / 255
+  const g = parseInt(full.slice(2, 4), 16) / 255
+  const b = parseInt(full.slice(4, 6), 16) / 255
+  const lin = (c: number) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4)
+  return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b) > 0.45
+}
+
+/** 표지 배경 위에 얹을 글자색 한 쌍 (본문용 / 흐린 글씨용) */
+export function coverInk(bg: string): { fg: string; dim: string } {
+  return isLightColor(bg)
+    ? { fg: '#2c1a0e', dim: '#6b4f3a' }
+    : { fg: '#f5ead9', dim: '#d8c4a8' }
+}

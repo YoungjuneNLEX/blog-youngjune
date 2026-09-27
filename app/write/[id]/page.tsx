@@ -23,6 +23,10 @@ export default function EditPage() {
   const [thumbnailPreview, setThumbnailPreview] = useState('')
   const [isBookCover, setIsBookCover] = useState(false)
   const [excerpt, setExcerpt] = useState('')
+  const [topic, setTopic] = useState('')
+  const [topics, setTopics] = useState<{ name: string; short: string; color: string }[]>([])
+  const [summary, setSummary] = useState('')
+  const [summarizing, setSummarizing] = useState(false)
   const [content, setContent] = useState('')
   const [scheduledAt, setScheduledAt] = useState('')
   const [saving, setSaving] = useState(false)
@@ -51,6 +55,8 @@ export default function EditPage() {
         setThumbnailUrl(post.thumbnail_url || '')
         setThumbnailPreview(post.thumbnail_url || '')
         setExcerpt(post.excerpt || '')
+        setTopic(post.topic || '')
+        setSummary(post.summary || '')
         setContent(post.content || '')
         if (post.scheduled_at) setScheduledAt(post.scheduled_at.slice(0, 16))
         const allTags: string[] = post.tags || []
@@ -78,6 +84,28 @@ export default function EditPage() {
     setUploading(false)
   }
 
+  // 주제 목록은 관리자 설정에서 가져온다
+  useEffect(() => {
+    fetch('/api/settings').then(r => r.json())
+      .then(d => setTopics(d.topics || []))
+      .catch(() => {})
+  }, [])
+
+  // 세 줄 요약 만들기 — 만들어 주기만 하고, 저장은 글을 저장할 때 함께 된다
+  async function makeSummary() {
+    if (!content.trim()) { alert('본문을 먼저 작성해주세요.'); return }
+    setSummarizing(true)
+    const res = await fetch('/api/summary', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, content }),
+    })
+    setSummarizing(false)
+    if (!res.ok) { alert('요약을 만들지 못했습니다.'); return }
+    const d = await res.json()
+    setSummary(d.summary || '')
+  }
+
   async function handleReview() {
     if (!content.trim()) { alert('본문을 먼저 작성해주세요.'); return }
     setReviewing(true)
@@ -102,7 +130,7 @@ export default function EditPage() {
     const allTags = [bookTitle, ...extraTags]
 
     const body: any = {
-      title, content, category, visibility, excerpt,
+      title, content, category, visibility, excerpt, topic, summary,
       tags: allTags,
       thumbnail_url: thumbnailUrl || null,
       published: publish,
@@ -124,7 +152,7 @@ export default function EditPage() {
         })
       }
       setStatus(publish ? '발행 완료!' : '저장 완료!')
-      setTimeout(() => router.push('/manage'), 800)
+      setTimeout(() => router.push('/notes'), 800)
     } else {
       setStatus('오류가 발생했습니다.')
     }
@@ -205,6 +233,31 @@ export default function EditPage() {
             <select value={category} onChange={e => setCategory(e.target.value)} style={inputStyle}>
               {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
+          </div>
+          {/* 주제 — 적바림의 분류. 표지 색과 주제 페이지가 이 값을 쓴다. */}
+          <div>
+            <label style={labelStyle}>주제</label>
+            <select value={topic} onChange={e => setTopic(e.target.value)} style={inputStyle}>
+              <option value="">분류 전</option>
+              {topics.map(t => <option key={t.name} value={t.name}>{t.name}</option>)}
+            </select>
+          </div>
+
+          {/* 세 줄 요약 — 발행할 때 한 번 만들어 저장한다. 고칠 수 있다. */}
+          <div style={{ flexBasis: '100%' }}>
+            <label style={labelStyle}>
+              세 줄 요약 (발행하면 요약 창에 보입니다)
+              <button type="button" onClick={makeSummary} disabled={summarizing}
+                style={{ marginLeft: '8px', fontSize: '0.75rem', border: '1px solid var(--border)',
+                  borderRadius: '6px', padding: '2px 8px', background: 'var(--bg-card)',
+                  color: 'var(--accent)', cursor: 'pointer' }}>
+                {summarizing ? '만드는 중…' : '요약 만들기'}
+              </button>
+            </label>
+            <textarea value={summary} onChange={e => setSummary(e.target.value)} rows={3}
+              placeholder="한 줄에 하나씩. 비워 두면 요약 없이 발행됩니다."
+              style={{ ...inputStyle, width: '100%', resize: 'vertical', lineHeight: 1.7,
+                fontFamily: 'inherit' }} />
           </div>
           <div>
             <label style={labelStyle}>태그 (쉼표 구분)</label>

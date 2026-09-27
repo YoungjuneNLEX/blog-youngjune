@@ -51,6 +51,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       tags: body.tags,
       thumbnail_url: body.thumbnail_url,
       published: body.published,
+      topic: body.topic || null,
+      summary: body.summary || null,
     })
     .eq('id', id)
     .select()

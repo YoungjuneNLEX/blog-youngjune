@@ -2,6 +2,7 @@ import { auth } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { supabaseAdmin } from '@/lib/supabase'
 import { getSiteConfig } from '@/lib/settings'
+import { isTodayKST } from '@/lib/date'
 import QuickMemo, { MemoRow } from '@/components/QuickMemo'
 
 // 쓰는 공간은 캐시하지 않는다.
@@ -20,12 +21,15 @@ export default async function MemoPage() {
 
   const config = await getSiteConfig()
 
+  // 넉넉히 가져와 한국 시간 기준 오늘 것만 남긴다
   const { data } = await supabaseAdmin
     .from('posts')
     .select('id, content, topic, created_at')
     .eq('kind', 'note')
     .order('created_at', { ascending: false })
-    .limit(10)
+    .limit(40)
 
-  return <QuickMemo topics={config.topics} recent={(data || []) as MemoRow[]} />
+  const today = ((data || []) as MemoRow[]).filter(m => isTodayKST(m.created_at))
+
+  return <QuickMemo topics={config.topics} today={today} />
 }

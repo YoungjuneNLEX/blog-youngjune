@@ -1,18 +1,15 @@
 import type { Metadata, Viewport } from 'next'
-import { Geist } from 'next/font/google'
 import './globals.css'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import { SessionProvider } from 'next-auth/react'
 import { getSiteConfig, themeToCssVars } from '@/lib/settings'
 
-const geist = Geist({ subsets: ['latin'] })
-
 export async function generateMetadata(): Promise<Metadata> {
   const config = await getSiteConfig()
   return {
     title: config.siteName,
-    description: `${config.siteName} — 법, 일상, 그리고 책 이야기`,
+    description: `${config.siteName} — ${config.heroTitle}`,
     manifest: '/manifest.json',
     appleWebApp: {
       capable: true,
@@ -45,6 +42,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang="ko">
       <head>
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+        {/* 제목·본문 인용은 명조, UI 는 고딕. 한글 웹폰트는 글자 수가 많아
+            self-host 하면 무거우므로 필요한 구간만 내려받게 link 로 부른다. */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap"
+        />
         <script dangerouslySetInnerHTML={{ __html: `
           if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -53,10 +58,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           }
         ` }} />
       </head>
-      <body className={`${geist.className} min-h-screen`}
+      <body className="min-h-screen"
         style={{ background: 'var(--bg)', ...themeVars } as React.CSSProperties}>
         <SessionProvider>
-          <Header siteName={config.siteName} siteEyebrow={config.siteEyebrow} />
+          <Header siteName={config.siteName} topics={config.topics} />
           <main>{children}</main>
           <Footer siteName={config.footerName} />
         </SessionProvider>

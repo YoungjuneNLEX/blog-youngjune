@@ -12,17 +12,19 @@ export const SECTION_LABELS: Record<SectionId, string> = {
 // 적바림 주제 — 글과 메모를 묶는 분류.
 // 표지 이미지가 없는 글은 이 색 위에 제목을 찍어 표지를 만든다. (3단계)
 export interface Topic {
-  name: string
-  color: string
+  name: string   // 저장되는 이름. 노트 창고와 DB 가 쓴다.
+  short: string  // 홈 상단 칩처럼 좁은 자리에 쓰는 짧은 이름
+  color: string  // 표지 배경색
 }
 
+// 색은 시안(docs/design) 기준. 일·독서·상상은 시안에 있던 값 그대로.
 export const DEFAULT_TOPICS: Topic[] = [
-  { name: '생각', color: '#8b5e3c' },
-  { name: '일하며 배운 것', color: '#6b7f5e' },
-  { name: '오늘의 배움', color: '#a9784a' },
-  { name: '말씀 묵상', color: '#7a6ba3' },
-  { name: '독서', color: '#4f7a8c' },
-  { name: '상상', color: '#b06a7a' },
+  { name: '생각',           short: '생각', color: '#4a3728' },
+  { name: '일하며 배운 것', short: '일',   color: '#3d2a1c' },
+  { name: '오늘의 배움',    short: '배움', color: '#8b6f4e' },
+  { name: '말씀 묵상',      short: '묵상', color: '#6b5b7a' },
+  { name: '독서',           short: '독서', color: '#e9dcc8' },
+  { name: '상상',           short: '상상', color: '#5a6b55' },
 ]
 
 // 테마(스킨) 색상 — globals.css 의 CSS 변수와 1:1 대응
@@ -67,13 +69,14 @@ export interface SiteConfig {
   hiddenSections: SectionId[] // 숨길 섹션
 }
 
+// 시안 README 의 색 정의와 1:1
 export const DEFAULT_THEME: ThemeColors = {
   bg: '#faf6f0',
   bgCard: '#fffdf9',
   bgHeader: '#fffdf9',
   textMain: '#2c1a0e',
-  textSub: '#7a5c44',
-  textMuted: '#b09880',
+  textSub: '#6b4f3a',     // 보조
+  textMuted: '#8a6f58',   // 흐린 글자
   accent: '#8b5e3c',
   accentLight: '#c4956a',
   border: '#e8ddd0',
@@ -81,13 +84,13 @@ export const DEFAULT_THEME: ThemeColors = {
 }
 
 export const DEFAULT_CONFIG: SiteConfig = {
-  siteName: '1인 서점',
-  siteEyebrow: "Young June's",
-  heroTitle: '1인 서점',
+  siteName: '적바림',
+  siteEyebrow: 'JEOKBARIM',
+  heroTitle: '적어 두면 남는다',
   heroImage: '/hero.png',
-  latestTitle: '최신 글',
+  latestTitle: '최근 글',
   bookshelfTitle: '책장',
-  footerName: '1인 서점',
+  footerName: '적바림',
   topics: DEFAULT_TOPICS,
   theme: DEFAULT_THEME,
   sectionOrder: ['latest', 'bookshelf', 'sns'],
@@ -147,7 +150,12 @@ export function mergeConfig(partial: Partial<SiteConfig> | null | undefined): Si
   // 주제는 이름이 있는 항목만 남긴다. 하나도 없으면 기본 목록으로 되돌린다.
   const topics = (Array.isArray(p.topics) ? p.topics : [])
     .filter((t): t is Topic => !!t && typeof t.name === 'string' && t.name.trim() !== '')
-    .map(t => ({ name: t.name.trim(), color: t.color || '#8b5e3c' }))
+    .map(t => ({
+      name: t.name.trim(),
+      // 짧은 이름을 안 적었으면 원래 이름을 그대로 쓴다
+      short: (t.short || t.name).trim(),
+      color: t.color || '#8b5e3c',
+    }))
 
   return {
     ...DEFAULT_CONFIG,

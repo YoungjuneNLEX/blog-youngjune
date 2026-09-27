@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Topic } from '@/lib/site-config'
+import { toPlainText } from '@/lib/cover'
 import { formatDay, formatTime } from '@/lib/date'
 
 export interface WarehouseRow {
@@ -17,31 +18,16 @@ export interface WarehouseRow {
 }
 
 type Filter =
-  | { type: 'all' }
-  | { type: 'untagged' }
-  | { type: 'published' }
-  | { type: 'growing' }
-  | { type: 'topic'; name: string }
+  | { type: 'all' } | { type: 'untagged' } | { type: 'published' }
+  | { type: 'growing' } | { type: 'topic'; name: string }
 
-// 본문 HTML 을 미리보기용 평문으로
-function toPlainText(html: string | null): string {
-  if (!html) return ''
-  return html
-    .replace(/<[^>]*>/g, ' ')
-    .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<').replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"').replace(/&#39;/g, "'")
-    .replace(/\s+/g, ' ')
-    .trim()
-}
-
-function dayKey(iso: string) {
-  return formatDay(iso)
-}
+// X 는 링크를 23자로 셈한다. 280 에서 링크와 사이 공백을 빼고 여유를 둔다.
+const X_TEXT_LIMIT = 250
 
 /**
- * 노트 창고 — 적어 둔 것을 날짜별로 펼쳐 놓고, 골라서 처리하는 곳.
+ * 노트 창고 — 적어 둔 것을 날짜별로 펼쳐 놓고 골라서 처리하는 곳.
  * "공개는 나중에 고르는 것"이라는 원칙이 실제로 일어나는 화면이다.
+ * 옛 서재관리(/manage)를 여기로 합쳤다.
  */
 export default function NotesWarehouse({
   rows, topics,
@@ -63,11 +49,10 @@ export default function NotesWarehouse({
     }
   }), [rows, filter])
 
-  // 날짜별로 묶는다 (최신 날짜가 위)
   const byDay = useMemo(() => {
     const map = new Map<string, WarehouseRow[]>()
     for (const r of shown) {
-      const k = dayKey(r.created_at)
+      const k = formatDay(r.created_at)
       if (!map.has(k)) map.set(k, [])
       map.get(k)!.push(r)
     }
@@ -77,8 +62,7 @@ export default function NotesWarehouse({
   function toggle(id: string) {
     setPicked(prev => {
       const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
+      if (next.has(id)) next.delete(id); else next.add(id)
       return next
     })
   }
@@ -91,8 +75,7 @@ export default function NotesWarehouse({
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ids: Array.from(picked), ...body }),
     })
-    setBusy(false)
-    setTopicOpen(false)
+    setBusy(false); setTopicOpen(false)
     if (!res.ok) {
       const d = await res.json().catch(() => ({}))
       alert(d.error || '처리하지 못했습니다.')
@@ -102,182 +85,190 @@ export default function NotesWarehouse({
     router.refresh()
   }
 
-  const filters: { key: string; label: string; value: Filter }[] = [
+  /**
+   * X 글쓰기 창을 연다. X API 는 쓰지 않고 인텐트 주소로 새 창만 연다.
+   * 창은 클릭 처리 안에서 바로 열어야 팝업 차단에 걸리지 않으므로,
+   * 공개 전환은 창을 연 뒤에 보낸다.
+   */
+  function shareToX() {
+    if (picked.size !== 1) { alert('메모 하나만 골라주세요.'); return }
+    const id = Array.from(picked)[0]
+    const row = rows.find(r => r.id === id)
+    if (!row) return
+    if (row.kind !== 'note') { alert('메모만 X에 공유할 수 있습니다.'); return }
+    if (!confirm('X에 공유하면 이 메모는 적바림에서도 공개로 바뀝니다. 계속할까요?')) return
+
+    const url = `${window.location.origin}/posts/${id}`
+    const body = toPlainText(row.content)
+    const text = body.length > X_TEXT_LIMIT
+      ? body.slice(0, X_TEXT_LIMIT - 1).trimEnd() + '…'
+      : body
+
+    window.open(
+      `https://x.com/intent/post?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`,
+      '_blank', 'noopener,noreferrer',
+    )
+    run({ action: 'publish' })
+  }
+
+  const views: { key: string; label: string; value: Filter }[] = [
     { key: 'all', label: '모든 노트', value: { type: 'all' } },
     { key: 'untagged', label: '분류 전', value: { type: 'untagged' } },
     { key: 'published', label: '공개한 것', value: { type: 'published' } },
     { key: 'growing', label: '키우는 중', value: { type: 'growing' } },
-    ...topics.map(t => ({ key: `t:${t.name}`, label: t.name, value: { type: 'topic' as const, name: t.name } })),
   ]
   const activeKey = filter.type === 'topic' ? `t:${filter.name}` : filter.type
+  const pick = (v: Filter) => { setFilter(v); setPicked(new Set()) }
 
-  const chip: React.CSSProperties = {
-    minHeight: '44px', padding: '0 14px', borderRadius: '999px',
-    border: '1px solid var(--border)', background: 'var(--bg-card)',
-    color: 'var(--text-sub)', fontSize: '0.88rem', cursor: 'pointer', whiteSpace: 'nowrap',
-  }
-  const action: React.CSSProperties = {
-    minHeight: '44px', padding: '0 16px', borderRadius: '10px',
-    border: '1px solid var(--border)', background: 'var(--bg-card)',
-    color: 'var(--text-sub)', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer',
-  }
+  const actions = (
+    <>
+      <button onClick={() => run({ action: 'publish' })} disabled={busy} className="btn">
+        선택한 것 공개하기
+      </button>
+      <div style={{ position: 'relative' }}>
+        <button onClick={() => setTopicOpen(v => !v)} disabled={busy} className="btn"
+          style={{ width: '100%' }}>주제 바꾸기</button>
+        {topicOpen && (
+          <div style={{ position: 'absolute', bottom: 'calc(100% + 6px)', right: 0, zIndex: 50,
+            minWidth: '11rem', background: 'var(--bg-card)', border: '1px solid var(--border)',
+            borderRadius: '10px', overflow: 'hidden', boxShadow: '0 8px 24px rgba(44,26,14,0.15)' }}>
+            <button onClick={() => run({ action: 'topic', topic: '' })}
+              style={{ display: 'block', width: '100%', textAlign: 'left', minHeight: '44px',
+                padding: '0 14px', background: 'none', border: 'none', cursor: 'pointer',
+                color: 'var(--text-sub)', fontSize: '15px', fontFamily: 'inherit' }}>
+              분류 전으로
+            </button>
+            {topics.map(t => (
+              <button key={t.name} onClick={() => run({ action: 'topic', topic: t.name })}
+                style={{ display: 'block', width: '100%', textAlign: 'left', minHeight: '44px',
+                  padding: '0 14px', background: 'none', borderTop: '1px solid var(--border-soft)',
+                  borderLeft: 'none', borderRight: 'none', borderBottom: 'none', cursor: 'pointer',
+                  color: 'var(--text-main)', fontSize: '15px', fontFamily: 'inherit' }}>
+                {t.name}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+      <button onClick={shareToX} disabled={busy} className="btn">X에 공유</button>
+      <button onClick={() => { if (confirm(`${picked.size}개를 지울까요? 되돌릴 수 없습니다.`)) run({}, 'DELETE') }}
+        disabled={busy} className="btn" style={{ color: '#a33' }}>삭제</button>
+    </>
+  )
 
   return (
-    <div style={{ maxWidth: '760px', margin: '0 auto', padding: '1.25rem 1rem 6rem' }}>
-
-      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between',
-        gap: '12px', marginBottom: '1rem' }}>
-        <h1 style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--text-main)',
-          letterSpacing: '-0.02em' }}>노트 창고</h1>
-        <Link href="/memo" style={{ fontSize: '0.88rem', color: 'var(--accent)', fontWeight: 600 }}
-          className="hover:opacity-70 transition">+ 적바림</Link>
-      </div>
-
-      {/* 보기 필터 */}
-      <div className="no-scrollbar"
-        style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '2px' }}>
-        {filters.map(f => {
-          const on = activeKey === f.key
-          return (
-            <button key={f.key} onClick={() => { setFilter(f.value); setPicked(new Set()) }}
-              style={{ ...chip, ...(on
-                ? { background: 'var(--accent)', borderColor: 'var(--accent)', color: '#fff', fontWeight: 600 }
-                : {}) }}>
-              {f.label}
-            </button>
-          )
-        })}
-      </div>
-
-      <p style={{ fontSize: '0.8rem', color: 'var(--text-sub)', margin: '12px 0' }}>
-        {shown.length}개
-      </p>
-
-      {/* 날짜별 목록 */}
-      {byDay.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '3rem 0', color: 'var(--text-sub)',
-          background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '12px' }}>
-          여기에 해당하는 노트가 없습니다.
+    <div className="wh-page">
+      {/* 창고 머리글 */}
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        gap: '12px', padding: '16px var(--gutter)', borderBottom: '1px solid var(--border)' }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px', minWidth: 0 }}>
+          <Link href="/memo" className="wordmark">적바림</Link>
+          <span className="meta-sub">내 창고</span>
         </div>
-      ) : byDay.map(([day, items]) => (
-        <section key={day} style={{ marginBottom: '1.75rem' }}>
-          <h2 style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-sub)',
-            marginBottom: '8px' }}>{day}</h2>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <Link href="/" style={{ fontSize: '14px' }}>사이트 보기</Link>
+          <Link href="/write" className="btn btn-accent">새 긴 글</Link>
+        </div>
+      </header>
 
-          <ul style={{ listStyle: 'none', padding: 0, margin: 0,
-            display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {items.map(r => {
-              const on = picked.has(r.id)
-              const preview = toPlainText(r.content)
-              return (
-                <li key={r.id}
-                  style={{ background: 'var(--bg-card)',
-                    border: `1px solid ${on ? 'var(--accent)' : 'var(--border)'}`,
-                    borderRadius: '12px', padding: '12px 14px',
-                    display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+      <div className="wh-grid">
+        {/* PC: 왼쪽 보기 목록 */}
+        <nav className="wh-nav">
+          <div className="label" style={{ margin: '0 0 8px 12px' }}>보기</div>
+          {views.map(v => (
+            <button key={v.key} onClick={() => pick(v.value)}
+              className={activeKey === v.key ? 'on' : undefined}>{v.label}</button>
+          ))}
+          <div className="label" style={{ margin: '24px 0 8px 12px' }}>주제</div>
+          {topics.map(t => (
+            <button key={t.name} onClick={() => pick({ type: 'topic', name: t.name })}
+              className={activeKey === `t:${t.name}` ? 'on' : undefined}>{t.name}</button>
+          ))}
+        </nav>
 
-                  <label style={{ minWidth: '44px', minHeight: '44px', display: 'flex',
-                    alignItems: 'center', justifyContent: 'center', margin: '-12px 0 -12px -14px',
-                    cursor: 'pointer', flexShrink: 0 }}>
-                    <input type="checkbox" checked={on} onChange={() => toggle(r.id)}
-                      style={{ width: '20px', height: '20px', accentColor: 'var(--accent)' }} />
-                  </label>
+        <main className="wh-main" style={{ padding: '20px var(--gutter) 96px' }}>
+          {/* 모바일: 가로 칩 */}
+          <div className="wh-chips chip-row bleed no-scrollbar" style={{ marginBottom: '12px' }}>
+            {views.map(v => (
+              <button key={v.key} onClick={() => pick(v.value)}
+                className={`chip${activeKey === v.key ? ' chip-on' : ''}`}>{v.label}</button>
+            ))}
+            {topics.map(t => (
+              <button key={t.name} onClick={() => pick({ type: 'topic', name: t.name })}
+                className={`chip${activeKey === `t:${t.name}` ? ' chip-on' : ''}`}>{t.short}</button>
+            ))}
+          </div>
 
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    {r.kind === 'article' ? (
-                      <Link href={`/write/${r.id}`}
-                        style={{ color: 'var(--text-main)', fontWeight: 700, fontSize: '0.98rem' }}
-                        className="hover:underline">
-                        {r.title || '(제목 없음)'}
-                      </Link>
-                    ) : (
-                      <p style={{ color: 'var(--text-main)', fontSize: '0.95rem', lineHeight: 1.7,
-                        whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>{preview}</p>
-                    )}
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px',
-                      flexWrap: 'wrap', marginTop: '8px' }}>
-                      <span style={{ fontSize: '0.72rem', padding: '2px 8px', borderRadius: '999px',
-                        border: '1px solid var(--border)', color: 'var(--text-sub)' }}>
-                        {r.kind === 'note' ? '메모' : '긴 글'}
+          {byDay.length === 0 ? (
+            <p className="meta-sub" style={{ padding: '32px 0' }}>여기에 해당하는 노트가 없습니다.</p>
+          ) : byDay.map(([day, items]) => (
+            <section key={day}>
+              <div className="wh-day">{day}</div>
+              {items.map(r => {
+                const on = picked.has(r.id)
+                return (
+                  <div key={r.id} className="wh-row">
+                    <input type="checkbox" id={`n-${r.id}`} checked={on} onChange={() => toggle(r.id)} />
+                    <label htmlFor={`n-${r.id}`}>
+                      {r.kind === 'article' ? (
+                        <span className="wh-text" style={{ fontWeight: 700 }}>
+                          {r.title || '(제목 없음)'}
+                          <Link href={`/write/${r.id}`} onClick={e => e.stopPropagation()}
+                            style={{ marginLeft: '8px', fontSize: '13px', color: 'var(--accent)' }}>
+                            고치기
+                          </Link>
+                        </span>
+                      ) : (
+                        <span className="wh-text">{toPlainText(r.content)}</span>
+                      )}
+                      <span className="meta">
+                        {formatTime(r.created_at)} · {r.topic || '분류 전'} ·{' '}
+                        {r.published ? '공개됨' : '나만 보기'}
+                        {r.kind === 'article' && ' · 긴 글'}
                       </span>
-                      <span style={{ fontSize: '0.72rem', padding: '2px 8px', borderRadius: '999px',
-                        border: '1px solid var(--border)',
-                        color: r.topic ? 'var(--accent)' : 'var(--text-sub)' }}>
-                        {r.topic || '분류 전'}
-                      </span>
-                      <span style={{ fontSize: '0.72rem', padding: '2px 8px', borderRadius: '999px',
-                        background: r.published ? '#e6f4ea' : 'var(--border-soft)',
-                        color: r.published ? '#3f7d54' : 'var(--text-sub)' }}>
-                        {r.published ? '공개' : '비공개'}
-                      </span>
-                      <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)' }}>
-                        {formatTime(r.created_at)}
-                      </span>
-                    </div>
+                    </label>
                   </div>
-                </li>
-              )
-            })}
-          </ul>
-        </section>
-      ))}
+                )
+              })}
+            </section>
+          ))}
+        </main>
 
-      {/* 고른 것 처리 — 화면 아래 고정 */}
+        {/* PC: 오른쪽 처리 패널 */}
+        <aside className="wh-aside">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <div className="label">선택한 메모 {picked.size}개</div>
+            <p style={{ margin: 0, fontSize: '14px', lineHeight: 1.7, color: 'var(--quote)' }}>
+              같은 흐름의 메모를 골라 한 편의 글로 키웁니다.
+            </p>
+          </div>
+
+          <button className="btn btn-ink" disabled title="5단계에서 만듭니다">
+            묶어서 글 초안 만들기
+          </button>
+          {actions}
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px',
+            paddingTop: '20px', borderTop: '1px solid var(--border-soft)' }}>
+            <div className="label">규칙</div>
+            <p style={{ margin: 0, fontSize: '13px', lineHeight: 1.7, color: 'var(--quote)' }}>
+              모든 메모는 나만 보기로 저장됩니다. 공개는 여기서 직접 고를 때만 일어납니다.
+              X에 공유하면 그 메모는 적바림에서도 공개로 바뀝니다.
+            </p>
+          </div>
+        </aside>
+      </div>
+
+      {/* 모바일: 아래 고정 처리 막대 */}
       {picked.size > 0 && (
-        <div style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 40,
-          background: 'var(--bg-card)', borderTop: '1px solid var(--border)',
-          padding: '10px 1rem calc(10px + env(safe-area-inset-bottom))',
-          boxShadow: '0 -6px 20px rgba(44,26,14,0.10)' }}>
-          <div style={{ maxWidth: '760px', margin: '0 auto', display: 'flex',
-            alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '0.88rem', color: 'var(--text-main)', fontWeight: 700,
-              marginRight: 'auto' }}>{picked.size}개 고름</span>
-
-            <button onClick={() => run({ action: 'publish' })} disabled={busy}
-              style={{ ...action, background: 'var(--accent)', borderColor: 'var(--accent)',
-                color: '#fff' }}>공개하기</button>
-
-            <div style={{ position: 'relative' }}>
-              <button onClick={() => setTopicOpen(v => !v)} disabled={busy} style={action}>
-                주제 바꾸기
-              </button>
-              {topicOpen && (
-                <div style={{ position: 'absolute', bottom: 'calc(100% + 6px)', right: 0,
-                  minWidth: '10rem', background: 'var(--bg-card)',
-                  border: '1px solid var(--border)', borderRadius: '10px', overflow: 'hidden',
-                  boxShadow: '0 8px 24px rgba(44,26,14,0.15)' }}>
-                  <button onClick={() => run({ action: 'topic', topic: '' })}
-                    style={{ display: 'block', width: '100%', textAlign: 'left',
-                      minHeight: '44px', padding: '0 14px', background: 'none', border: 'none',
-                      color: 'var(--text-sub)', fontSize: '0.9rem', cursor: 'pointer' }}>
-                    분류 전으로
-                  </button>
-                  {topics.map(t => (
-                    <button key={t.name} onClick={() => run({ action: 'topic', topic: t.name })}
-                      style={{ display: 'block', width: '100%', textAlign: 'left',
-                        minHeight: '44px', padding: '0 14px', background: 'none',
-                        borderTop: '1px solid var(--border-soft)', borderLeft: 'none',
-                        borderRight: 'none', borderBottom: 'none',
-                        color: 'var(--text-main)', fontSize: '0.9rem', cursor: 'pointer' }}>
-                      {t.name}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* 5단계에서 켠다 */}
-            <button disabled title="5단계에서 만듭니다"
-              style={{ ...action, opacity: 0.4, cursor: 'not-allowed' }}>
-              묶어서 글 초안 만들기
-            </button>
-
-            <button onClick={() => { if (confirm(`${picked.size}개를 지울까요? 되돌릴 수 없습니다.`)) run({}, 'DELETE') }}
-              disabled={busy} style={{ ...action, color: '#a33' }}>삭제</button>
-
-            <button onClick={() => setPicked(new Set())} disabled={busy}
-              style={{ ...action, border: 'none', background: 'none' }}>해제</button>
+        <div className="wh-bar">
+          <div className="wh-bar-inner">
+            <span style={{ fontSize: '14px', fontWeight: 700, marginRight: 'auto' }}>
+              {picked.size}개 고름
+            </span>
+            {actions}
+            <button onClick={() => setPicked(new Set())} disabled={busy} className="btn"
+              style={{ border: 'none' }}>해제</button>
           </div>
         </div>
       )}

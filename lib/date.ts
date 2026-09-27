@@ -53,3 +53,10 @@ export function formatDateTime(iso: string): string {
   const t = kstParts(iso)
   return `${t.month}월 ${t.day}일 ${clock(t.hour, t.minute)}`
 }
+
+/** 한국 시간 기준으로 오늘 적은 것인지 */
+export function isTodayKST(iso: string): boolean {
+  const a = kstParts(iso)
+  const b = kstParts(new Date().toISOString())
+  return a.year === b.year && a.month === b.month && a.day === b.day
+}

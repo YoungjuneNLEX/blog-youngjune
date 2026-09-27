@@ -12,7 +12,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
-  const { title, content, category, visibility, published, tags, thumbnail_url, excerpt } = await req.json()
+  const { title, content, category, visibility, published, tags, thumbnail_url, excerpt, topic, summary } = await req.json()
 
   const { data: profile } = await supabaseAdmin
     .from('profiles')
@@ -22,7 +22,13 @@ export async function POST(req: Request) {
 
   const { data, error } = await supabaseAdmin
     .from('posts')
-    .insert({ title, content, category, visibility, published, tags, thumbnail_url, excerpt, author_id: profile?.id })
+    .insert({
+      title, content, category, visibility, published, tags, thumbnail_url, excerpt,
+      topic: topic || null,
+      summary: summary || null,
+      kind: 'article',   // 긴 글. 메모는 /api/notes 로 들어온다
+      author_id: profile?.id,
+    })
     .select()
     .single()
 

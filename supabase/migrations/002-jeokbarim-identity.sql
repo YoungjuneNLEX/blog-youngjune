@@ -9,7 +9,7 @@
 --
 -- 무엇이 바뀌나
 --   1) 사이트 이름·문구·푸터 이름 → 적바림
---   2) 보조 글자색 #b09880 → #8a6f58 (대비 확보. 설계 문서 "디자인" 항목)
+--   2) 보조 글자 #7a5c44 → #6b4f3a, 흐린 글자 #b09880 → #8a6f58 (시안 README 의 색)
 --   3) 옛 서점 문구(최신 글 / 책장 섹션 제목)를 적바림 말로
 --   theme 의 나머지 색과 섹션 순서·숨김 설정은 건드리지 않는다.
 
@@ -32,7 +32,7 @@ set value = (
   || jsonb_build_object(
        'theme',
        coalesce(value::jsonb -> 'theme', '{}'::jsonb)
-         || jsonb_build_object('textMuted', '#8a6f58')
+         || jsonb_build_object('textSub', '#6b4f3a', 'textMuted', '#8a6f58')
      )
 )::text
 where key = 'site_config';
@@ -50,10 +50,12 @@ select
   value::jsonb ->> 'siteEyebrow'           as 영문문구,
   value::jsonb ->> 'heroTitle'             as 한줄,
   value::jsonb ->> 'footerName'            as 푸터,
-  value::jsonb -> 'theme' ->> 'textMuted'  as 보조글자색,
+  value::jsonb -> 'theme' ->> 'textSub'    as 보조,
+  value::jsonb -> 'theme' ->> 'textMuted'  as 흐린글자,
   value::jsonb -> 'theme' ->> 'accent'     as 강조색
 from public.site_settings
 where key = 'site_config';
 
 -- 되돌리기가 필요하면 위 값들을 예전 값으로 다시 update 하면 된다.
--- 예전 값: siteName '1인 서점' / siteEyebrow "Young June's" / textMuted '#b09880'
+-- 예전 값: siteName '1인 서점' / siteEyebrow "Young June's"
+--          textSub '#7a5c44' / textMuted '#b09880'

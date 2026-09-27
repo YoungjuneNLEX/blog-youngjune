@@ -1,34 +1,30 @@
 'use client'
 
-export default function Footer({ siteName = '1인 서점' }: { siteName?: string }) {
+import { usePathname } from 'next/navigation'
+import { useSession, signIn } from 'next-auth/react'
+
+export default function Footer({ siteName = '적바림' }: { siteName?: string }) {
+  const pathname = usePathname()
+  const { data: session } = useSession()
+
+  // 쓰는 공간에는 푸터를 두지 않는다 (시안 Write·Archive 에 없다)
+  if (pathname?.startsWith('/memo') || pathname?.startsWith('/notes')) return null
+
   return (
-    <footer style={{ background: 'var(--bg-card)', borderTop: '1px solid var(--border)',
-      padding: '2rem 4rem', marginTop: '2rem' }}>
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
-        <span style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--text-main)' }}>{siteName}</span>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-          {[
-            { label: '네이버 블로그', href: 'https://blog.naver.com/lawyer_youngjune', prefix: 'N' },
-            { label: '유튜브', href: 'https://www.youtube.com/@사무장박영준', prefix: '▶' },
-            { label: 'X', href: 'https://x.com/youngjune0529', prefix: 'X' },
-            { label: '카카오채널', href: 'https://pf.kakao.com/_ExjlsX/chat', prefix: '💬' },
-          ].map(link => (
-            <a key={link.label} href={link.href} target="_blank" rel="noopener noreferrer"
-              style={{ color: 'var(--text-muted)', fontSize: '0.8rem', textDecoration: 'none',
-                display: 'flex', alignItems: 'center', gap: '5px' }}
-              onMouseEnter={e => ((e.currentTarget as HTMLElement).style.color = 'var(--accent)')}
-              onMouseLeave={e => ((e.currentTarget as HTMLElement).style.color = 'var(--text-muted)')}>
-              <span>{link.prefix}</span>
-              <span className="footer-sns-label">{link.label}</span>
-            </a>
-          ))}
-        </div>
-
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>
-          © 2026 사무장 박영준. 모든 글의 저작권은 저자에게 있습니다.
-        </p>
-      </div>
+    <footer className="wrap"
+      style={{ marginTop: 'auto', paddingTop: '32px', paddingBottom: '28px',
+        display: 'flex', flexDirection: 'column', gap: '6px',
+        fontSize: '13px', color: 'var(--text-sub)' }}>
+      <span className="serif" style={{ fontSize: '15px', color: 'var(--text-main)' }}>{siteName}</span>
+      <span>나중에 참고하려고 간단히 글로 적어 둠.</span>
+      {!session && (
+        <button onClick={() => signIn('google')}
+          style={{ alignSelf: 'flex-start', marginTop: '6px', background: 'none', border: 'none',
+            padding: 0, cursor: 'pointer', fontSize: '13px', color: 'var(--text-muted)',
+            fontFamily: 'inherit' }}>
+          로그인
+        </button>
+      )}
     </footer>
   )
 }
