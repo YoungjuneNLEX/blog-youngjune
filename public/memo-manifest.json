@@ -1,0 +1,16 @@
+{
+  "id": "/memo",
+  "name": "적바림",
+  "short_name": "적바림",
+  "description": "떠오른 것을 바로 적어 두는 곳",
+  "start_url": "/memo",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#faf6f0",
+  "theme_color": "#8b5e3c",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

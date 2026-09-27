@@ -9,6 +9,22 @@ export const SECTION_LABELS: Record<SectionId, string> = {
   sns: 'SNS 더보기',
 }
 
+// 적바림 주제 — 글과 메모를 묶는 분류.
+// 표지 이미지가 없는 글은 이 색 위에 제목을 찍어 표지를 만든다. (3단계)
+export interface Topic {
+  name: string
+  color: string
+}
+
+export const DEFAULT_TOPICS: Topic[] = [
+  { name: '생각', color: '#8b5e3c' },
+  { name: '일하며 배운 것', color: '#6b7f5e' },
+  { name: '오늘의 배움', color: '#a9784a' },
+  { name: '말씀 묵상', color: '#7a6ba3' },
+  { name: '독서', color: '#4f7a8c' },
+  { name: '상상', color: '#b06a7a' },
+]
+
 // 테마(스킨) 색상 — globals.css 의 CSS 변수와 1:1 대응
 export interface ThemeColors {
   bg: string
@@ -45,6 +61,7 @@ export interface SiteConfig {
   latestTitle: string    // 최신 글 섹션 제목
   bookshelfTitle: string // 책장 섹션 제목
   footerName: string     // 푸터에 표시되는 이름
+  topics: Topic[]        // 주제 목록 (관리자 설정에서 편집 — 4단계)
   theme: ThemeColors
   sectionOrder: SectionId[]   // 섹션 표시 순서
   hiddenSections: SectionId[] // 숨길 섹션
@@ -71,6 +88,7 @@ export const DEFAULT_CONFIG: SiteConfig = {
   latestTitle: '최신 글',
   bookshelfTitle: '책장',
   footerName: '1인 서점',
+  topics: DEFAULT_TOPICS,
   theme: DEFAULT_THEME,
   sectionOrder: ['latest', 'bookshelf', 'sns'],
   hiddenSections: [],
@@ -126,9 +144,15 @@ export function mergeConfig(partial: Partial<SiteConfig> | null | undefined): Si
   for (const s of DEFAULT_CONFIG.sectionOrder) {
     if (!valid.includes(s)) valid.push(s)
   }
+  // 주제는 이름이 있는 항목만 남긴다. 하나도 없으면 기본 목록으로 되돌린다.
+  const topics = (Array.isArray(p.topics) ? p.topics : [])
+    .filter((t): t is Topic => !!t && typeof t.name === 'string' && t.name.trim() !== '')
+    .map(t => ({ name: t.name.trim(), color: t.color || '#8b5e3c' }))
+
   return {
     ...DEFAULT_CONFIG,
     ...p,
+    topics: topics.length > 0 ? topics : DEFAULT_TOPICS,
     theme: { ...DEFAULT_THEME, ...(p.theme || {}) },
     sectionOrder: valid,
     hiddenSections: Array.isArray(p.hiddenSections)

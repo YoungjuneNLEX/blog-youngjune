@@ -38,6 +38,8 @@ export default function Header({ siteName, siteEyebrow }: { siteName: string; si
           )}
           {isAdmin && (
             <>
+              <Link href="/memo" style={linkStyle} className="whitespace-nowrap hover:opacity-70 transition">적바림</Link>
+              <Link href="/notes" style={linkStyle} className="whitespace-nowrap hover:opacity-70 transition">노트 창고</Link>
               <Link href="/admin/settings" style={linkStyle} className="whitespace-nowrap hover:opacity-70 transition">사이트 설정</Link>
               <Link href="/admin" style={linkStyle} className="whitespace-nowrap hover:opacity-70 transition">회원관리</Link>
             </>
@@ -98,6 +100,10 @@ export default function Header({ siteName, siteEyebrow }: { siteName: string; si
                 )}
                 {isAdmin && (
                   <>
+                    <Link href="/memo" onClick={() => setOpen(false)} style={linkStyle}
+                      className="block px-4 py-3 hover:opacity-70 transition">적바림</Link>
+                    <Link href="/notes" onClick={() => setOpen(false)} style={linkStyle}
+                      className="block px-4 py-3 hover:opacity-70 transition">노트 창고</Link>
                     <Link href="/admin/settings" onClick={() => setOpen(false)} style={linkStyle}
                       className="block px-4 py-3 hover:opacity-70 transition">사이트 설정</Link>
                     <Link href="/admin" onClick={() => setOpen(false)} style={linkStyle}
