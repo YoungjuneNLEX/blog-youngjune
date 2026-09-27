@@ -50,8 +50,20 @@ export function topicSlug(name: string): string {
   return encodeURIComponent(name)
 }
 
+/**
+ * 주소 조각을 주제 이름으로.
+ * 한글 주소는 환경에 따라 한 번 또는 두 번 인코딩된 채로 들어오므로
+ * 더 이상 바뀌지 않을 때까지 풀어 준다. (한 번만 풀면 %EC... 가 남아 404 가 났음)
+ */
 export function topicFromSlug(slug: string): string {
-  try { return decodeURIComponent(slug) } catch { return slug }
+  let cur = slug
+  for (let i = 0; i < 3; i++) {
+    let next: string
+    try { next = decodeURIComponent(cur) } catch { break }
+    if (next === cur) break
+    cur = next
+  }
+  return cur
 }
 
 /**
