@@ -14,6 +14,12 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     .single()
 
   if (error || !data) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
+  // 미발행 글은 관리자만. 존재 여부도 알리지 않도록 404 로 답한다.
+  if (!data.published && session.user?.role !== 'admin') {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  }
+
   return NextResponse.json(data)
 }
 

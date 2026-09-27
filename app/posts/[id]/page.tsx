@@ -3,7 +3,6 @@ import { supabaseAdmin } from '@/lib/supabase'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import PostActions from '@/components/PostActions'
-import Comments from '@/components/Comments'
 
 export default async function PostPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -126,9 +125,6 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
           )}
         </div>
       )}
-
-      {/* 댓글 */}
-      <Comments postId={post.id} />
     </div>
   )
 }

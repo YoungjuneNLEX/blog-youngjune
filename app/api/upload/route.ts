@@ -3,8 +3,11 @@ import { supabaseAdmin } from '@/lib/supabase'
 import { NextResponse } from 'next/server'
 
 export async function POST(req: Request) {
+  // 파일 업로드는 관리자만 — 로그인만 하면 누구나 올릴 수 있는 상태였다
   const session = await auth()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (session?.user?.role !== 'admin') {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
 
   const formData = await req.formData()
   const file = formData.get('file') as File
