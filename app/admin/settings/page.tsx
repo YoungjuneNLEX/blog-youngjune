@@ -13,7 +13,7 @@ import { coverInk } from '@/lib/cover'
 
 const TEXT_FIELDS: { key: keyof SiteConfig; label: string; hint?: string }[] = [
   { key: 'siteName', label: '제호 (사이트 이름)', hint: '머리글·푸터·브라우저 탭에 쓰입니다' },
-  { key: 'heroTitle', label: '한 줄 소개', hint: '검색 결과의 설명문에 쓰입니다' },
+  { key: 'heroTitle', label: '검색 설명문', hint: '구글 검색 결과에 보이는 사이트 설명입니다. 홈 커버의 한 줄 소개는 아래 "서재 주인"에서 바꿉니다' },
   { key: 'latestTitle', label: '전체 페이지 제목', hint: '/archive 맨 위에 쓰입니다' },
   { key: 'bookshelfTitle', label: '책장 페이지 제목' },
   { key: 'footerName', label: '푸터 이름' },
@@ -285,7 +285,7 @@ export default function SettingsPage() {
                 onChange={e => set('profile', { ...config.profile, name: e.target.value })} />
             </label>
             <label>
-              <span className="meta-sub" style={{ display: 'block', marginBottom: '6px' }}>한 줄 소개</span>
+              <span className="meta-sub" style={{ display: 'block', marginBottom: '6px' }}>한 줄 소개 (홈 커버·소개 페이지에 보임)</span>
               <textarea value={config.profile.bio} rows={2}
                 style={{ ...input, resize: 'vertical', lineHeight: 1.7 }}
                 onChange={e => set('profile', { ...config.profile, bio: e.target.value })} />
