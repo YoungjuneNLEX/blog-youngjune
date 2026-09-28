@@ -123,7 +123,7 @@ export default function AboutPage() {
             <p style={{ color: 'var(--text-muted)', fontSize: '0.68rem', fontWeight: 600,
               letterSpacing: '0.1em', textTransform: 'uppercase' }}>모바일 미리보기</p>
             <div style={{ width: '210px', border: '8px solid #1f1f1f', borderRadius: '28px',
-              overflow: 'hidden', boxShadow: '0 8px 32px rgba(44,26,14,0.2)', background: '#fff' }}>
+              overflow: 'hidden', boxShadow: '0 8px 32px rgba(0,0,0,0.16)', background: '#fff' }}>
               <div style={{ height: '22px', background: '#1f1f1f', display: 'flex',
                 justifyContent: 'center', alignItems: 'center' }}>
                 <div style={{ width: '56px', height: '7px', background: '#111111', borderRadius: '4px' }} />

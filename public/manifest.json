@@ -4,8 +4,8 @@
   "description": "적바림 — 생각을 적고, 적은 것을 열어 둡니다",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#4f7a62",
+  "background_color": "#fbfaf6",
+  "theme_color": "#33517e",
   "orientation": "portrait",
   "icons": [
     {

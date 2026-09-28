@@ -52,7 +52,7 @@ export default function BookTitleInput({ value, onChange }: Props) {
       {open && (filtered.length > 0 || isNew) && (
         <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 100,
           background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '8px',
-          boxShadow: '0 4px 20px rgba(44,26,14,0.12)', marginTop: '4px', overflow: 'hidden' }}>
+          boxShadow: '0 4px 20px rgba(0,0,0,0.12)', marginTop: '4px', overflow: 'hidden' }}>
 
           {filtered.length > 0 && (
             <>
@@ -65,7 +65,7 @@ export default function BookTitleInput({ value, onChange }: Props) {
                   style={{ display: 'block', width: '100%', textAlign: 'left',
                     padding: '8px 12px', fontSize: '0.85rem', color: 'var(--text-main)',
                     background: 'transparent', border: 'none', cursor: 'pointer' }}
-                  onMouseEnter={e => (e.currentTarget.style.background = '#f6f6f4')}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'var(--border-soft)')}
                   onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
                   📚 {b}
                 </button>
@@ -80,7 +80,7 @@ export default function BookTitleInput({ value, onChange }: Props) {
                 background: 'transparent', border: 'none', cursor: 'pointer',
                 borderTop: filtered.length > 0 ? '1px solid var(--border-soft)' : 'none',
                 fontWeight: 600 }}
-              onMouseEnter={e => (e.currentTarget.style.background = '#f6f6f4')}
+              onMouseEnter={e => (e.currentTarget.style.background = 'var(--border-soft)')}
               onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
               + 새 책 "{search.trim()}" 만들기
             </button>

@@ -1,4 +1,4 @@
-import { NEUTRAL_TOPIC, Topic } from './site-config'
+import { NEUTRAL_TOPIC, readableInk, Topic } from './site-config'
 
 /** 본문 HTML 을 미리보기용 평문으로 바꾼다. */
 export function toPlainText(html: string | null | undefined): string {
@@ -39,13 +39,24 @@ export function coverImage(
   return post.thumbnail_url?.trim() || firstImage(post.content) || null
 }
 
-/** 주제의 바탕/글자 짝. 모르는 주제거나 분류 전이면 무채색 짝을 쓴다. */
+/**
+ * 주제의 바탕/글자 짝.
+ * 색을 비워 둔 중분류는 상위 분류 색을 물려받는다.
+ * 모르는 주제거나 분류 전이면 무채색 짝을 쓴다.
+ */
 export function topicPair(
   topic: string | null | undefined, topics: Topic[],
 ): { color: string; ink: string } {
   const found = topic ? topics.find(t => t.name === topic) : undefined
   if (!found) return { ...NEUTRAL_TOPIC }
-  return { color: found.color || NEUTRAL_TOPIC.color, ink: found.ink || NEUTRAL_TOPIC.ink }
+
+  const parent = found.parentId ? topics.find(t => t.id === found.parentId) : undefined
+  const color = found.color || parent?.color || NEUTRAL_TOPIC.color
+  const ink = found.ink
+    || (found.color ? readableInk(found.color) : '')
+    || parent?.ink
+    || readableInk(color)
+  return { color, ink }
 }
 
 /** 주제 바탕색만 필요할 때 */

@@ -6,8 +6,8 @@
   "start_url": "/memo",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#4f7a62",
+  "background_color": "#fbfaf6",
+  "theme_color": "#33517e",
   "orientation": "portrait",
   "icons": [
     {

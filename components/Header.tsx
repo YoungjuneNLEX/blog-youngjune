@@ -4,8 +4,9 @@ import Link from 'next/link'
 import { useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
-import { Topic } from '@/lib/site-config'
-import { topicSlug } from '@/lib/cover'
+import CategoryPanel from '@/components/CategoryPanel'
+import { SEAL_RED, Topic } from '@/lib/site-config'
+import { topicFromSlug } from '@/lib/cover'
 
 /** 관리자에게만 보이는 네 곳 */
 const ADMIN_LINKS = [
@@ -22,13 +23,14 @@ export default function Header({
   const pathname = usePathname()
   const isAdmin = session?.user?.role === 'admin'
   const [open, setOpen] = useState(false)
+  const [cats, setCats] = useState(false)
 
   // 쓰는 공간은 자체 머리글을 쓴다
   if (pathname?.startsWith('/memo') || pathname?.startsWith('/notes')) return null
 
   const onArchive = pathname === '/archive'
   const current = pathname?.startsWith('/topics/')
-    ? decodeURIComponent(pathname.split('/')[2] || '')
+    ? topicFromSlug(pathname.split('/')[2] || '')
     : null
 
   return (
@@ -36,17 +38,23 @@ export default function Header({
       <div className="wrap"
         style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           minHeight: '56px', paddingTop: '6px', paddingBottom: '6px' }}>
-        <Link href="/" className="wordmark">{siteName}</Link>
+        <Link href="/" className="wordmark">
+          {siteName}
+          {/* 인주색 점 — 시안에서 색을 쓰는 유일한 자리 */}
+          <span aria-hidden className="seal" style={{ background: SEAL_RED }} />
+        </Link>
 
-        {/* PC: 주제를 그대로 펼친다 */}
+        {/* PC: 전체 / 주제 ▾ / 책장 / 소개 (주제는 카테고리 화면을 연다) */}
         <nav className="only-pc" style={{ gap: '24px', fontSize: '15px', alignItems: 'center' }}>
           <Link href="/archive" style={onArchive ? { color: 'var(--accent)' } : undefined}>전체</Link>
-          {topics.map(t => (
-            <Link key={t.id} href={`/topics/${topicSlug(t.name)}`}
-              style={current === t.name ? { color: 'var(--accent)' } : undefined}>
-              {t.short}
-            </Link>
-          ))}
+          <button onClick={() => setCats(true)} aria-haspopup="dialog"
+            style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'none',
+              border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'inherit', fontSize: '15px',
+              color: current ? 'var(--accent)' : 'var(--text-main)' }}>
+            {current || '주제'}
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              strokeWidth="2" strokeLinecap="round" aria-hidden><path d="M6 9l6 6 6-6" /></svg>
+          </button>
           {showBookshelf && (
             <Link href="/bookshelf"
               style={pathname?.startsWith('/bookshelf') ? { color: 'var(--accent)' } : undefined}>책장</Link>
@@ -81,11 +89,6 @@ export default function Header({
                 background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '12px',
                 overflow: 'hidden', boxShadow: '0 8px 24px rgba(0,0,0,0.12)' }}>
                 <MenuLink href="/archive" onClick={() => setOpen(false)}>전체</MenuLink>
-                {topics.map(t => (
-                  <MenuLink key={t.id} href={`/topics/${topicSlug(t.name)}`} onClick={() => setOpen(false)}>
-                    {t.name}
-                  </MenuLink>
-                ))}
                 {showBookshelf && <MenuLink href="/bookshelf" onClick={() => setOpen(false)}>책장</MenuLink>}
                 <MenuLink href="/about" onClick={() => setOpen(false)}>소개</MenuLink>
                 {isAdmin && ADMIN_LINKS.map(l => (
@@ -102,6 +105,10 @@ export default function Header({
           )}
         </div>
       </div>
+
+      {cats && (
+        <CategoryPanel topics={topics} current={current} onClose={() => setCats(false)} />
+      )}
     </header>
   )
 }

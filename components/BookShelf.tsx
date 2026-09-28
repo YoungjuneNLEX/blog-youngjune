@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import SummarySheet from '@/components/SummarySheet'
-import { Topic } from '@/lib/site-config'
+import { PASTEL_PAIRS, Topic } from '@/lib/site-config'
 import { coverInk } from '@/lib/cover'
 import { SheetData } from '@/lib/public'
 
@@ -12,8 +12,8 @@ export interface ShelfBook {
   items: { id: string; title: string; dateText: string }[]
 }
 
-// C안 파스텔 책등 색. 순서대로 돌려 써서 같은 자리의 책은 늘 같은 색이 된다.
-const SPINES = ['#f6e2dc', '#dfeaf5', '#e2f0e5', '#f5ecdc', '#ebe6f5', '#f3e3ee']
+// 파스텔 책등 색. 순서대로 돌려 써서 같은 자리의 책은 늘 같은 색이 된다.
+const SPINES = PASTEL_PAIRS.map(p => p.color)
 
 /** 책장 — 독후감을 쓴 책의 표지. 누르면 요약 창이 뜬다. */
 export default function BookShelf({

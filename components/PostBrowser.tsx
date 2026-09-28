@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import Cover, { Thumb } from '@/components/Cover'
 import SummarySheet from '@/components/SummarySheet'
-import TopicPicker from '@/components/TopicPicker'
+import CategoryPanel from '@/components/CategoryPanel'
 import { Topic } from '@/lib/site-config'
 import { FeedEntry } from '@/lib/feed'
 import { SheetData } from '@/lib/public'
@@ -23,15 +23,14 @@ export default function PostBrowser({
   notePreview?: number        // 글 탭 아래에 짧은 노트를 몇 개 미리 보일지 (홈)
 }) {
   const [tab, setTab] = useState<'article' | 'note'>('article')
-  const [topic, setTopic] = useState<string | null>(null)
   const [album, setAlbum] = useState(true)
   const [pick, setPick] = useState(false)
   const [open, setOpen] = useState<SheetData | null>(null)
 
   const shown = useMemo(() => {
     const kind = showTabs ? tab : 'article'
-    return entries.filter(e => e.kind === kind && (!topic || e.topic === topic))
-  }, [entries, tab, topic, showTabs])
+    return entries.filter(e => e.kind === kind)
+  }, [entries, tab, showTabs])
 
   function sheetOf(e: FeedEntry): SheetData {
     return {
@@ -48,11 +47,11 @@ export default function PostBrowser({
   }
 
   const previewNotes = useMemo(
-    () => entries.filter(e => e.kind === 'note' && (!topic || e.topic === topic)).slice(0, notePreview),
-    [entries, topic, notePreview],
+    () => entries.filter(e => e.kind === 'note').slice(0, notePreview),
+    [entries, notePreview],
   )
 
-  const label = lockedTopic || topic || '전체 주제'
+  const label = lockedTopic || '전체 주제'
   const isNotes = showTabs && tab === 'note'
 
   return (
@@ -67,16 +66,12 @@ export default function PostBrowser({
       )}
 
       <div className="browse-bar">
-        {lockedTopic ? (
-          <span className="topic-pick" style={{ cursor: 'default' }}>{label}</span>
-        ) : (
-          <button type="button" className="topic-pick" onClick={() => setPick(true)}
-            aria-haspopup="dialog">
-            {label}
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-              strokeWidth="2" strokeLinecap="round" aria-hidden><path d="M6 9l6 6 6-6" /></svg>
-          </button>
-        )}
+        <button type="button" className="topic-pick" onClick={() => setPick(true)}
+          aria-haspopup="dialog">
+          {label}
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            strokeWidth="2" strokeLinecap="round" aria-hidden><path d="M6 9l6 6 6-6" /></svg>
+        </button>
 
         {!isNotes && (
           <div className="view-pick">
@@ -168,8 +163,7 @@ export default function PostBrowser({
       )}
 
       {pick && (
-        <TopicPicker topics={topics} current={topic}
-          onPick={t => { setTopic(t); setPick(false) }} onClose={() => setPick(false)} />
+        <CategoryPanel topics={topics} current={lockedTopic} onClose={() => setPick(false)} />
       )}
 
       {open && <SummarySheet data={open} topics={topics} onClose={() => setOpen(null)} />}

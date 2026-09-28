@@ -91,7 +91,7 @@ export default function RichEditor({ content, onChange, highlightWord }: Props) 
       style={{
         padding: '4px 8px', borderRadius: '5px', fontSize: '0.78rem', fontWeight: 600,
         border: active ? '1.5px solid var(--accent)' : '1px solid var(--border)',
-        background: active ? '#f6f6f4' : 'transparent',
+        background: active ? 'var(--border-soft)' : 'transparent',
         color: active ? 'var(--accent)' : 'var(--text-sub)',
         cursor: 'pointer', lineHeight: 1,
       }}

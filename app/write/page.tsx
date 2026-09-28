@@ -6,6 +6,7 @@ import dynamic from 'next/dynamic'
 
 const RichEditor = dynamic(() => import('@/components/RichEditor'), { ssr: false })
 import BookTitleInput from '@/components/BookTitleInput'
+import { childTopics, Topic } from '@/lib/site-config'
 
 const CATEGORIES = ['에세이', '소설', '인문교양', '일상', '여행', '기타']
 
@@ -22,7 +23,7 @@ export default function WritePage() {
   const [isBookCover, setIsBookCover] = useState(false)
   const [excerpt, setExcerpt] = useState('')
   const [topic, setTopic] = useState('')
-  const [topics, setTopics] = useState<{ name: string; short: string; color: string }[]>([])
+  const [topics, setTopics] = useState<Topic[]>([])
   const [summary, setSummary] = useState('')
   const [summarizing, setSummarizing] = useState(false)
   const [templates, setTemplates] = useState<{ id: string; name: string; body: string }[]>([])
@@ -253,7 +254,17 @@ export default function WritePage() {
             <label style={labelStyle}>주제</label>
             <select value={topic} onChange={e => setTopic(e.target.value)} style={inputStyle}>
               <option value="">분류 전</option>
-              {topics.map(t => <option key={t.name} value={t.name}>{t.name}</option>)}
+              {topics.filter(t => !t.parentId).map(parent => {
+                const kids = childTopics(topics, parent.id)
+                return kids.length === 0
+                  ? <option key={parent.id} value={parent.name}>{parent.name}</option>
+                  : (
+                    <optgroup key={parent.id} label={parent.name}>
+                      <option value={parent.name}>{parent.name} (대분류)</option>
+                      {kids.map(k => <option key={k.id} value={k.name}>{k.name}</option>)}
+                    </optgroup>
+                  )
+              })}
             </select>
           </div>
 
@@ -352,7 +363,7 @@ export default function WritePage() {
           <p style={{ color: 'var(--text-muted)', fontSize: '0.68rem', fontWeight: 600,
             letterSpacing: '0.1em', textTransform: 'uppercase' }}>모바일 미리보기</p>
           <div style={{ width: '210px', border: '8px solid #1f1f1f', borderRadius: '28px',
-            overflow: 'hidden', boxShadow: '0 8px 32px rgba(44,26,14,0.2)', background: '#fff' }}>
+            overflow: 'hidden', boxShadow: '0 8px 32px rgba(0,0,0,0.16)', background: '#fff' }}>
             <div style={{ height: '22px', background: '#1f1f1f', display: 'flex',
               justifyContent: 'center', alignItems: 'center' }}>
               <div style={{ width: '56px', height: '7px', background: '#111111', borderRadius: '4px' }} />

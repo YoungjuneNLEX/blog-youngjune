@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { Topic } from '@/lib/site-config'
+import { childTopics, Topic } from '@/lib/site-config'
 import { formatTime } from '@/lib/date'
 
 export interface MemoRow {
@@ -77,15 +77,25 @@ export default function QuickMemo({ topics, today }: { topics: Topic[]; today: M
           value={text} onChange={e => setText(e.target.value)} onKeyDown={onKeyDown}
           placeholder="제목 없이, 한 줄이어도 괜찮아요" />
 
-        {/* 주제 — 안 고르면 '분류 전'으로 들어간다. 다시 누르면 해제된다. */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-          {topics.map(t => {
-            const on = topic === t.name
+        {/* 주제 — 안 고르면 '분류 전'으로 들어간다. 다시 누르면 해제된다.
+            대분류 줄 아래에 그 중분류를 한 칸 들여 붙인다. */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {topics.filter(t => !t.parentId).map(parent => {
+            const kids = childTopics(topics, parent.id)
+            const chip = (t: Topic, sub = false) => {
+              const on = topic === t.name
+              return (
+                <button key={t.id} type="button" onClick={() => setTopic(on ? null : t.name)}
+                  className={`chip${on ? ' chip-on' : ''}${sub ? ' chip-sub' : ''}`}>
+                  {t.short}
+                </button>
+              )
+            }
             return (
-              <button key={t.name} type="button" onClick={() => setTopic(on ? null : t.name)}
-                className={`chip${on ? ' chip-on' : ''}`}>
-                {t.short}
-              </button>
+              <div key={parent.id} style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                {chip(parent)}
+                {kids.map(k => chip(k, true))}
+              </div>
             )
           })}
         </div>

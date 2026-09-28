@@ -2,11 +2,11 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import { useSession } from 'next-auth/react'
-import TopicPicker from '@/components/TopicPicker'
+import CategoryPanel from '@/components/CategoryPanel'
 import { Topic } from '@/lib/site-config'
-import { topicSlug } from '@/lib/cover'
+import { topicFromSlug } from '@/lib/cover'
 
 /** 쓰는 공간에는 두지 않는다 (자체 머리글을 쓴다) */
 const WRITING = ['/memo', '/notes', '/write', '/admin']
@@ -20,7 +20,6 @@ export default function BottomNav({
   topics, showBookshelf,
 }: { topics: Topic[]; showBookshelf: boolean }) {
   const pathname = usePathname() || '/'
-  const router = useRouter()
   const { data: session } = useSession()
   const [pick, setPick] = useState(false)
 
@@ -28,6 +27,9 @@ export default function BottomNav({
 
   const isAdmin = session?.user?.role === 'admin'
   const onTopics = pathname.startsWith('/topics') || pathname === '/archive'
+  // 지금 보고 있는 분류 (카테고리 화면에서 쪽빛으로 표시된다)
+  const currentTopic = pathname.startsWith('/topics/')
+    ? topicFromSlug(pathname.split('/')[2] || '') : null
   const cols = 3 + (isAdmin ? 1 : 0) + (showBookshelf ? 1 : 0)
 
   return (
@@ -77,11 +79,7 @@ export default function BottomNav({
       </nav>
 
       {pick && (
-        <TopicPicker topics={topics} current={null} onClose={() => setPick(false)}
-          onPick={t => {
-            setPick(false)
-            router.push(t ? `/topics/${topicSlug(t)}` : '/archive')
-          }} />
+        <CategoryPanel topics={topics} current={currentTopic} onClose={() => setPick(false)} />
       )}
     </>
   )

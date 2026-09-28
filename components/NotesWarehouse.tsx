@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Topic } from '@/lib/site-config'
+import { orderedTopics, Topic, topicNamesUnder } from '@/lib/site-config'
 import { toPlainText } from '@/lib/cover'
 import { formatDay, formatTime } from '@/lib/date'
 
@@ -51,10 +51,11 @@ export default function NotesWarehouse({
       case 'published': return r.published
       // 키우는 중 = 쓰다 만 긴 글
       case 'growing':   return r.kind === 'article' && !r.published
-      case 'topic':     return r.topic === filter.name
+      // 대분류를 고르면 그 아래 중분류 글까지 함께 보여 준다
+      case 'topic':     return !!r.topic && topicNamesUnder(topics, filter.name).includes(r.topic)
       default:          return true
     }
-  }), [rows, filter])
+  }), [rows, filter, topics])
 
   const byDay = useMemo(() => {
     const map = new Map<string, WarehouseRow[]>()
@@ -167,19 +168,21 @@ export default function NotesWarehouse({
         {topicOpen && (
           <div style={{ position: 'absolute', bottom: 'calc(100% + 6px)', right: 0, zIndex: 50,
             minWidth: '11rem', background: 'var(--bg-card)', border: '1px solid var(--border)',
-            borderRadius: '10px', overflow: 'hidden', boxShadow: '0 8px 24px rgba(44,26,14,0.15)' }}>
+            borderRadius: '10px', overflow: 'hidden', boxShadow: '0 8px 24px rgba(0,0,0,0.12)' }}>
             <button onClick={() => run({ action: 'topic', topic: '' })}
               style={{ display: 'block', width: '100%', textAlign: 'left', minHeight: '44px',
                 padding: '0 14px', background: 'none', border: 'none', cursor: 'pointer',
                 color: 'var(--text-sub)', fontSize: '15px', fontFamily: 'inherit' }}>
               분류 전으로
             </button>
-            {topics.map(t => (
-              <button key={t.name} onClick={() => run({ action: 'topic', topic: t.name })}
+            {orderedTopics(topics).map(({ topic: t, depth }) => (
+              <button key={t.id} onClick={() => run({ action: 'topic', topic: t.name })}
                 style={{ display: 'block', width: '100%', textAlign: 'left', minHeight: '44px',
-                  padding: '0 14px', background: 'none', borderTop: '1px solid var(--border-soft)',
+                  padding: depth === 1 ? '0 14px 0 30px' : '0 14px', background: 'none',
+                  borderTop: '1px solid var(--border-soft)',
                   borderLeft: 'none', borderRight: 'none', borderBottom: 'none', cursor: 'pointer',
-                  color: 'var(--text-main)', fontSize: '15px', fontFamily: 'inherit' }}>
+                  color: 'var(--text-main)', fontSize: depth === 1 ? '14px' : '15px',
+                  fontFamily: 'inherit' }}>
                 {t.name}
               </button>
             ))}
@@ -216,9 +219,12 @@ export default function NotesWarehouse({
               className={activeKey === v.key ? 'on' : undefined}>{v.label}</button>
           ))}
           <div className="label" style={{ margin: '24px 0 8px 12px' }}>주제</div>
-          {topics.map(t => (
-            <button key={t.name} onClick={() => pick({ type: 'topic', name: t.name })}
-              className={activeKey === `t:${t.name}` ? 'on' : undefined}>{t.name}</button>
+          {orderedTopics(topics).map(({ topic: t, depth }) => (
+            <button key={t.id} onClick={() => pick({ type: 'topic', name: t.name })}
+              className={activeKey === `t:${t.name}` ? 'on' : undefined}
+              style={depth === 1 ? { paddingLeft: '28px', fontSize: '14px' } : undefined}>
+              {t.name}
+            </button>
           ))}
         </nav>
 
@@ -229,9 +235,11 @@ export default function NotesWarehouse({
               <button key={v.key} onClick={() => pick(v.value)}
                 className={`chip${activeKey === v.key ? ' chip-on' : ''}`}>{v.label}</button>
             ))}
-            {topics.map(t => (
-              <button key={t.name} onClick={() => pick({ type: 'topic', name: t.name })}
-                className={`chip${activeKey === `t:${t.name}` ? ' chip-on' : ''}`}>{t.short}</button>
+            {orderedTopics(topics).map(({ topic: t, depth }) => (
+              <button key={t.id} onClick={() => pick({ type: 'topic', name: t.name })}
+                className={`chip${activeKey === `t:${t.name}` ? ' chip-on' : ''}${depth === 1 ? ' chip-sub' : ''}`}>
+                {t.short}
+              </button>
             ))}
           </div>
 
