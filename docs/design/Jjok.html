@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>적바림 쪽빛</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&amp;family=Noto+Serif+KR:wght@700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'Noto Sans KR',sans-serif;background:#fbfaf6;color:#1f1f1f}
+a{color:#1f1f1f;text-decoration:none}a:hover{color:#33517e}
+</style>
+</helmet>
+<div style="width: 390px; height: 1720px; box-sizing: border-box; background: #fbfaf6; display: flex; flex-direction: column; position: relative; overflow: hidden;">
+
+<header style="display: flex; justify-content: space-between; align-items: center; padding: 6px 8px 6px 16px; background: #fbfaf6; border-bottom: 1px solid #ececea;">
+<a href="#" style="font-family: 'Noto Serif KR', serif; font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 6px;">적바림<span aria-hidden="true" style="width: 7px; height: 7px; border-radius: 4px; background: #b5483a;"></span></a>
+<div style="display: flex;">
+<a href="#" aria-label="검색" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg>
+</a>
+<a href="#" aria-label="메뉴" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
+</a>
+</div>
+</header>
+
+<section style="position: relative; height: 300px; background: {{cover}}; display: flex; flex-direction: column; justify-content: flex-end; padding: 20px 16px; box-sizing: border-box;">
+<span style="position: absolute; top: 16px; right: 16px; font-size: 11px; color: #5f5f5f;">[커버 이미지 — 설정에서 교체]</span>
+<span style="font-size: 12px; color: #5f5f5f;">글 [N] · 짧은 노트 [N]</span>
+<h1 style="margin: 6px 0 14px; font-family: 'Noto Serif KR', serif; font-size: 30px; font-weight: 700;">적바림</h1>
+<div style="display: flex; align-items: center; gap: 12px;">
+<div style="width: 52px; height: 52px; border-radius: 26px; background: #fbfaf6; border: 2px solid #fbfaf6; box-shadow: 0 0 0 1px #d9d9d4; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #767676;">[사진]</div>
+<div style="display: flex; flex-direction: column; gap: 2px;">
+<span style="font-size: 16px; font-weight: 700;">사무장 박영준</span>
+<span style="font-size: 13px; color: #5f5f5f;">생각을 적고, 적은 것을 열어 둡니다</span>
+</div>
+</div>
+</section>
+
+<nav aria-label="보기" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-bottom: 1px solid #ececea;">
+<a href="#" style="height: 48px; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; border-bottom: 3px solid #1f1f1f;">글</a>
+<a href="#" style="height: 48px; display: flex; align-items: center; justify-content: center; font-size: 16px; color: #767676;">짧은 노트</a>
+</nav>
+
+<div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 8px 8px 16px;">
+<button type="button" style="min-height: 44px; display: flex; align-items: center; gap: 6px; border: none; background: transparent; padding: 0; font-family: inherit; font-size: 17px; font-weight: 700; color: #1f1f1f;">
+전체 주제
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>
+</button>
+<div style="display: flex;">
+<button type="button" aria-label="앨범형" style="width: 44px; height: 44px; border: none; background: transparent; display: flex; align-items: center; justify-content: center; color: #1f1f1f;">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1.5"></rect><rect x="13" y="4" width="7" height="7" rx="1.5"></rect><rect x="4" y="13" width="7" height="7" rx="1.5"></rect><rect x="13" y="13" width="7" height="7" rx="1.5"></rect></svg>
+</button>
+<button type="button" aria-label="목록형" style="width: 44px; height: 44px; border: none; background: transparent; display: flex; align-items: center; justify-content: center; color: #9a9a96;">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"></path><rect x="3.5" y="4.5" width="3" height="3" rx="0.5"></rect><rect x="3.5" y="10.5" width="3" height="3" rx="0.5"></rect><rect x="3.5" y="16.5" width="3" height="3" rx="0.5"></rect></svg>
+</button>
+</div>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 12px; padding: 0 16px;">
+
+<a href="#" style="display: flex; flex-direction: column; gap: 8px;">
+<div style="height: 200px; border-radius: 10px; background: #e6efe9; display: flex; flex-direction: column; justify-content: space-between; padding: 14px; box-sizing: border-box;">
+<span style="font-size: 11px; color: #3d5c4a;">일</span>
+<span style="font-family: 'Noto Serif KR', serif; font-size: 16px; font-weight: 700; line-height: 1.4; color: #2f4a3b;">[긴 글 제목]</span>
+</div>
+<span style="font-size: 15px; font-weight: 500; line-height: 1.4;">[긴 글 제목]</span>
+<span style="font-size: 12px; color: #767676;">9월 25일 · 일</span>
+</a>
+
+<a href="#" style="display: flex; flex-direction: column; gap: 8px;">
+<div style="height: 200px; border-radius: 10px; background: #e9e7e2; display: flex; align-items: center; justify-content: center; font-size: 11px; color: #767676;">[사진 표지]</div>
+<span style="font-size: 15px; font-weight: 500; line-height: 1.4;">[독후감 제목]</span>
+<span style="font-size: 12px; color: #767676;">9월 21일 · 독서</span>
+</a>
+
+<a href="#" style="display: flex; flex-direction: column; gap: 8px;">
+<div style="height: 200px; border-radius: 10px; background: #f3e3ee; display: flex; flex-direction: column; justify-content: space-between; padding: 14px; box-sizing: border-box;">
+<span style="font-size: 11px; color: #6d4660;">상상</span>
+<span style="font-family: 'Noto Serif KR', serif; font-size: 16px; font-weight: 700; line-height: 1.4; color: #4a2c40;">[단편 제목]</span>
+</div>
+<span style="font-size: 15px; font-weight: 500; line-height: 1.4;">[단편 제목]</span>
+<span style="font-size: 12px; color: #767676;">9월 20일 · 상상</span>
+</a>
+
+<a href="#" style="display: flex; flex-direction: column; gap: 8px;">
+<div style="height: 200px; border-radius: 10px; background: #f5f0d4; display: flex; flex-direction: column; justify-content: space-between; padding: 14px; box-sizing: border-box;">
+<span style="font-size: 11px; color: #5e5424;">배움</span>
+<span style="font-family: 'Noto Serif KR', serif; font-size: 16px; font-weight: 700; line-height: 1.4; color: #4a431a;">[긴 글 제목]</span>
+</div>
+<span style="font-size: 15px; font-weight: 500; line-height: 1.4;">[긴 글 제목]</span>
+<span style="font-size: 12px; color: #767676;">9월 18일 · 배움</span>
+</a>
+
+</div>
+
+<section style="margin-top: 28px; padding: 20px 16px; background: #f6f6f4; display: flex; flex-direction: column; gap: 12px;">
+<div style="display: flex; justify-content: space-between; align-items: baseline;">
+<h2 style="margin: 0; font-size: 17px; font-weight: 700;">짧은 노트</h2>
+<a href="#" style="font-size: 13px; color: #5f5f5f;">더 보기</a>
+</div>
+<article style="background: #fbfaf6; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 6px;">
+<p style="margin: 0; font-size: 15px; line-height: 1.7;">[짧은 메모 본문]</p>
+<span style="font-size: 12px; color: #767676;">9월 27일 · 생각</span>
+</article>
+<article style="background: #fbfaf6; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 6px;">
+<p style="margin: 0; font-size: 15px; line-height: 1.7;">[짧은 메모 본문]</p>
+<span style="font-size: 12px; color: #767676;">9월 24일 · 묵상</span>
+</article>
+</section>
+
+<nav aria-label="아래 메뉴" style="position: absolute; left: 0; right: 0; bottom: 0; height: 64px; background: #fbfaf6; border-top: 1px solid #ececea; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr));">
+<a href="#" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 11px; color: #1f1f1f;">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7v9H4z"></path></svg>홈</a>
+<a href="#" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 11px; color: #767676;">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M5 6h14M5 12h14M5 18h9"></path></svg>주제</a>
+<a href="#" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 11px; color: #33517e; font-weight: 700;">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4"></rect><path d="M12 8v8M8 12h8"></path></svg>적바림</a>
+<a href="#" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 11px; color: #767676;">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h5v16H5zM10 4h4v16h-4zM15 5l4 1-3 14-4-1z"></path></svg>책장</a>
+<a href="#" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 11px; color: #767676;">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"></path></svg>소개</a>
+</nav>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"cover":{"editor":"color","default":"#e4eaf3","options":["#e4eaf3","#dde5f0","#f5ecdc","#ebe6f5"]},"$preview":{"width":390,"height":1720}}'>
+class Component extends DCLogic {
+renderVals() { return { cover: this.props.cover ?? '#e4eaf3' }; }
+}
+</script>
+</body>
+</html>
