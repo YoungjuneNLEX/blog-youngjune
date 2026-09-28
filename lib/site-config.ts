@@ -6,24 +6,29 @@ export interface Topic {
   id: string     // 이름이 바뀌어도 같은 주제임을 알아보는 열쇠
   name: string   // 저장되는 이름. 노트 창고와 posts.topic 이 쓴다.
   short: string  // 홈 상단 칩처럼 좁은 자리에 쓰는 짧은 이름
-  color: string  // 표지 배경색
+  color: string  // 표지 바탕색 (파스텔)
+  ink: string    // 그 바탕 위에 얹는 글자색
 }
 
-// 색은 시안(docs/design) 기준. 일·독서·상상은 시안에 있던 값 그대로.
+// 색은 C안 시안(docs/design/README.md)의 바탕/글자 짝 그대로.
 export const DEFAULT_TOPICS: Topic[] = [
-  { id: '생각',           name: '생각',           short: '생각', color: '#4a3728' },
-  { id: '일하며 배운 것', name: '일하며 배운 것', short: '일',   color: '#3d2a1c' },
-  { id: '오늘의 배움',    name: '오늘의 배움',    short: '배움', color: '#8b6f4e' },
-  { id: '말씀 묵상',      name: '말씀 묵상',      short: '묵상', color: '#6b5b7a' },
-  { id: '독서',           name: '독서',           short: '독서', color: '#e9dcc8' },
-  { id: '상상',           name: '상상',           short: '상상', color: '#5a6b55' },
+  { id: '생각',           name: '생각',           short: '생각', color: '#ebe6f5', ink: '#3e3458' },
+  { id: '일하며 배운 것', name: '일하며 배운 것', short: '일',   color: '#dfeaf5', ink: '#22364d' },
+  { id: '오늘의 배움',    name: '오늘의 배움',    short: '배움', color: '#e2f0e5', ink: '#24402c' },
+  { id: '말씀 묵상',      name: '말씀 묵상',      short: '묵상', color: '#f5ecdc', ink: '#4d3b1d' },
+  { id: '독서',           name: '독서',           short: '독서', color: '#f6e2dc', ink: '#55302a' },
+  { id: '상상',           name: '상상',           short: '상상', color: '#f3e3ee', ink: '#4a2c40' },
 ]
+
+// 설정에 없는 주제·분류 전 글에 쓰는 무채색 짝
+export const NEUTRAL_TOPIC = { color: '#e9e7e2', ink: '#3f3f3d' }
 
 /** 서재 주인 */
 export interface Profile {
   name: string      // 닉네임
   bio: string       // 한 줄 소개
-  avatarUrl: string // 사진 (비우면 안 보임)
+  avatarUrl: string // 사진 (비우면 이름 첫 글자를 대신 보여준다)
+  coverUrl: string  // 홈 맨 위 커버 이미지 (비우면 옅은 단색)
 }
 
 // 테마(스킨) 색상 — globals.css 의 CSS 변수와 1:1 대응
@@ -49,7 +54,7 @@ export const THEME_FIELD_LABELS: Record<keyof ThemeColors, string> = {
   textSub: '보조 글자',
   textMuted: '흐린 글자',
   accent: '강조색',
-  accentLight: '강조색(밝게)',
+  accentLight: '강조색(옅은 면)',
   border: '괘선',
   borderSoft: '괘선(연하게)',
 }
@@ -68,24 +73,41 @@ export interface SiteConfig {
   theme: ThemeColors
 }
 
-// 시안 README 의 색 정의와 1:1
+// C안 시안 README 의 색 정의와 1:1
 export const DEFAULT_THEME: ThemeColors = {
-  bg: '#faf6f0',
-  bgCard: '#fffdf9',
-  bgHeader: '#fffdf9',
-  textMain: '#2c1a0e',
-  textSub: '#6b4f3a',     // 보조
-  textMuted: '#8a6f58',   // 흐린 글자
-  accent: '#8b5e3c',
-  accentLight: '#c4956a',
-  border: '#e8ddd0',
-  borderSoft: '#f0e8de',
+  bg: '#ffffff',
+  bgCard: '#ffffff',
+  bgHeader: '#ffffff',
+  textMain: '#1f1f1f',
+  textSub: '#5f5f5f',     // 보조
+  textMuted: '#767676',   // 흐린 글자
+  accent: '#4f7a62',      // 버튼 강조
+  accentLight: '#e6efe9', // 강조색 옅은 면 (커버 기본 바탕)
+  border: '#ececea',
+  borderSoft: '#f6f6f4',
+}
+
+/**
+ * "C안 색으로 되돌리기" — 색만 되돌린다.
+ * 주제의 이름·짧은 이름·순서와 문구·프로필·템플릿은 건드리지 않는다.
+ * 기본 목록에 없는 주제는 무채색 짝으로 둔다.
+ */
+export function resetColors(config: SiteConfig): SiteConfig {
+  return {
+    ...config,
+    theme: DEFAULT_THEME,
+    topics: config.topics.map(t => {
+      const base = DEFAULT_TOPICS.find(d => d.id === t.id || d.name === t.name)
+      return { ...t, color: base?.color || NEUTRAL_TOPIC.color, ink: base?.ink || NEUTRAL_TOPIC.ink }
+    }),
+  }
 }
 
 export const DEFAULT_PROFILE: Profile = {
   name: '박영준',
-  bio: '법과 일상 사이에서 보고 들은 것을 적어 둡니다.',
+  bio: '생각을 적고, 적은 것을 열어 둡니다',
   avatarUrl: '',
+  coverUrl: '',
 }
 
 export const DEFAULT_CONFIG: SiteConfig = {
@@ -100,6 +122,16 @@ export const DEFAULT_CONFIG: SiteConfig = {
   showShortNotes: true,
   showBookshelf: true,
   theme: DEFAULT_THEME,
+}
+
+/** 바탕색이 밝으면 짙은 글자, 어두우면 밝은 글자. 옛 설정을 옮길 때만 쓴다. */
+function readableInk(bg: string): string {
+  const h = bg.replace('#', '')
+  const full = h.length === 3 ? h.split('').map(c => c + c).join('') : h
+  if (full.length !== 6) return NEUTRAL_TOPIC.ink
+  const [r, g, b] = [0, 2, 4].map(i => parseInt(full.slice(i, i + 2), 16) / 255)
+  const lin = (c: number) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4)
+  return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b) > 0.45 ? '#1f1f1f' : '#ffffff'
 }
 
 function text(value: unknown, fallback: string): string {
@@ -126,7 +158,9 @@ export function mergeConfig(partial: Partial<SiteConfig> | null | undefined): Si
       id: text(t.id, t.name!.trim()),
       name: t.name!.trim(),
       short: text(t.short, t.name!.trim()),
-      color: text(t.color, '#8b5e3c'),
+      color: text(t.color, NEUTRAL_TOPIC.color),
+      // 옛 설정에는 글자색이 없다. 그때는 바탕 밝기로 읽히는 색을 고른다.
+      ink: text(t.ink, readableInk(text(t.color, NEUTRAL_TOPIC.color))),
     }))
 
   const rawProfile = (p.profile || {}) as Partial<Profile>
@@ -141,8 +175,9 @@ export function mergeConfig(partial: Partial<SiteConfig> | null | undefined): Si
     profile: {
       name: text(rawProfile.name, DEFAULT_PROFILE.name),
       bio: text(rawProfile.bio, DEFAULT_PROFILE.bio),
-      // 사진은 비워 둘 수 있다
+      // 사진·커버는 비워 둘 수 있다
       avatarUrl: typeof rawProfile.avatarUrl === 'string' ? rawProfile.avatarUrl : '',
+      coverUrl: typeof rawProfile.coverUrl === 'string' ? rawProfile.coverUrl : '',
     },
     topics: topics.length > 0 ? topics : DEFAULT_TOPICS,
     showShortNotes: bool(p.showShortNotes, true),

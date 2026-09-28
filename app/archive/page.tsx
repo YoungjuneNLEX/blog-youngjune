@@ -3,7 +3,7 @@ import { supabaseAdmin, assertDbOk } from '@/lib/supabase'
 import { getSiteConfig } from '@/lib/settings'
 import { toFeed } from '@/lib/feed'
 import { loadSourceNotes } from '@/lib/source-notes'
-import PostFeed from '@/components/PostFeed'
+import PostBrowser from '@/components/PostBrowser'
 
 export const revalidate = 300
 export const metadata: Metadata = { title: '전체' }
@@ -22,10 +22,15 @@ export default async function ArchivePage() {
   const sourceNotes = await loadSourceNotes(data || [], '보관함/나온 메모')
 
   return (
-    <div className="wrap" style={{ paddingTop: '28px', paddingBottom: '48px' }}>
-      <h1 className="serif" style={{ fontSize: '26px', fontWeight: 700, margin: '0 0 4px' }}>전체</h1>
-      <p className="meta-sub" style={{ margin: '0 0 24px' }}>여기에 열어 둔 글과 메모를 모았습니다.</p>
-      <PostFeed entries={toFeed(data || [], config.topics, sourceNotes)} topics={config.topics} />
+    <div style={{ paddingTop: '20px', paddingBottom: '40px' }}>
+      <div className="wrap" style={{ paddingBottom: '4px' }}>
+        <h1 className="serif" style={{ fontSize: '24px', fontWeight: 700, margin: '0 0 4px' }}>
+          {config.latestTitle}
+        </h1>
+        <p className="meta-sub" style={{ margin: 0 }}>여기에 열어 둔 글과 메모를 모았습니다.</p>
+      </div>
+      <PostBrowser entries={toFeed(data || [], config.topics, sourceNotes)}
+        topics={config.topics} showTabs={config.showShortNotes} />
     </div>
   )
 }

@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { Topic } from '@/lib/site-config'
-import { coverInk, topicColor, topicSlug } from '@/lib/cover'
+import { coverInk, topicPair, topicSlug } from '@/lib/cover'
 import { SheetData } from '@/lib/public'
 
 /**
@@ -27,10 +27,12 @@ export default function SummarySheet({
     }
   }, [onClose])
 
-  const bg = topicColor(data.topic, topics)
-  const ink = coverInk(bg)
-  const fg = data.image ? '#f5ead9' : ink.fg
-  const dim = data.image ? '#e3d6c2' : ink.dim
+  const pair = topicPair(data.topic, topics)
+  const bg = pair.color
+  const ink = coverInk(pair.color, pair.ink)
+  // 사진 위에는 덮개가 깔리므로 흰 글자를 쓴다
+  const fg = data.image ? '#ffffff' : ink.fg
+  const dim = data.image ? 'rgba(255,255,255,0.85)' : ink.dim
   const label = topics.find(t => t.name === data.topic)?.short || data.topic || '적바림'
 
   async function share() {

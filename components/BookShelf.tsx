@@ -12,8 +12,8 @@ export interface ShelfBook {
   items: { id: string; title: string; dateText: string }[]
 }
 
-// 시안의 책등 색. 제목에 따라 늘 같은 색이 나오게 순서대로 돌려 쓴다.
-const SPINES = ['#c9b08e', '#7c5a3e', '#9fae93', '#d9c7ae', '#5c4636', '#b89a74']
+// C안 파스텔 책등 색. 순서대로 돌려 써서 같은 자리의 책은 늘 같은 색이 된다.
+const SPINES = ['#f6e2dc', '#dfeaf5', '#e2f0e5', '#f5ecdc', '#ebe6f5', '#f3e3ee']
 
 /** 책장 — 독후감을 쓴 책의 표지. 누르면 요약 창이 뜬다. */
 export default function BookShelf({
@@ -23,16 +23,16 @@ export default function BookShelf({
   if (books.length === 0) return null
 
   return (
-    <aside style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+    <aside style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
       <h2 className="sec-title">{title}</h2>
 
-      <div className="shelf bleed no-scrollbar">
+      <div className="shelf">
         {books.map((b, i) => {
           const bg = SPINES[i % SPINES.length]
           const ink = coverInk(bg)
           return (
             <button key={b.title} className="book" aria-label={b.title}
-              style={{ background: bg, color: b.cover ? '#f5ead9' : ink.fg }}
+              style={{ background: bg, color: ink.fg }}
               onClick={() => setOpen({
                 href: b.items[0] ? `/posts/${b.items[0].id}` : null,
                 title: b.title,

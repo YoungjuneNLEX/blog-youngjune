@@ -1,4 +1,4 @@
-import { Topic } from './site-config'
+import { NEUTRAL_TOPIC, Topic } from './site-config'
 
 /** 본문 HTML 을 미리보기용 평문으로 바꾼다. */
 export function toPlainText(html: string | null | undefined): string {
@@ -39,10 +39,18 @@ export function coverImage(
   return post.thumbnail_url?.trim() || firstImage(post.content) || null
 }
 
-/** 주제 색. 모르는 주제거나 분류 전이면 강조색을 쓴다. */
+/** 주제의 바탕/글자 짝. 모르는 주제거나 분류 전이면 무채색 짝을 쓴다. */
+export function topicPair(
+  topic: string | null | undefined, topics: Topic[],
+): { color: string; ink: string } {
+  const found = topic ? topics.find(t => t.name === topic) : undefined
+  if (!found) return { ...NEUTRAL_TOPIC }
+  return { color: found.color || NEUTRAL_TOPIC.color, ink: found.ink || NEUTRAL_TOPIC.ink }
+}
+
+/** 주제 바탕색만 필요할 때 */
 export function topicColor(topic: string | null | undefined, topics: Topic[]): string {
-  if (!topic) return '#8b5e3c'
-  return topics.find(t => t.name === topic)?.color || '#8b5e3c'
+  return topicPair(topic, topics).color
 }
 
 /** 주제 이름을 주소 조각으로. 제목 자체가 식별자다. */
@@ -67,7 +75,7 @@ export function topicFromSlug(slug: string): string {
 }
 
 /**
- * 배경색이 밝은지 판단한다. (독서 #e9dcc8 처럼 밝은 표지에는 어두운 글자를 쓴다)
+ * 배경색이 밝은지 판단한다. (파스텔 표지에는 짙은 글자를 쓴다)
  * sRGB 상대 휘도 근사값.
  */
 export function isLightColor(hex: string): boolean {
@@ -80,9 +88,25 @@ export function isLightColor(hex: string): boolean {
   return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b) > 0.45
 }
 
-/** 표지 배경 위에 얹을 글자색 한 쌍 (본문용 / 흐린 글씨용) */
-export function coverInk(bg: string): { fg: string; dim: string } {
+/**
+ * 표지 글자 한 쌍 (제목용 / 흐린 글씨용).
+ * 주제에 글자색(ink)이 정해져 있으면 그것을 쓰고, 흐린 글씨는 살짝 연하게 만든다.
+ */
+export function coverInk(bg: string, ink?: string): { fg: string; dim: string } {
+  if (ink) return { fg: ink, dim: fade(ink, 0.72) }
   return isLightColor(bg)
-    ? { fg: '#2c1a0e', dim: '#6b4f3a' }
-    : { fg: '#f5ead9', dim: '#d8c4a8' }
+    ? { fg: '#1f1f1f', dim: '#5f5f5f' }
+    : { fg: '#ffffff', dim: '#e4e4e2' }
+}
+
+/** 글자색을 흰색 쪽으로 살짝 섞어 흐린 글씨용 색을 만든다 */
+function fade(hex: string, keep: number): string {
+  const h = hex.replace('#', '')
+  const full = h.length === 3 ? h.split('').map(c => c + c).join('') : h
+  if (full.length !== 6) return hex
+  const mix = (i: number) => {
+    const v = parseInt(full.slice(i, i + 2), 16)
+    return Math.round(v * keep + 255 * (1 - keep)).toString(16).padStart(2, '0')
+  }
+  return `#${mix(0)}${mix(2)}${mix(4)}`
 }

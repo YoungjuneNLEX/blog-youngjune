@@ -65,7 +65,7 @@ export default function BookTitleInput({ value, onChange }: Props) {
                   style={{ display: 'block', width: '100%', textAlign: 'left',
                     padding: '8px 12px', fontSize: '0.85rem', color: 'var(--text-main)',
                     background: 'transparent', border: 'none', cursor: 'pointer' }}
-                  onMouseEnter={e => (e.currentTarget.style.background = '#f5ebe0')}
+                  onMouseEnter={e => (e.currentTarget.style.background = '#f6f6f4')}
                   onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
                   📚 {b}
                 </button>
@@ -80,7 +80,7 @@ export default function BookTitleInput({ value, onChange }: Props) {
                 background: 'transparent', border: 'none', cursor: 'pointer',
                 borderTop: filtered.length > 0 ? '1px solid var(--border-soft)' : 'none',
                 fontWeight: 600 }}
-              onMouseEnter={e => (e.currentTarget.style.background = '#f5ebe0')}
+              onMouseEnter={e => (e.currentTarget.style.background = '#f6f6f4')}
               onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
               + 새 책 "{search.trim()}" 만들기
             </button>

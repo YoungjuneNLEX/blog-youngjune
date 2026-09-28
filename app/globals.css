@@ -1,34 +1,37 @@
 @import "tailwindcss";
 
 /* ==========================================================================
-   적바림 — 디자인 토큰 (docs/design 시안 기준)
-   휴대폰 390px 을 기준으로 쓰고, 넓은 화면은 아래 미디어쿼리에서 넓힌다.
+   적바림 — 디자인 토큰 (C안 시안 docs/design/PastelHome·PastelList 기준)
+   흰 바탕 + 파스텔 주제 색. 휴대폰 390px 을 기준으로 쓰고,
+   넓은 화면은 아래 미디어쿼리에서 폭만 넓힌다.
    ========================================================================== */
 
 :root {
-  /* 시안 README 의 색 */
-  --bg: #faf6f0;
-  --bg-card: #fffdf9;
-  --bg-header: #fffdf9;
-  --text-main: #2c1a0e;
-  --text-sub: #6b4f3a;
-  --text-muted: #8a6f58;
-  --accent: #8b5e3c;
-  --accent-light: #c4956a;
-  --border: #e8ddd0;
-  --border-soft: #f0e8de;
+  /* C안 README 의 색 */
+  --bg: #ffffff;
+  --bg-card: #ffffff;
+  --bg-header: #ffffff;
+  --text-main: #1f1f1f;
+  --text-sub: #5f5f5f;
+  --text-muted: #767676;
+  --accent: #4f7a62;        /* 버튼 강조 */
+  --accent-light: #e6efe9;  /* 강조색 옅은 면 (커버 기본 바탕) */
+  --border: #ececea;
+  --border-soft: #f6f6f4;
 
   /* 테마에 딸리지 않는 고정값 */
-  --line-strong: #d6c7b6;   /* 칩 테두리, 시트 손잡이 */
-  --summary-bg: #f5ede2;    /* 세 줄 요약 상자 */
-  --on-ink: #faf6f0;        /* 짙은 버튼 위 글자 */
-  --quote: #4a3322;         /* 인용·설명문 */
+  --line-strong: #d9d9d4;   /* 버튼 테두리, 시트 손잡이 */
+  --summary-bg: #f6f6f4;    /* 세 줄 요약 상자 */
+  --on-ink: #ffffff;        /* 짙은 버튼 위 글자 */
+  --quote: #3f3f3f;         /* 인용·설명문 */
+  --dim-icon: #9a9a96;      /* 꺼져 있는 아이콘 */
 
   --font-serif: 'Noto Serif KR', serif;
-  --font-sans: 'IBM Plex Sans KR', -apple-system, 'Apple SD Gothic Neo', sans-serif;
+  --font-sans: 'Noto Sans KR', -apple-system, 'Apple SD Gothic Neo', sans-serif;
 
   --gutter: 16px;
-  --wrap: 1280px;
+  --wrap: 1120px;
+  --bottom-nav: 64px;       /* 모바일 하단 고정 메뉴 높이 */
 }
 
 * { box-sizing: border-box; }
@@ -47,7 +50,10 @@ body {
 a { color: var(--text-main); text-decoration: none; }
 a:hover { color: var(--accent); }
 
-::selection { background: #e8c9a8; }
+::selection { background: #dbe8e0; }
+
+/* 하단 고정 메뉴에 본문이 가리지 않도록 같은 높이만큼 비워 두는 자리 */
+.bottom-nav-space { height: var(--bottom-nav); }
 
 /* Tailwind 의 md 는 768px 이라 이 파일의 900px 전환과 어긋난다. 직접 쓴다. */
 .only-mobile { display: flex; }
@@ -138,8 +144,8 @@ a:hover { color: var(--accent); }
 }
 
 /* --------------------------------------------------------------------------
-   표지 — 색 배경 위에 주제·제목·메타를 세로로 편다
-   사진이 있으면 사진 위에 같은 배치를 얹는다 (글자가 읽히는 정도로만 어둡게)
+   표지 — 주제 파스텔 바탕에 주제 이름과 제목을 얹는다 (C안)
+   사진이 있으면 사진만 보여 준다. 제목은 카드 아래 글로 따로 붙는다.
    -------------------------------------------------------------------------- */
 
 .cover {
@@ -148,100 +154,223 @@ a:hover { color: var(--accent); }
   flex-direction: column;
   justify-content: space-between;
   gap: 10px;
-  border-radius: 8px;
-  padding: 18px;
+  border-radius: 10px;
+  padding: 14px;
   overflow: hidden;
 }
 .cover > * { position: relative; z-index: 2; }
 .cover-photo {
   position: absolute;
   inset: 0;
-  z-index: 0;
+  z-index: 1;
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
-/* 사진 위 글자가 읽히도록 최소한만 깐다 */
-.cover-veil {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  background: linear-gradient(
-    to bottom,
-    rgba(28, 16, 8, 0.42) 0%,
-    rgba(28, 16, 8, 0.20) 38%,
-    rgba(28, 16, 8, 0.52) 100%
-  );
-}
-.cover-topic { font-size: 11px; letter-spacing: 2px; }
+.cover-topic { font-size: 11px; }
 .cover-title {
   font-family: var(--font-serif);
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 700;
   line-height: 1.4;
   display: -webkit-box;
-  -webkit-line-clamp: 4;
+  -webkit-line-clamp: 5;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-.cover-meta { font-size: 12px; }
 
 /* --------------------------------------------------------------------------
-   홈 — 대표 글 / 최근 글
+   홈 커버 + 서재 주인
    -------------------------------------------------------------------------- */
 
-.feature { display: flex; flex-direction: column; gap: 12px; }
-.feature .cover { height: 420px; padding: 28px 24px; }
-.feature .cover-topic { font-size: 12px; }
-.feature .cover-title { font-size: 30px; line-height: 1.35; }
-.feature .cover-meta { font-size: 13px; }
-.feature-title { font-family: var(--font-serif); font-size: 19px; font-weight: 700; line-height: 1.4; }
+.home-cover {
+  position: relative;
+  height: 300px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 6px;
+  padding: 20px var(--gutter);
+  overflow: hidden;
+  background: var(--accent-light);
+}
+.home-cover > * { position: relative; z-index: 2; }
+.home-cover-photo {
+  position: absolute; inset: 0; z-index: 0;
+  width: 100%; height: 100%; object-fit: cover;
+}
+/* 사진 위 글자가 읽히도록 최소한만 깐다 */
+.home-cover-veil {
+  position: absolute; inset: 0; z-index: 1;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.45) 100%);
+}
+.home-cover-count { font-size: 12px; }
+.home-cover-title {
+  margin: 0 0 8px;
+  font-family: var(--font-serif);
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.owner { display: flex; align-items: center; gap: 12px; }
+.owner-face {
+  width: 52px; height: 52px; flex-shrink: 0;
+  border-radius: 26px;
+  background: #ffffff;
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-serif);
+  font-size: 20px; font-weight: 700; color: var(--text-sub);
+}
+.owner-face img { width: 100%; height: 100%; object-fit: cover; }
+.owner-name { font-size: 16px; font-weight: 700; }
+.owner-bio { font-size: 13px; }
 
-.rail { display: flex; gap: 12px; }
-.rail-card { flex-shrink: 0; width: 200px; display: flex; flex-direction: column; gap: 10px; }
-.rail-card .cover { height: 260px; }
-.rail-card-title { display: none; }  /* 모바일에서는 표지에만 제목 (시안) */
+/* --------------------------------------------------------------------------
+   글 / 짧은 노트 탭 · 주제 고르기 · 보기 전환
+   -------------------------------------------------------------------------- */
 
-/* 주제·보관함의 글 묶음 (시안에 없는 화면 — 홈과 같은 말로 짰다) */
-.feed-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
-.feed-card { display: flex; flex-direction: column; gap: 10px;
-  background: none; border: none; padding: 0; text-align: left; cursor: pointer; }
-.feed-card .cover { height: 220px; }
+.tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-bottom: 1px solid var(--border);
+}
+.tab {
+  height: 48px;
+  display: flex; align-items: center; justify-content: center;
+  background: none; border: none;
+  border-bottom: 3px solid transparent;
+  font-family: inherit; font-size: 16px; color: var(--text-muted);
+  cursor: pointer;
+}
+.tab-on { font-weight: 700; color: var(--text-main); border-bottom-color: var(--text-main); }
+
+.browse-bar {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 8px 8px var(--gutter);
+}
+.topic-pick {
+  min-height: 44px;
+  display: flex; align-items: center; gap: 6px;
+  border: none; background: transparent; padding: 0;
+  font-family: inherit; font-size: 17px; font-weight: 700; color: var(--text-main);
+  cursor: pointer;
+}
+.view-pick { display: flex; }
+.view-pick button {
+  width: 44px; height: 44px;
+  display: flex; align-items: center; justify-content: center;
+  border: none; background: none; cursor: pointer; color: var(--dim-icon);
+}
+.view-pick .on { color: var(--text-main); }
+
+/* 주제 고르기 — 아래에서 올라오는 시트 */
+.pick-sheet {
+  width: 100%;
+  background: var(--bg-card);
+  border-radius: 16px 16px 0 0;
+  padding: 8px 0 12px;
+  max-height: 72vh; overflow-y: auto;
+  animation: sheet-up 0.22s ease-out;
+}
+.pick-item {
+  width: 100%; min-height: 52px;
+  display: flex; align-items: center; gap: 10px;
+  padding: 0 20px;
+  background: none; border: none; cursor: pointer;
+  font-family: inherit; font-size: 16px; color: var(--text-main); text-align: left;
+}
+.pick-item .dot { width: 14px; height: 14px; border-radius: 7px; flex-shrink: 0; }
+.pick-item.on { font-weight: 700; }
+
+/* --------------------------------------------------------------------------
+   카드 목록 — 앨범형 / 목록형
+   -------------------------------------------------------------------------- */
+
+.album {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px 12px;
+  padding: 4px var(--gutter) 0;
+}
+.album-card {
+  display: flex; flex-direction: column; gap: 8px;
+  background: none; border: none; padding: 0; text-align: left; cursor: pointer;
+}
+.album-card .cover { height: 200px; }
+.album-title { font-size: 15px; font-weight: 500; line-height: 1.4; }
+
+.rows { display: flex; flex-direction: column; padding: 0 var(--gutter); }
+.row-card {
+  display: flex; gap: 14px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--border);
+  background: none; border-left: none; border-right: none; border-top: none;
+  text-align: left; cursor: pointer;
+}
+.row-card > div { display: flex; flex-direction: column; gap: 6px; flex-grow: 1; min-width: 0; }
+.row-title { font-size: 16px; font-weight: 700; line-height: 1.45; }
+.row-sum {
+  font-size: 14px; line-height: 1.6; color: var(--text-sub);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.row-thumb {
+  flex-shrink: 0; width: 88px; height: 88px;
+  border-radius: 8px; overflow: hidden; position: relative;
+  display: flex; align-items: flex-end; padding: 8px;
+}
+.row-thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.row-thumb span {
+  position: relative; z-index: 2;
+  font-family: var(--font-serif); font-size: 11px; font-weight: 700; line-height: 1.3;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+
+.empty { padding: 40px var(--gutter); color: var(--text-muted); font-size: 14px; }
 
 /* --------------------------------------------------------------------------
    짧은 노트
    -------------------------------------------------------------------------- */
 
+.note-list { display: flex; flex-direction: column; gap: 12px; padding: 16px var(--gutter) 0; }
 .note-item {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 20px 0;
-  border-bottom: 1px solid var(--border);
+  display: flex; flex-direction: column; gap: 6px;
+  background: var(--border-soft);
+  border-radius: 10px;
+  padding: 14px;
 }
-.note-item:last-child { border-bottom: none; }
 .note-text {
   margin: 0;
-  font-family: var(--font-serif);
-  font-size: 17px;
-  line-height: 1.75;
+  font-size: 15px;
+  line-height: 1.7;
   white-space: pre-wrap;
 }
+
+/* 글 탭 아래 짧은 노트 미리 보기 (홈) */
+.note-strip {
+  margin-top: 28px;
+  padding: 20px var(--gutter);
+  background: var(--border-soft);
+  display: flex; flex-direction: column; gap: 12px;
+}
+.note-strip-head { display: flex; justify-content: space-between; align-items: baseline; }
+.note-strip .note-item { padding: 14px; }
 
 /* --------------------------------------------------------------------------
    책장
    -------------------------------------------------------------------------- */
 
-.shelf { display: flex; gap: 10px; }
+.shelf { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px 12px; }
 .book {
-  flex-shrink: 0;
-  width: 88px;
-  height: 128px;
-  border-radius: 4px;
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  border-radius: 8px;
   overflow: hidden;
   display: flex;
   align-items: flex-end;
-  padding: 8px;
+  padding: 10px;
   cursor: pointer;
   border: none;
   position: relative;
@@ -251,7 +380,7 @@ a:hover { color: var(--accent); }
   position: relative;
   z-index: 2;
   font-family: var(--font-serif);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   line-height: 1.35;
   display: -webkit-box;
@@ -261,6 +390,40 @@ a:hover { color: var(--accent); }
 }
 
 /* --------------------------------------------------------------------------
+   하단 고정 메뉴 (모바일) — 홈 · 주제 · 적바림 · 책장 · 소개
+   '적바림'은 관리자에게만 보인다.
+   -------------------------------------------------------------------------- */
+
+.bottom-nav {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;
+  height: var(--bottom-nav);
+  background: var(--bg-header);
+  border-top: 1px solid var(--border);
+  display: grid;
+}
+.bottom-nav > * {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  font-family: inherit; font-size: 11px; color: var(--text-muted);
+  background: none; border: none; cursor: pointer;
+}
+.bottom-nav .on { color: var(--text-main); }
+.bottom-nav .write { color: var(--accent); font-weight: 700; }
+
+/* 사진 표지 위 글자가 읽히도록 최소한만 깐다 (요약 창) */
+.cover-veil {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.32) 0%,
+    rgba(0, 0, 0, 0.12) 40%,
+    rgba(0, 0, 0, 0.48) 100%
+  );
+}
+.cover-meta { font-size: 12px; }
+
+/* --------------------------------------------------------------------------
    요약 창 — 모바일은 아래에서 올라오는 시트
    -------------------------------------------------------------------------- */
 
@@ -268,7 +431,7 @@ a:hover { color: var(--accent); }
   position: fixed;
   inset: 0;
   z-index: 70;
-  background: rgba(44, 26, 14, 0.55);
+  background: rgba(0, 0, 0, 0.45);
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
@@ -314,6 +477,8 @@ a:hover { color: var(--accent); }
   position: relative;
 }
 .sheet-cover img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+/* 사진·덮개 위로 글자가 올라오게 */
+.sheet-cover > span { position: relative; z-index: 2; }
 .sheet-cover-title {
   position: relative; z-index: 2;
   font-family: var(--font-serif);
@@ -411,7 +576,7 @@ a:hover { color: var(--accent); }
 .tiptap-view img { max-width: 100%; height: auto; border-radius: 8px; margin: 0.8em 0; }
 .tiptap-view code { background: var(--bg); padding: 0.1em 0.4em; border-radius: 4px; font-size: 0.9em; }
 .tiptap-view pre {
-  background: #2c1a0e; color: #efe6da; padding: 1.1em;
+  background: #2b2b2b; color: #f0f0ee; padding: 1.1em;
   border-radius: 10px; overflow-x: auto; margin: 1.4em 0; font-size: 0.88em;
 }
 .tiptap-view pre code { background: none; padding: 0; }
@@ -436,7 +601,7 @@ a:hover { color: var(--accent); }
   outline: none;
   resize: none;
   background: transparent;
-  font-family: var(--font-serif);
+  font-family: inherit;
   font-size: 18px;
   line-height: 1.7;
   color: var(--text-main);
@@ -478,7 +643,7 @@ a:hover { color: var(--accent); }
   accent-color: var(--accent); flex-shrink: 0;
 }
 .wh-row label { display: flex; flex-direction: column; gap: 6px; flex-grow: 1; min-width: 0; cursor: pointer; }
-.wh-text { font-family: var(--font-serif); font-size: 17px; line-height: 1.6; }
+.wh-text { font-size: 16px; line-height: 1.65; }
 .wh-day { font-size: 13px; color: var(--text-sub); padding: 24px 0 12px; }
 .wh-day:first-child { padding-top: 0; }
 
@@ -527,39 +692,43 @@ a:hover { color: var(--accent); }
   .meta { font-size: 13px; }
   .meta-sub { font-size: 14px; }
 
-  /* 최근 글 2:1:1 — 대표 글이 두 배 폭 */
-  .home-stories {
-    display: grid;
-    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr);
-    gap: 24px;
-    align-items: start;
-  }
   .bleed { margin: 0; padding: 0; overflow: visible; }
-  .feature { gap: 14px; }
-  .feature .cover { height: 360px; padding: 32px; }
-  .feature .cover-title { font-size: 34px; }
-  .feature-title { font-size: 20px; }
-  .rail { display: contents; }
-  .rail-card { width: auto; gap: 14px; }
-  .rail-card .cover { height: 360px; padding: 24px; }
-  .rail-card .cover-title { font-size: 24px; }
-  /* 2:1:1 한 줄이 되도록 셋째 카드부터는 감춘다 (모바일에서는 넘겨서 본다) */
-  .rail-card:nth-child(n + 3) { display: none; }
-  .rail-card-title { display: block; font-family: var(--font-serif); font-size: 18px; font-weight: 700; }
 
-  /* 짧은 노트 + 책장 */
-  .home-below {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 320px;
-    gap: 64px;
-    align-items: start;
+  /* 하단 고정 메뉴는 모바일에서만 쓴다. PC 는 상단 메뉴로 다닌다. */
+  .bottom-nav, .bottom-nav-space { display: none; }
+
+  /* 홈 커버는 조금 더 높고, 안쪽 여백은 본문과 같은 줄에 맞춘다 */
+  .home-cover { height: 360px; padding: 32px var(--gutter); }
+  .home-cover-inner, .browse-bar, .album, .rows, .note-list {
+    width: 100%; max-width: var(--wrap); margin-left: auto; margin-right: auto;
   }
-  .feed-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
-  .feed-card .cover { height: 280px; }
-  .note-item { padding: 24px 0; }
-  .note-text { font-size: 18px; line-height: 1.7; }
-  .shelf { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-  .book { width: auto; height: 130px; }
+  .home-cover-title { font-size: 40px; }
+  .owner-face { width: 60px; height: 60px; border-radius: 30px; }
+
+  .tabs { max-width: var(--wrap); margin: 0 auto; }
+  .browse-bar { padding-left: var(--gutter); padding-right: 8px; }
+
+  /* 앨범형은 3열, 목록형은 그대로 한 줄씩 */
+  .album { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px 24px; padding-top: 8px; }
+  .album-card .cover { height: 260px; padding: 18px; }
+  .album-card .cover-title { font-size: 20px; }
+  .album-title { font-size: 17px; }
+  .row-title { font-size: 18px; }
+  .row-thumb { width: 120px; height: 120px; }
+  .row-card { padding: 20px 0; gap: 20px; }
+
+  .note-list { flex-direction: column; gap: 14px; }
+  .note-strip { margin-top: 40px; padding: 28px var(--gutter); }
+  .note-strip-head, .note-strip .note-item {
+    width: 100%; max-width: var(--wrap); margin-left: auto; margin-right: auto;
+  }
+  .note-item { padding: 18px; }
+  .note-text { font-size: 16px; line-height: 1.75; }
+
+  .shelf { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 20px 16px; }
+
+  /* 주제 고르기는 가운데 작은 창으로 */
+  .pick-sheet { width: 420px; max-width: 100%; border-radius: 12px; padding: 12px 0; }
 
   /* 요약 창: 가운데 모달 */
   .scrim { align-items: center; justify-content: center; flex-direction: row; padding: 24px; }

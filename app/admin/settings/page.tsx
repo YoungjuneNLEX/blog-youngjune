@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { useSession } from 'next-auth/react'
 import {
   SiteConfig, ThemeColors, Topic,
-  DEFAULT_CONFIG, DEFAULT_THEME, THEME_FIELD_LABELS, themeToCssVars,
+  DEFAULT_CONFIG, NEUTRAL_TOPIC, THEME_FIELD_LABELS, resetColors, themeToCssVars,
 } from '@/lib/site-config'
 import { DEFAULT_TEMPLATES, PostTemplate } from '@/lib/templates'
 import { coverInk } from '@/lib/cover'
@@ -14,8 +14,8 @@ import { coverInk } from '@/lib/cover'
 const TEXT_FIELDS: { key: keyof SiteConfig; label: string; hint?: string }[] = [
   { key: 'siteName', label: '제호 (사이트 이름)', hint: '머리글·푸터·브라우저 탭에 쓰입니다' },
   { key: 'heroTitle', label: '한 줄 소개', hint: '검색 결과의 설명문에 쓰입니다' },
-  { key: 'latestTitle', label: '최근 글 섹션 제목' },
-  { key: 'bookshelfTitle', label: '책장 섹션 제목' },
+  { key: 'latestTitle', label: '전체 페이지 제목', hint: '/archive 맨 위에 쓰입니다' },
+  { key: 'bookshelfTitle', label: '책장 페이지 제목' },
   { key: 'footerName', label: '푸터 이름' },
   { key: 'footerNote', label: '푸터 한 줄' },
 ]
@@ -31,6 +31,7 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
+  const coverRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (status === 'authenticated' && session?.user?.role !== 'admin') router.replace('/')
@@ -69,7 +70,7 @@ export default function SettingsPage() {
   function addTopic() {
     setConfig(c => ({
       ...c,
-      topics: [...c.topics, { id: `t${Date.now()}`, name: '새 주제', short: '새', color: '#8b5e3c' }],
+      topics: [...c.topics, { id: `t${Date.now()}`, name: '새 주제', short: '새', ...NEUTRAL_TOPIC }],
     }))
     setSaved('')
   }
@@ -84,13 +85,24 @@ export default function SettingsPage() {
     setSaved('')
   }
 
-  async function uploadAvatar(file: File) {
+  /** 사진을 올려 프로필 사진(avatarUrl) 또는 홈 커버(coverUrl) 에 넣는다 */
+  async function uploadImage(file: File, field: 'avatarUrl' | 'coverUrl') {
     const form = new FormData()
     form.append('file', file)
     const res = await fetch('/api/upload', { method: 'POST', body: form })
     if (!res.ok) { alert('사진을 올리지 못했습니다.'); return }
     const d = await res.json()
-    set('profile', { ...config.profile, avatarUrl: d.url })
+    set('profile', { ...config.profile, [field]: d.url })
+  }
+
+  /**
+   * C안 색으로 되돌리기 — 사이트 색과 주제의 바탕·글자색만 되돌린다.
+   * 주제 이름·짧은 이름·순서와 문구·서재 주인·템플릿은 건드리지 않는다.
+   */
+  function resetToCyan() {
+    if (!confirm('사이트 색과 주제 색을 C안 기본값으로 되돌립니다.\n주제 이름과 문구·서재 주인·템플릿은 그대로 둡니다. 계속할까요?')) return
+    setConfig(c => resetColors(c))
+    setSaved('')
   }
 
   /** 저장 전에 주제 이름 변경·삭제로 몇 편이 함께 바뀌는지 알려준다 */
@@ -182,7 +194,7 @@ export default function SettingsPage() {
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {config.topics.map((t, i) => {
-            const ink = coverInk(t.color)
+            const ink = coverInk(t.color, t.ink)
             return (
               <div key={t.id} style={{ border: '1px solid var(--border)', borderRadius: '12px',
                 padding: '12px', display: 'flex', gap: '12px', alignItems: 'flex-start',
@@ -208,10 +220,15 @@ export default function SettingsPage() {
                       <input value={t.short} style={input}
                         onChange={e => setTopic(i, { short: e.target.value })} />
                     </label>
-                    <label style={{ width: '96px' }}>
-                      <span className="meta" style={{ display: 'block', marginBottom: '4px' }}>색</span>
+                    <label style={{ width: '84px' }}>
+                      <span className="meta" style={{ display: 'block', marginBottom: '4px' }}>바탕</span>
                       <input type="color" value={t.color} style={{ ...input, padding: '4px' }}
                         onChange={e => setTopic(i, { color: e.target.value })} />
+                    </label>
+                    <label style={{ width: '84px' }}>
+                      <span className="meta" style={{ display: 'block', marginBottom: '4px' }}>글자</span>
+                      <input type="color" value={t.ink} style={{ ...input, padding: '4px' }}
+                        onChange={e => setTopic(i, { ink: e.target.value })} />
                     </label>
                   </div>
                   <span className="meta">글 {usage[t.name] || 0}편</span>
@@ -235,7 +252,9 @@ export default function SettingsPage() {
       {/* 프로필 */}
       <section style={card}>
         <h2 className="sec-title" style={{ marginBottom: '4px' }}>서재 주인</h2>
-        <p className="meta" style={{ marginBottom: '14px' }}>소개 페이지 맨 위와 푸터에 보입니다.</p>
+        <p className="meta" style={{ marginBottom: '14px' }}>
+          홈 맨 위 커버와 소개 페이지, 푸터에 보입니다.
+        </p>
 
         <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center' }}>
@@ -248,7 +267,7 @@ export default function SettingsPage() {
                 : '사진 없음'}
             </div>
             <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }}
-              onChange={e => { const f = e.target.files?.[0]; if (f) uploadAvatar(f); e.target.value = '' }} />
+              onChange={e => { const f = e.target.files?.[0]; if (f) uploadImage(f, 'avatarUrl'); e.target.value = '' }} />
             <button onClick={() => fileRef.current?.click()} className="btn"
               style={{ minHeight: '44px', padding: '0 12px', fontSize: '14px' }}>사진 고르기</button>
             {config.profile.avatarUrl && (
@@ -273,17 +292,40 @@ export default function SettingsPage() {
             </label>
           </div>
         </div>
+
+        {/* 홈 커버 이미지 — 비우면 옅은 단색이 깔린다 */}
+        <div style={{ marginTop: '18px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <span className="meta-sub">홈 커버 이미지</span>
+          <div style={{ height: '120px', borderRadius: '10px', overflow: 'hidden',
+            background: config.profile.coverUrl ? 'var(--border-soft)' : 'var(--accent-light)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {config.profile.coverUrl
+              ? <img src={config.profile.coverUrl} alt=""
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              : <span className="meta">사진 없음 — 옅은 색이 깔립니다</span>}
+          </div>
+          <input ref={coverRef} type="file" accept="image/*" style={{ display: 'none' }}
+            onChange={e => { const f = e.target.files?.[0]; if (f) uploadImage(f, 'coverUrl'); e.target.value = '' }} />
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button onClick={() => coverRef.current?.click()} className="btn"
+              style={{ minHeight: '44px', padding: '0 14px', fontSize: '14px' }}>커버 고르기</button>
+            {config.profile.coverUrl && (
+              <button onClick={() => set('profile', { ...config.profile, coverUrl: '' })} className="btn"
+                style={{ minHeight: '44px', padding: '0 14px', fontSize: '14px' }}>커버 빼기</button>
+            )}
+          </div>
+        </div>
       </section>
 
       {/* 표시 */}
       <section style={card}>
         <h2 className="sec-title" style={{ marginBottom: '4px' }}>홈에 보일 것</h2>
         <p className="meta" style={{ marginBottom: '14px' }}>
-          최근 글은 항상 보입니다. 아래 둘만 켜고 끌 수 있습니다.
+          글 목록은 항상 보입니다. 아래 둘만 켜고 끌 수 있습니다.
         </p>
         {([
-          ['showShortNotes', '짧은 노트'],
-          ['showBookshelf', '책장'],
+          ['showShortNotes', '짧은 노트 탭'],
+          ['showBookshelf', '책장 (아래 메뉴와 책장 페이지)'],
         ] as const).map(([key, label]) => (
           <label key={key} style={{ display: 'flex', alignItems: 'center', gap: '10px',
             minHeight: '44px', cursor: 'pointer' }}>
@@ -299,11 +341,13 @@ export default function SettingsPage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
           gap: '12px', flexWrap: 'wrap', marginBottom: '4px' }}>
           <h2 className="sec-title">색</h2>
-          <button onClick={() => { set('theme', DEFAULT_THEME); }} className="btn"
-            style={{ minHeight: '44px', fontSize: '14px' }}>시안 색으로 되돌리기</button>
+          <button onClick={resetToCyan} className="btn"
+            style={{ minHeight: '44px', fontSize: '14px' }}>C안 색으로 되돌리기</button>
         </div>
         <p className="meta" style={{ marginBottom: '14px' }}>
           잘못 만지면 글자가 안 보일 수 있습니다. 그럴 땐 위 버튼으로 되돌리세요.
+          버튼은 사이트 색과 주제 색(바탕·글자)만 되돌립니다. 주제 이름·순서와
+          문구·서재 주인·템플릿은 그대로 둡니다.
         </p>
 
         <div style={{ ...themeToCssVars(config.theme), background: 'var(--bg)',

@@ -68,9 +68,9 @@ export default function AboutPage() {
   }
 
   const previewHtml = `
-    <div style="padding:1rem;font-size:14px;line-height:2;color:#2c1a0e;font-family:'Apple SD Gothic Neo',sans-serif;">
+    <div style="padding:1rem;font-size:14px;line-height:2;color:#1f1f1f;font-family:'Apple SD Gothic Neo',sans-serif;">
       <h2 style="font-size:16px;font-weight:800;margin-bottom:1rem;">소개</h2>
-      <div style="font-size:13px;line-height:2;color:#2c1a0e;">${content || '<p style="color:#b09880;">본문이 여기에 표시됩니다...</p>'}</div>
+      <div style="font-size:13px;line-height:2;color:#1f1f1f;">${content || '<p style="color:#767676;">본문이 여기에 표시됩니다...</p>'}</div>
     </div>
   `
 
@@ -122,16 +122,16 @@ export default function AboutPage() {
               flexDirection: 'column', alignItems: 'center', gap: '10px', overflowY: 'auto' }}>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.68rem', fontWeight: 600,
               letterSpacing: '0.1em', textTransform: 'uppercase' }}>모바일 미리보기</p>
-            <div style={{ width: '210px', border: '8px solid #2c1a0e', borderRadius: '28px',
+            <div style={{ width: '210px', border: '8px solid #1f1f1f', borderRadius: '28px',
               overflow: 'hidden', boxShadow: '0 8px 32px rgba(44,26,14,0.2)', background: '#fff' }}>
-              <div style={{ height: '22px', background: '#2c1a0e', display: 'flex',
+              <div style={{ height: '22px', background: '#1f1f1f', display: 'flex',
                 justifyContent: 'center', alignItems: 'center' }}>
-                <div style={{ width: '56px', height: '7px', background: '#1a0e06', borderRadius: '4px' }} />
+                <div style={{ width: '56px', height: '7px', background: '#111111', borderRadius: '4px' }} />
               </div>
-              <div style={{ padding: '8px 10px 4px', borderBottom: '1px solid #f0e8de', background: '#fffdf9' }}>
-                <div style={{ fontWeight: 800, fontSize: '11px', color: '#2c1a0e' }}>1인 서점</div>
+              <div style={{ padding: '8px 10px 4px', borderBottom: '1px solid #ececea', background: '#ffffff' }}>
+                <div style={{ fontWeight: 800, fontSize: '11px', color: '#1f1f1f' }}>적바림</div>
               </div>
-              <div style={{ height: '460px', overflowY: 'auto', background: '#faf6f0' }}
+              <div style={{ height: '460px', overflowY: 'auto', background: '#ffffff' }}
                 dangerouslySetInnerHTML={{ __html: previewHtml }} />
             </div>
           </div>

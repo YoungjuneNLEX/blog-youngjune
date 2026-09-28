@@ -5,7 +5,7 @@ import { getSiteConfig } from '@/lib/settings'
 import { topicFromSlug } from '@/lib/cover'
 import { toFeed } from '@/lib/feed'
 import { loadSourceNotes } from '@/lib/source-notes'
-import PostFeed from '@/components/PostFeed'
+import PostBrowser from '@/components/PostBrowser'
 
 export const revalidate = 300
 
@@ -40,11 +40,9 @@ export default async function TopicPage({ params }: Props) {
   const sourceNotes = await loadSourceNotes(data || [], `주제/${name}/나온 메모`)
 
   return (
-    <div className="wrap" style={{ paddingTop: '28px', paddingBottom: '48px' }}>
-      <h1 className="serif" style={{ fontSize: '26px', fontWeight: 700, margin: '0 0 24px' }}>
-        {name}
-      </h1>
-      <PostFeed entries={toFeed(data || [], config.topics, sourceNotes)} topics={config.topics} />
+    <div style={{ paddingTop: '20px', paddingBottom: '40px' }}>
+      <PostBrowser entries={toFeed(data || [], config.topics, sourceNotes)}
+        topics={config.topics} showTabs={config.showShortNotes} lockedTopic={name} />
     </div>
   )
 }

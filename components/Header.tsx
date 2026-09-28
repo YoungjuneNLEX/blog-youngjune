@@ -15,7 +15,9 @@ const ADMIN_LINKS = [
   { href: '/admin/settings', label: '설정' },
 ]
 
-export default function Header({ siteName, topics }: { siteName: string; topics: Topic[] }) {
+export default function Header({
+  siteName, topics, showBookshelf,
+}: { siteName: string; topics: Topic[]; showBookshelf: boolean }) {
   const { data: session } = useSession()
   const pathname = usePathname()
   const isAdmin = session?.user?.role === 'admin'
@@ -30,22 +32,25 @@ export default function Header({ siteName, topics }: { siteName: string; topics:
     : null
 
   return (
-    <header style={{ borderBottom: '1px solid var(--border)' }}>
-      {/* 제호 + 메뉴 */}
+    <header style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-header)' }}>
       <div className="wrap"
         style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          paddingTop: '16px', paddingBottom: '12px' }}>
+          minHeight: '56px', paddingTop: '6px', paddingBottom: '6px' }}>
         <Link href="/" className="wordmark">{siteName}</Link>
 
         {/* PC: 주제를 그대로 펼친다 */}
-        <nav className="only-pc" style={{ gap: '28px', fontSize: '15px', alignItems: 'center' }}>
+        <nav className="only-pc" style={{ gap: '24px', fontSize: '15px', alignItems: 'center' }}>
           <Link href="/archive" style={onArchive ? { color: 'var(--accent)' } : undefined}>전체</Link>
           {topics.map(t => (
-            <Link key={t.name} href={`/topics/${topicSlug(t.name)}`}
+            <Link key={t.id} href={`/topics/${topicSlug(t.name)}`}
               style={current === t.name ? { color: 'var(--accent)' } : undefined}>
               {t.short}
             </Link>
           ))}
+          {showBookshelf && (
+            <Link href="/bookshelf"
+              style={pathname?.startsWith('/bookshelf') ? { color: 'var(--accent)' } : undefined}>책장</Link>
+          )}
           <Link href="/about" style={{ color: 'var(--text-sub)' }}>소개</Link>
           {isAdmin && (
             <>
@@ -59,56 +64,57 @@ export default function Header({ siteName, topics }: { siteName: string; topics:
           )}
         </nav>
 
-        {/* 모바일: 소개(사람 아이콘) + 관리자면 쓰기 메뉴 */}
+        {/* 모바일: 메뉴 하나. 주제·책장은 아래 고정 메뉴로도 간다. */}
         <div className="only-mobile" style={{ position: 'relative', alignItems: 'center' }}>
-          {isAdmin && (
-            <button onClick={() => setOpen(v => !v)} aria-label="쓰는 공간" aria-expanded={open}
-              className="icon-btn">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                strokeWidth="1.8" strokeLinecap="round" aria-hidden>
-                <path d="M4 20h4l10-10-4-4L4 16v4z" /><path d="M13.5 6.5l4 4" />
-              </svg>
-            </button>
-          )}
-          <Link href="/about" aria-label="소개" className="icon-btn">
+          <button onClick={() => setOpen(v => !v)} aria-label="메뉴" aria-expanded={open}
+            className="icon-btn">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
               strokeWidth="1.8" strokeLinecap="round" aria-hidden>
-              <circle cx="12" cy="8" r="4" /><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" />
+              <path d="M4 7h16M4 12h16M4 17h16" />
             </svg>
-          </Link>
+          </button>
 
-          {open && isAdmin && (
+          {open && (
             <>
               <div className="fixed inset-0" style={{ zIndex: 40 }} onClick={() => setOpen(false)} />
-              <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 50, minWidth: '11rem',
+              <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 50, minWidth: '12rem',
                 background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '12px',
-                overflow: 'hidden', boxShadow: '0 8px 24px rgba(44,26,14,0.15)' }}>
-                {ADMIN_LINKS.map(l => (
-                  <Link key={l.href} href={l.href} onClick={() => setOpen(false)}
-                    style={{ display: 'block', padding: '12px 16px', fontSize: '15px',
-                      borderBottom: '1px solid var(--border-soft)' }}>{l.label}</Link>
+                overflow: 'hidden', boxShadow: '0 8px 24px rgba(0,0,0,0.12)' }}>
+                <MenuLink href="/archive" onClick={() => setOpen(false)}>전체</MenuLink>
+                {topics.map(t => (
+                  <MenuLink key={t.id} href={`/topics/${topicSlug(t.name)}`} onClick={() => setOpen(false)}>
+                    {t.name}
+                  </MenuLink>
                 ))}
-                <button onClick={() => { setOpen(false); signOut() }}
-                  style={{ display: 'block', width: '100%', textAlign: 'left', padding: '12px 16px',
-                    fontSize: '15px', background: 'none', border: 'none', cursor: 'pointer',
-                    color: 'var(--text-sub)', fontFamily: 'inherit' }}>로그아웃</button>
+                {showBookshelf && <MenuLink href="/bookshelf" onClick={() => setOpen(false)}>책장</MenuLink>}
+                <MenuLink href="/about" onClick={() => setOpen(false)}>소개</MenuLink>
+                {isAdmin && ADMIN_LINKS.map(l => (
+                  <MenuLink key={l.href} href={l.href} onClick={() => setOpen(false)} sub>{l.label}</MenuLink>
+                ))}
+                {isAdmin && (
+                  <button onClick={() => { setOpen(false); signOut() }}
+                    style={{ display: 'block', width: '100%', textAlign: 'left', padding: '12px 16px',
+                      fontSize: '15px', background: 'none', border: 'none', cursor: 'pointer',
+                      color: 'var(--text-sub)', fontFamily: 'inherit' }}>로그아웃</button>
+                )}
               </div>
             </>
           )}
         </div>
       </div>
-
-      {/* 모바일: 주제 칩 */}
-      <nav aria-label="주제" className="only-mobile wrap bleed no-scrollbar chip-row"
-        style={{ paddingBottom: '12px' }}>
-        <Link href="/archive" className={`chip${onArchive ? ' chip-on' : ''}`}>전체</Link>
-        {topics.map(t => (
-          <Link key={t.name} href={`/topics/${topicSlug(t.name)}`}
-            className={`chip${current === t.name ? ' chip-on' : ''}`}>
-            {t.short}
-          </Link>
-        ))}
-      </nav>
     </header>
+  )
+}
+
+function MenuLink({
+  href, onClick, children, sub = false,
+}: { href: string; onClick: () => void; children: React.ReactNode; sub?: boolean }) {
+  return (
+    <Link href={href} onClick={onClick}
+      style={{ display: 'block', padding: '12px 16px', fontSize: '15px',
+        borderBottom: '1px solid var(--border-soft)',
+        color: sub ? 'var(--text-sub)' : 'var(--text-main)' }}>
+      {children}
+    </Link>
   )
 }

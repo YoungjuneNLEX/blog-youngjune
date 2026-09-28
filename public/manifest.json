@@ -1,11 +1,11 @@
 {
-  "name": "1인 서점",
-  "short_name": "1인 서점",
-  "description": "Young June의 1인 서점 — 법, 일상, 그리고 책 이야기",
+  "name": "적바림",
+  "short_name": "적바림",
+  "description": "적바림 — 생각을 적고, 적은 것을 열어 둡니다",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#faf6f0",
-  "theme_color": "#8b5e3c",
+  "background_color": "#ffffff",
+  "theme_color": "#4f7a62",
   "orientation": "portrait",
   "icons": [
     {
