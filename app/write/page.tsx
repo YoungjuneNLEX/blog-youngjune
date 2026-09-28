@@ -166,7 +166,7 @@ export default function WritePage() {
   const previewHtml = `
     <div style="padding:1rem;font-size:14px;line-height:2;color:#1f1f1f;font-family:'Apple SD Gothic Neo',sans-serif;">
       ${thumbnailPreview || thumbnailUrl ? `<img src="${thumbnailPreview || thumbnailUrl}" style="width:100%;border-radius:8px;margin-bottom:1rem;object-fit:cover;max-height:160px;" />` : ''}
-      ${category ? `<span style="font-size:11px;background:#f6f6f4;color:#4f7a62;padding:2px 8px;border-radius:999px;font-weight:600;">${category}</span>` : ''}
+      ${category ? `<span style="font-size:11px;background:#e4eaf3;color:#33517e;padding:2px 8px;border-radius:999px;font-weight:600;">${category}</span>` : ''}
       <h1 style="font-size:18px;font-weight:800;margin:0.75rem 0 0.25rem;line-height:1.3;">${title || '제목을 입력하세요'}</h1>
       ${bookTitle ? `<p style="font-size:11px;color:#767676;margin-bottom:1rem;">${bookTitle}</p>` : ''}
       <div style="font-size:14px;line-height:2;color:#1f1f1f;">${content || '<p style="color:#767676;">본문이 여기에 표시됩니다...</p>'}</div>
