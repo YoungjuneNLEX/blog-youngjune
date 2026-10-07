@@ -4,6 +4,9 @@ import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { childTopics, Topic } from '@/lib/site-config'
 import { formatTime } from '@/lib/date'
+import { fetchWithTimeout, networkErrorMessage } from '@/lib/http'
+
+const DRAFT_KEY = 'jeokbarim:short-draft'
 
 export interface MemoRow {
   id: string
@@ -43,28 +46,60 @@ export default function ShortWriter({
     el.setSelectionRange(el.value.length, el.value.length)
   }, [])
 
+  // 쓰던 짧은 글을 이 기기에 임시로 남겨 둔다. 저장이 실패하거나 화면을 나가도 다시 돌아오면 이어 쓸 수 있게.
+  // (새로 쓰는 경우만. 고치기 화면은 DB 에 원본이 있으니 남기지 않는다)
+  useEffect(() => {
+    if (edit || text) return
+    try {
+      const draft = localStorage.getItem(DRAFT_KEY)
+      if (draft) onText(draft)
+    } catch { /* 저장소를 못 쓰는 브라우저면 넘어간다 */ }
+    // 처음 한 번만
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
+    if (edit) return
+    try {
+      if (text.trim()) localStorage.setItem(DRAFT_KEY, text)
+      else localStorage.removeItem(DRAFT_KEY)
+    } catch { /* 무시 */ }
+  }, [text, edit])
+
   async function save() {
     const body = text.trim()
     if (!body || saving) return
     setSaving(true); setError('')
 
-    const res = edit
-      ? await fetch(`/api/posts/${edit.postId}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          // 공개 여부는 건드리지 않는다. 바꾸는 것은 본문과 주제뿐.
-          body: JSON.stringify({ content: body, topic: topic || null }),
-        })
-      : await fetch('/api/notes', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ content: body, topic: topic || null }),
-        })
+    let res: Response
+    try {
+      res = edit
+        ? await fetchWithTimeout(`/api/posts/${edit.postId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            // 공개 여부는 건드리지 않는다. 바꾸는 것은 본문과 주제뿐.
+            body: JSON.stringify({ content: body, topic: topic || null }),
+          })
+        : await fetchWithTimeout('/api/notes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content: body, topic: topic || null }),
+          })
+    } catch (e) {
+      // 통신이 끊겨도 "저장 중…"에 매달리지 않는다. 쓴 글은 지우지 않는다.
+      setSaving(false)
+      setError(networkErrorMessage(e))
+      return
+    }
     setSaving(false)
 
     if (!res.ok) {
       const d = await res.json().catch(() => ({}))
-      setError(d.error || '저장하지 못했습니다. 다시 시도해주세요.')
+      setError(
+        res.status === 403
+          ? '로그인이 풀렸습니다. 쓴 글은 그대로 있으니 다시 로그인한 뒤 눌러 주세요.'
+          : d.error || '저장하지 못했습니다. 다시 시도해주세요.',
+      )
       return
     }
 
@@ -76,6 +111,7 @@ export default function ShortWriter({
     const saved: MemoRow = await res.json()
     setList(prev => [saved, ...prev])
     onSaved?.(saved)
+    try { localStorage.removeItem(DRAFT_KEY) } catch { /* 무시 */ }
     onText('')
     // 주제는 남겨 둔다 — 같은 주제로 이어 적는 일이 많다
     boxRef.current?.focus()
