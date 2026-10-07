@@ -27,7 +27,7 @@ export async function POST(req: Request) {
 
   const { ids, templateId } = await req.json()
   if (!Array.isArray(ids) || ids.length === 0) {
-    return NextResponse.json({ error: '메모를 하나 이상 골라주세요.' }, { status: 400 })
+    return NextResponse.json({ error: '짧은 글을 하나 이상 골라주세요.' }, { status: 400 })
   }
   if (ids.length > MAX_NOTES) {
     return NextResponse.json(
@@ -43,7 +43,7 @@ export async function POST(req: Request) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   if (!notes?.length) {
-    return NextResponse.json({ error: '묶을 메모를 찾지 못했습니다.' }, { status: 400 })
+    return NextResponse.json({ error: '묶을 짧은 글을 찾지 못했습니다.' }, { status: 400 })
   }
 
   const pieces = notes.map(n => toPlainText(n.content)).filter(Boolean)

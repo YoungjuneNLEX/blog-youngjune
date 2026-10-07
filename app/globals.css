@@ -381,37 +381,6 @@ a:hover { color: var(--accent); }
 .note-strip .note-item { padding: 14px; }
 
 /* --------------------------------------------------------------------------
-   책장
-   -------------------------------------------------------------------------- */
-
-.shelf { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px 12px; }
-.book {
-  width: 100%;
-  aspect-ratio: 2 / 3;
-  border-radius: 8px;
-  overflow: hidden;
-  display: flex;
-  align-items: flex-end;
-  padding: 10px;
-  cursor: pointer;
-  border: none;
-  position: relative;
-}
-.book img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.book-name {
-  position: relative;
-  z-index: 2;
-  font-family: var(--font-serif);
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1.35;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-/* --------------------------------------------------------------------------
    하단 고정 메뉴 (모바일) — 홈 · 주제 · 적바림 · 책장 · 소개
    '적바림'은 관리자에게만 보인다.
    -------------------------------------------------------------------------- */
@@ -665,6 +634,10 @@ a:hover { color: var(--accent); }
   accent-color: var(--accent); flex-shrink: 0;
 }
 .wh-row label { display: flex; flex-direction: column; gap: 6px; flex-grow: 1; min-width: 0; cursor: pointer; }
+/* 긴 글 줄은 눌러서 고치는 화면으로 간다 */
+.wh-open { display: flex; flex-direction: column; gap: 6px; flex-grow: 1; min-width: 0; }
+.wh-edit { flex-shrink: 0; align-self: flex-start; padding: 2px 4px; font-size: 13px; color: var(--accent);
+  min-height: 44px; display: flex; align-items: center; }
 .wh-text { font-size: 16px; line-height: 1.65; }
 .wh-day { font-size: 13px; color: var(--text-sub); padding: 24px 0 12px; }
 .wh-day:first-child { padding-top: 0; }
@@ -683,10 +656,44 @@ a:hover { color: var(--accent); }
 .wh-bar .btn { min-height: 44px; font-size: 14px; padding: 0 14px; }
 
 /* --------------------------------------------------------------------------
+   글쓰기 맨 위 줄 + 짧은 글 | 긴 글 전환
+   -------------------------------------------------------------------------- */
+
+.write-bar {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 8px;
+  padding: 4px var(--gutter);
+  min-height: 56px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-header);
+  flex-shrink: 0;
+}
+.write-bar-link {
+  display: flex; align-items: center; min-height: 44px;
+  font-size: 14px; color: var(--text-sub);
+}
+.write-bar-right { justify-self: end; }
+.write-bar-mid { display: flex; justify-content: center; }
+.seg {
+  display: inline-grid; grid-template-columns: 1fr 1fr;
+  border: 1px solid var(--line-strong); border-radius: 999px; padding: 3px;
+  background: var(--border-soft);
+}
+.seg button {
+  min-height: 36px; padding: 0 16px; border: none; border-radius: 999px;
+  background: transparent; font-family: inherit; font-size: 14px;
+  color: var(--text-sub); cursor: pointer; white-space: nowrap;
+}
+.seg button.on { background: var(--accent); color: #ffffff; font-weight: 700; }
+
+/* --------------------------------------------------------------------------
    글쓰기 화면 (에디터)
    -------------------------------------------------------------------------- */
 
-.write-shell { display: flex; flex-direction: column; min-height: calc(100vh - 64px); }
+.write-page { min-height: 100vh; background: var(--bg); }
+.write-shell { display: flex; flex-direction: column; min-height: calc(100vh - 57px); }
 .write-split { display: block; }
 .write-main { padding: 16px; }
 .write-editor { height: 60vh; min-height: 380px; overflow: hidden; }
@@ -746,8 +753,6 @@ a:hover { color: var(--accent); }
   }
   .note-item { padding: 18px; }
   .note-text { font-size: 16px; line-height: 1.75; }
-
-  .shelf { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 20px 16px; }
 
   /* 카테고리는 가운데 창으로 */
   .cat-scrim { background: rgba(0, 0, 0, 0.45); align-items: center; justify-content: center;
@@ -833,7 +838,7 @@ a:hover { color: var(--accent); }
   .wh-bar { display: none; }     /* PC 는 오른쪽 패널로 처리한다 */
 
   /* 글쓰기: 좌우 분할 */
-  .write-shell { height: calc(100vh - 64px); }
+  .write-shell { height: calc(100vh - 57px); }
   .write-split { display: flex; flex: 1; overflow: hidden; }
   .write-main { flex: 1; display: flex; flex-direction: column; overflow: hidden; padding: 20px; }
   .write-editor { flex: 1; height: auto; }

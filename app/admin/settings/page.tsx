@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { useSession } from 'next-auth/react'
+import { signOut, useSession } from 'next-auth/react'
 import {
   ColorChange, SiteConfig, ThemeColors, Topic,
   DEFAULT_CONFIG, NEUTRAL_TOPIC, THEME_FIELD_LABELS,
@@ -15,8 +15,6 @@ import { coverInk, topicPair } from '@/lib/cover'
 const TEXT_FIELDS: { key: keyof SiteConfig; label: string; hint?: string }[] = [
   { key: 'siteName', label: '제호 (사이트 이름)', hint: '머리글·푸터·브라우저 탭에 쓰입니다' },
   { key: 'heroTitle', label: '검색 설명문', hint: '구글 검색 결과에 보이는 사이트 설명입니다. 홈 커버의 한 줄 소개는 아래 "서재 주인"에서 바꿉니다' },
-  { key: 'latestTitle', label: '전체 페이지 제목', hint: '/archive 맨 위에 쓰입니다' },
-  { key: 'bookshelfTitle', label: '책장 페이지 제목' },
   { key: 'footerName', label: '푸터 이름' },
   { key: 'footerNote', label: '푸터 한 줄' },
 ]
@@ -248,7 +246,11 @@ export default function SettingsPage() {
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
         gap: '12px', marginBottom: '20px', flexWrap: 'wrap' }}>
-        <h1 className="wordmark">설정</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+          <Link href="/notes" aria-label="글관리로" className="meta-sub"
+            style={{ display: 'flex', alignItems: 'center', minHeight: '44px' }}>← 글관리</Link>
+          <h1 className="wordmark">설정</h1>
+        </div>
         <Link href="/admin" className="meta-sub">회원 관리 →</Link>
       </div>
 
@@ -444,11 +446,10 @@ export default function SettingsPage() {
       <section style={card}>
         <h2 className="sec-title" style={{ marginBottom: '4px' }}>홈에 보일 것</h2>
         <p className="meta" style={{ marginBottom: '14px' }}>
-          글 목록은 항상 보입니다. 아래 둘만 켜고 끌 수 있습니다.
+          긴 글은 항상 보입니다. 짧은 글만 켜고 끌 수 있습니다.
         </p>
         {([
-          ['showShortNotes', '짧은 노트 탭'],
-          ['showBookshelf', '책장 (아래 메뉴와 책장 페이지)'],
+          ['showShortNotes', '짧은 글 탭 (홈·주제 페이지)'],
         ] as const).map(([key, label]) => (
           <label key={key} style={{ display: 'flex', alignItems: 'center', gap: '10px',
             minHeight: '44px', cursor: 'pointer' }}>
@@ -596,6 +597,12 @@ export default function SettingsPage() {
           style={{ minHeight: '48px', padding: '0 28px' }}>
           {saving ? '저장 중…' : '저장하기'}
         </button>
+      </div>
+
+      {/* 로그아웃은 설정 맨 아래에 둔다 */}
+      <div style={{ marginTop: '32px', paddingTop: '20px', borderTop: '1px solid var(--border)' }}>
+        <button onClick={() => signOut({ callbackUrl: '/' })} className="btn"
+          style={{ width: '100%', color: 'var(--text-sub)' }}>로그아웃</button>
       </div>
     </div>
   )

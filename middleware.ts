@@ -16,8 +16,8 @@ export default auth((req) => {
     }
   }
 
-  // 쓰는 공간(적바림·노트 창고)은 관리자만
-  if (pathname.startsWith('/memo') || pathname.startsWith('/notes')) {
+  // 글관리는 관리자만
+  if (pathname.startsWith('/notes')) {
     if (session?.user?.role !== 'admin') {
       return NextResponse.redirect(new URL('/', req.url))
     }
@@ -27,5 +27,5 @@ export default auth((req) => {
 })
 
 export const config = {
-  matcher: ['/write/:path*', '/admin/:path*', '/memo/:path*', '/notes/:path*'],
+  matcher: ['/write/:path*', '/admin/:path*', '/notes/:path*'],
 }

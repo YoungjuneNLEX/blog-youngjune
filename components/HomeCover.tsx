@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { Profile } from '@/lib/site-config'
 
 /**
@@ -20,10 +21,11 @@ export default function HomeCover({
       )}
       <div className="home-cover-inner" style={{ display: 'flex', flexDirection: 'column' }}>
         <span className="home-cover-count" style={{ color: dim }}>
-          글 {articleCount} · 짧은 노트 {noteCount}
+          긴 글 {articleCount} · 짧은 글 {noteCount}
         </span>
         <h1 className="home-cover-title">{siteName}</h1>
-        <div className="owner">
+        {/* 사진·닉네임을 누르면 소개 페이지로 */}
+        <Link href="/about" className="owner" style={{ color: 'inherit' }}>
           <span className="owner-face">
             {profile.avatarUrl
               ? <img src={profile.avatarUrl} alt="" />
@@ -33,7 +35,7 @@ export default function HomeCover({
             <span className="owner-name">{profile.name}</span>
             <span className="owner-bio" style={{ color: dim }}>{profile.bio}</span>
           </span>
-        </div>
+        </Link>
       </div>
     </section>
   )

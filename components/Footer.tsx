@@ -9,8 +9,8 @@ export default function Footer({
   const pathname = usePathname()
   const { data: session } = useSession()
 
-  // 쓰는 공간에는 푸터를 두지 않는다 (시안 Write·Archive 에 없다)
-  if (pathname?.startsWith('/memo') || pathname?.startsWith('/notes')) return null
+  // 쓰는 공간에는 푸터를 두지 않는다
+  if (pathname?.startsWith('/notes') || pathname?.startsWith('/write')) return null
 
   return (
     <footer className="wrap"

@@ -120,7 +120,7 @@ export default async function PostPage({ params }: Props) {
               style={{ border: '1px solid var(--border)', borderRadius: '12px', padding: '14px' }}>
               <span className="meta">← 이전</span>
               <p className="serif" style={{ fontSize: '15px', fontWeight: 700, margin: '4px 0 0' }}>
-                {prev.title || '메모'}
+                {prev.title || '짧은 글'}
               </p>
             </Link>
           ) : <span />}
@@ -129,7 +129,7 @@ export default async function PostPage({ params }: Props) {
               style={{ border: '1px solid var(--border)', borderRadius: '12px', padding: '14px', textAlign: 'right' }}>
               <span className="meta">다음 →</span>
               <p className="serif" style={{ fontSize: '15px', fontWeight: 700, margin: '4px 0 0' }}>
-                {next.title || '메모'}
+                {next.title || '짧은 글'}
               </p>
             </Link>
           )}

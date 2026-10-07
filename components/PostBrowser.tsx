@@ -10,17 +10,17 @@ import { FeedEntry } from '@/lib/feed'
 import { SheetData } from '@/lib/public'
 
 /**
- * 글 목록 (C안) — 글/짧은 노트 탭, 주제 고르기, 앨범형·목록형 전환.
- * 홈·전체·주제 페이지가 모두 이 부품을 쓴다.
+ * 글 목록 (C안) — 긴 글/짧은 글 탭, 주제 고르기, 앨범형·목록형 전환.
+ * 홈·주제 페이지가 이 부품을 쓴다.
  */
 export default function PostBrowser({
   entries, topics, showTabs = true, lockedTopic = null, notePreview = 0,
 }: {
   entries: FeedEntry[]
   topics: Topic[]
-  showTabs?: boolean          // 짧은 노트 탭을 보일지 (설정에서 끌 수 있다)
+  showTabs?: boolean          // 짧은 글 탭을 보일지 (설정에서 끌 수 있다)
   lockedTopic?: string | null // 주제 페이지처럼 주제가 이미 정해진 경우
-  notePreview?: number        // 글 탭 아래에 짧은 노트를 몇 개 미리 보일지 (홈)
+  notePreview?: number        // 긴 글 아래에 짧은 글을 몇 개 미리 보일지 (홈)
 }) {
   const [tab, setTab] = useState<'article' | 'note'>('article')
   const [album, setAlbum] = useState(true)
@@ -59,9 +59,9 @@ export default function PostBrowser({
       {showTabs && (
         <nav aria-label="보기" className="tabs">
           <button className={`tab${tab === 'article' ? ' tab-on' : ''}`}
-            onClick={() => setTab('article')}>글</button>
+            onClick={() => setTab('article')}>긴 글</button>
           <button className={`tab${tab === 'note' ? ' tab-on' : ''}`}
-            onClick={() => setTab('note')}>짧은 노트</button>
+            onClick={() => setTab('note')}>짧은 글</button>
         </nav>
       )}
 
@@ -98,10 +98,10 @@ export default function PostBrowser({
       </div>
 
       {shown.length === 0 && (
-        <p className="empty">{isNotes ? '아직 열어 둔 메모가 없습니다.' : '아직 열어 둔 글이 없습니다.'}</p>
+        <p className="empty">{isNotes ? '아직 열어 둔 짧은 글이 없습니다.' : '아직 열어 둔 긴 글이 없습니다.'}</p>
       )}
 
-      {/* 짧은 노트 — 표지 없이 본문 그대로 */}
+      {/* 짧은 글 — 표지 없이 본문 그대로 */}
       {isNotes && shown.length > 0 && (
         <div className="note-list">
           {shown.map(e => (
@@ -142,11 +142,11 @@ export default function PostBrowser({
         </div>
       )}
 
-      {/* 글 탭 아래 짧은 노트 미리 보기 (홈, 시안 PastelHome) */}
+      {/* 긴 글 아래 짧은 글 미리 보기 (홈, 시안 PastelHome) */}
       {!isNotes && notePreview > 0 && showTabs && previewNotes.length > 0 && (
         <section className="note-strip">
           <div className="note-strip-head">
-            <h2 className="sec-title" style={{ fontSize: '17px' }}>짧은 노트</h2>
+            <h2 className="sec-title" style={{ fontSize: '17px' }}>짧은 글</h2>
             <button className="sec-more" onClick={() => setTab('note')}
               style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
               더 보기

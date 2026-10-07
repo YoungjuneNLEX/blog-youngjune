@@ -109,14 +109,11 @@ export const THEME_FIELD_LABELS: Record<keyof ThemeColors, string> = {
 export interface SiteConfig {
   siteName: string       // 제호
   heroTitle: string      // 한 줄 소개 (브라우저 설명문에 쓰인다)
-  latestTitle: string    // 최근 글 섹션 제목
-  bookshelfTitle: string // 책장 섹션 제목
   footerName: string     // 푸터에 표시되는 이름
   footerNote: string     // 푸터 한 줄
   profile: Profile
   topics: Topic[]
-  showShortNotes: boolean // 홈에 짧은 노트 보이기
-  showBookshelf: boolean  // 홈에 책장 보이기
+  showShortNotes: boolean // 짧은 글 탭 보이기 (키 이름은 저장된 설정과 맞추려고 그대로 둔다)
   theme: ThemeColors
 }
 
@@ -203,14 +200,11 @@ export const DEFAULT_PROFILE: Profile = {
 export const DEFAULT_CONFIG: SiteConfig = {
   siteName: '적바림',
   heroTitle: '적어 두면 남는다',
-  latestTitle: '최근 글',
-  bookshelfTitle: '책장',
   footerName: '적바림',
   footerNote: '나중에 참고하려고 간단히 글로 적어 둠.',
   profile: DEFAULT_PROFILE,
   topics: DEFAULT_TOPICS,
   showShortNotes: true,
-  showBookshelf: true,
   theme: DEFAULT_THEME,
 }
 
@@ -258,7 +252,8 @@ function bool(value: unknown, fallback: boolean): boolean {
 
 /**
  * 부분 저장이나 옛 설정이 와도 안전하게 채운다.
- * 옛 항목(siteEyebrow·heroImage·sectionOrder 등)은 여기서 조용히 걸러진다.
+ * 옛 항목(siteEyebrow·heroImage·sectionOrder·latestTitle·bookshelfTitle·showBookshelf 등)은
+ * 여기서 조용히 걸러진다. (books 테이블과 데이터는 그대로 둔다)
  */
 export function mergeConfig(partial: Partial<SiteConfig> | null | undefined): SiteConfig {
   const p = (partial || {}) as Record<string, unknown>
@@ -286,8 +281,6 @@ export function mergeConfig(partial: Partial<SiteConfig> | null | undefined): Si
   return {
     siteName: text(p.siteName, DEFAULT_CONFIG.siteName),
     heroTitle: text(p.heroTitle, DEFAULT_CONFIG.heroTitle),
-    latestTitle: text(p.latestTitle, DEFAULT_CONFIG.latestTitle),
-    bookshelfTitle: text(p.bookshelfTitle, DEFAULT_CONFIG.bookshelfTitle),
     footerName: text(p.footerName, DEFAULT_CONFIG.footerName),
     footerNote: text(p.footerNote, DEFAULT_CONFIG.footerNote),
     profile: {
@@ -299,7 +292,6 @@ export function mergeConfig(partial: Partial<SiteConfig> | null | undefined): Si
     },
     topics: topics.length > 0 ? topics : DEFAULT_TOPICS,
     showShortNotes: bool(p.showShortNotes, true),
-    showBookshelf: bool(p.showBookshelf, true),
     theme: { ...DEFAULT_THEME, ...((p.theme || {}) as Partial<ThemeColors>) },
   }
 }

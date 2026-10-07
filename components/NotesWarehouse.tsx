@@ -11,33 +11,37 @@ export interface WarehouseRow {
   id: string
   title: string
   content: string | null
-  kind: 'note' | 'article'
+  kind: 'note' | 'article'   // DB 값 그대로. 화면에서는 note = 짧은 글, article = 긴 글
   topic: string | null
   published: boolean
   created_at: string
 }
 
+type Tab = 'short' | 'long'
 type Filter =
   | { type: 'all' } | { type: 'untagged' } | { type: 'published' }
-  | { type: 'growing' } | { type: 'topic'; name: string }
+  | { type: 'private' } | { type: 'topic'; name: string }
 
 // X 는 링크를 23자로 셈한다. 280 에서 링크와 사이 공백을 빼고 여유를 둔다.
 const X_TEXT_LIMIT = 250
 
 /**
- * 노트 창고 — 적어 둔 것을 날짜별로 펼쳐 놓고 골라서 처리하는 곳.
+ * 글관리 — 쓴 글을 날짜별로 펼쳐 놓고 골라서 처리하는 곳.
+ * 맨 위 [짧은 글 | 긴 글] 탭마다 같은 필터(분류 전·공개 여부·주제)를 쓰고,
+ * 짧은 글은 공개·주제·X 공유·묶어서 긴 글 초안, 긴 글은 공개·주제를 고른다.
  * "공개는 나중에 고르는 것"이라는 원칙이 실제로 일어나는 화면이다.
- * 옛 서재관리(/manage)를 여기로 합쳤다.
  */
 export default function NotesWarehouse({
-  rows, topics, templates, grown,
+  rows, topics, templates, grown, initialTab = 'short',
 }: {
   rows: WarehouseRow[]
   topics: Topic[]
   templates: { id: string; name: string }[]
-  grown: string[]          // 이미 초안으로 자란 메모
+  grown: string[]          // 이미 긴 글 초안으로 자란 짧은 글
+  initialTab?: Tab
 }) {
   const router = useRouter()
+  const [tab, setTab] = useState<Tab>(initialTab)
   const [filter, setFilter] = useState<Filter>({ type: 'all' })
   const [picked, setPicked] = useState<Set<string>>(new Set())
   const [busy, setBusy] = useState(false)
@@ -45,17 +49,23 @@ export default function NotesWarehouse({
   const [templateId, setTemplateId] = useState('')
   const grownSet = useMemo(() => new Set(grown), [grown])
 
+  const kind = tab === 'short' ? 'note' : 'article'
+  const counts = useMemo(() => ({
+    short: rows.filter(r => r.kind === 'note').length,
+    long: rows.filter(r => r.kind === 'article').length,
+  }), [rows])
+
   const shown = useMemo(() => rows.filter(r => {
+    if (r.kind !== kind) return false
     switch (filter.type) {
       case 'untagged':  return !r.topic
       case 'published': return r.published
-      // 키우는 중 = 쓰다 만 긴 글
-      case 'growing':   return r.kind === 'article' && !r.published
+      case 'private':   return !r.published
       // 대분류를 고르면 그 아래 중분류 글까지 함께 보여 준다
       case 'topic':     return !!r.topic && topicNamesUnder(topics, filter.name).includes(r.topic)
       default:          return true
     }
-  }), [rows, filter, topics])
+  }), [rows, kind, filter, topics])
 
   const byDay = useMemo(() => {
     const map = new Map<string, WarehouseRow[]>()
@@ -94,15 +104,13 @@ export default function NotesWarehouse({
   }
 
   /**
-   * 고른 메모를 묶어 긴 글 초안 한 편을 만든다.
-   * 원본 메모는 그대로 남는다. 새 초안은 비공개로 들어가고, 바로 손볼 수 있게 글쓰기 화면으로 간다.
+   * 고른 짧은 글을 묶어 긴 글 초안 한 편을 만든다.
+   * 원본 짧은 글은 그대로 남는다. 새 초안은 비공개로 들어가고, 바로 손볼 수 있게 글쓰기 화면으로 간다.
    */
   async function compose() {
     const picks = Array.from(picked)
     const onlyNotes = picks.filter(id => rows.find(r => r.id === id)?.kind === 'note')
-    if (onlyNotes.length === 0) { alert('메모를 하나 이상 골라주세요. 긴 글은 묶을 수 없습니다.'); return }
-    if (onlyNotes.length !== picks.length
-      && !confirm('고른 것 중 긴 글은 빼고 메모만 묶습니다. 계속할까요?')) return
+    if (onlyNotes.length === 0) { alert('짧은 글을 하나 이상 골라주세요.'); return }
 
     setBusy(true)
     const res = await fetch('/api/compose', {
@@ -128,12 +136,12 @@ export default function NotesWarehouse({
    * 공개 전환은 창을 연 뒤에 보낸다.
    */
   function shareToX() {
-    if (picked.size !== 1) { alert('메모 하나만 골라주세요.'); return }
+    if (picked.size !== 1) { alert('짧은 글 하나만 골라주세요.'); return }
     const id = Array.from(picked)[0]
     const row = rows.find(r => r.id === id)
     if (!row) return
-    if (row.kind !== 'note') { alert('메모만 X에 공유할 수 있습니다.'); return }
-    if (!confirm('X에 공유하면 이 메모는 적바림에서도 공개로 바뀝니다. 계속할까요?')) return
+    if (row.kind !== 'note') { alert('짧은 글만 X에 공유할 수 있습니다.'); return }
+    if (!confirm('X에 공유하면 이 짧은 글은 사이트에서도 공개로 바뀝니다. 계속할까요?')) return
 
     const url = `${window.location.origin}/posts/${id}`
     const body = toPlainText(row.content)
@@ -149,18 +157,27 @@ export default function NotesWarehouse({
   }
 
   const views: { key: string; label: string; value: Filter }[] = [
-    { key: 'all', label: '모든 노트', value: { type: 'all' } },
+    { key: 'all', label: '모두', value: { type: 'all' } },
     { key: 'untagged', label: '분류 전', value: { type: 'untagged' } },
     { key: 'published', label: '공개한 것', value: { type: 'published' } },
-    { key: 'growing', label: '키우는 중', value: { type: 'growing' } },
+    { key: 'private', label: '나만 보기', value: { type: 'private' } },
   ]
   const activeKey = filter.type === 'topic' ? `t:${filter.name}` : filter.type
   const pick = (v: Filter) => { setFilter(v); setPicked(new Set()) }
+  function changeTab(next: Tab) {
+    if (next === tab) return
+    setTab(next); setFilter({ type: 'all' }); setPicked(new Set()); setTopicOpen(false)
+  }
+
+  const noun = tab === 'short' ? '짧은 글' : '긴 글'
 
   const actions = (
     <>
       <button onClick={() => run({ action: 'publish' })} disabled={busy} className="btn">
         선택한 것 공개하기
+      </button>
+      <button onClick={() => run({ action: 'unpublish' })} disabled={busy} className="btn">
+        나만 보기로
       </button>
       <div style={{ position: 'relative' }}>
         <button onClick={() => setTopicOpen(v => !v)} disabled={busy} className="btn"
@@ -189,7 +206,9 @@ export default function NotesWarehouse({
           </div>
         )}
       </div>
-      <button onClick={shareToX} disabled={busy} className="btn">X에 공유</button>
+      {tab === 'short' && (
+        <button onClick={shareToX} disabled={busy} className="btn">X에 공유</button>
+      )}
       <button onClick={() => { if (confirm(`${picked.size}개를 지울까요? 되돌릴 수 없습니다.`)) run({}, 'DELETE') }}
         disabled={busy} className="btn" style={{ color: '#a33' }}>삭제</button>
     </>
@@ -197,18 +216,35 @@ export default function NotesWarehouse({
 
   return (
     <div className="wh-page">
-      {/* 창고 머리글 */}
+      {/* 글관리 머리글 — 오른쪽 위 톱니바퀴가 설정으로 가는 길이다 */}
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        gap: '12px', padding: '16px var(--gutter)', borderBottom: '1px solid var(--border)' }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px', minWidth: 0 }}>
-          <Link href="/memo" className="wordmark">적바림</Link>
-          <span className="meta-sub">내 창고</span>
+        gap: '12px', padding: '10px var(--gutter)', borderBottom: '1px solid var(--border)' }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px', minWidth: 0 }}>
+          <Link href="/" className="wordmark">적바림</Link>
+          <span className="meta-sub" style={{ fontWeight: 700 }}>글관리</span>
         </div>
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-          <Link href="/" style={{ fontSize: '14px' }}>사이트 보기</Link>
-          <Link href="/write" className="btn btn-accent">새 긴 글</Link>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <Link href="/" style={{ fontSize: '14px', padding: '12px 0' }}>사이트</Link>
+          <Link href="/write" className="btn btn-accent" style={{ padding: '0 16px' }}>글쓰기</Link>
+          <Link href="/admin/settings" aria-label="설정" className="icon-btn">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+            </svg>
+          </Link>
         </div>
       </header>
+
+      {/* 맨 위 탭 */}
+      <nav aria-label="글 종류" className="tabs">
+        <button className={`tab${tab === 'short' ? ' tab-on' : ''}`} onClick={() => changeTab('short')}>
+          짧은 글 {counts.short}
+        </button>
+        <button className={`tab${tab === 'long' ? ' tab-on' : ''}`} onClick={() => changeTab('long')}>
+          긴 글 {counts.long}
+        </button>
+      </nav>
 
       <div className="wh-grid">
         {/* PC: 왼쪽 보기 목록 */}
@@ -244,34 +280,40 @@ export default function NotesWarehouse({
           </div>
 
           {byDay.length === 0 ? (
-            <p className="meta-sub" style={{ padding: '32px 0' }}>여기에 해당하는 노트가 없습니다.</p>
+            <p className="meta-sub" style={{ padding: '32px 0' }}>여기에 해당하는 {noun}이 없습니다.</p>
           ) : byDay.map(([day, items]) => (
             <section key={day}>
               <div className="wh-day">{day}</div>
               {items.map(r => {
                 const on = picked.has(r.id)
+                const meta = (
+                  <span className="meta">
+                    {formatTime(r.created_at)} · {r.topic || '분류 전'} ·{' '}
+                    {r.published ? '공개됨' : '나만 보기'}
+                    {grownSet.has(r.id) && ' · 긴 글 초안으로 자람'}
+                  </span>
+                )
                 return (
                   <div key={r.id} className="wh-row">
-                    <input type="checkbox" id={`n-${r.id}`} checked={on} onChange={() => toggle(r.id)} />
-                    <label htmlFor={`n-${r.id}`}>
-                      {r.kind === 'article' ? (
+                    <input type="checkbox" id={`n-${r.id}`} checked={on} onChange={() => toggle(r.id)}
+                      aria-label="고르기" />
+                    {r.kind === 'article' ? (
+                      // 긴 글은 누르면 고치는 화면으로 간다. 고르기는 왼쪽 체크칸으로.
+                      <Link href={`/write/${r.id}`} className="wh-open">
                         <span className="wh-text" style={{ fontWeight: 700 }}>
                           {r.title || '(제목 없음)'}
-                          <Link href={`/write/${r.id}`} onClick={e => e.stopPropagation()}
-                            style={{ marginLeft: '8px', fontSize: '13px', color: 'var(--accent)' }}>
-                            고치기
-                          </Link>
                         </span>
-                      ) : (
+                        {meta}
+                      </Link>
+                    ) : (
+                      <label htmlFor={`n-${r.id}`}>
                         <span className="wh-text">{toPlainText(r.content)}</span>
-                      )}
-                      <span className="meta">
-                        {formatTime(r.created_at)} · {r.topic || '분류 전'} ·{' '}
-                        {r.published ? '공개됨' : '나만 보기'}
-                        {r.kind === 'article' && ' · 긴 글'}
-                        {grownSet.has(r.id) && ' · 초안으로 자람'}
-                      </span>
-                    </label>
+                        {meta}
+                      </label>
+                    )}
+                    {r.kind === 'note' && (
+                      <Link href={`/write/${r.id}`} className="wh-edit">고치기</Link>
+                    )}
                   </div>
                 )
               })}
@@ -282,35 +324,41 @@ export default function NotesWarehouse({
         {/* PC: 오른쪽 처리 패널 */}
         <aside className="wh-aside">
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <div className="label">선택한 메모 {picked.size}개</div>
+            <div className="label">선택한 {noun} {picked.size}개</div>
             <p style={{ margin: 0, fontSize: '14px', lineHeight: 1.7, color: 'var(--quote)' }}>
-              같은 흐름의 메모를 골라 한 편의 글로 키웁니다.
+              {tab === 'short'
+                ? '같은 흐름의 짧은 글을 골라 긴 글 한 편으로 키웁니다.'
+                : '긴 글을 누르면 고치는 화면으로 갑니다. 여기서는 여러 편을 골라 공개와 주제를 바꿉니다.'}
             </p>
           </div>
 
-          {templates.length > 0 && (
-            <label style={{ display: 'block' }}>
-              <span className="meta" style={{ display: 'block', marginBottom: '4px' }}>템플릿 (선택)</span>
-              <select value={templateId} onChange={e => setTemplateId(e.target.value)}
-                style={{ width: '100%', minHeight: '44px', padding: '0 10px', fontSize: '15px',
-                  border: '1px solid var(--border)', borderRadius: '10px',
-                  background: 'var(--bg)', color: 'var(--text-main)', fontFamily: 'inherit' }}>
-                <option value="">뼈대 없이</option>
-                {templates.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-              </select>
-            </label>
+          {tab === 'short' && (
+            <>
+              {templates.length > 0 && (
+                <label style={{ display: 'block' }}>
+                  <span className="meta" style={{ display: 'block', marginBottom: '4px' }}>템플릿 (선택)</span>
+                  <select value={templateId} onChange={e => setTemplateId(e.target.value)}
+                    style={{ width: '100%', minHeight: '44px', padding: '0 10px', fontSize: '15px',
+                      border: '1px solid var(--border)', borderRadius: '10px',
+                      background: 'var(--bg)', color: 'var(--text-main)', fontFamily: 'inherit' }}>
+                    <option value="">뼈대 없이</option>
+                    {templates.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                  </select>
+                </label>
+              )}
+              <button onClick={compose} className="btn btn-ink" disabled={busy || picked.size === 0}>
+                {busy ? '엮는 중…' : '묶어서 긴 글 초안 만들기'}
+              </button>
+            </>
           )}
-          <button onClick={compose} className="btn btn-ink" disabled={busy || picked.size === 0}>
-            {busy ? '엮는 중…' : '묶어서 글 초안 만들기'}
-          </button>
           {actions}
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px',
             paddingTop: '20px', borderTop: '1px solid var(--border-soft)' }}>
             <div className="label">규칙</div>
             <p style={{ margin: 0, fontSize: '13px', lineHeight: 1.7, color: 'var(--quote)' }}>
-              모든 메모는 나만 보기로 저장됩니다. 공개는 여기서 직접 고를 때만 일어납니다.
-              X에 공유하면 그 메모는 적바림에서도 공개로 바뀝니다.
+              새로 쓴 짧은 글은 나만 보기로 저장됩니다. 공개는 여기서 직접 고를 때만 일어납니다.
+              X에 공유하면 그 짧은 글은 사이트에서도 공개로 바뀝니다.
             </p>
           </div>
         </aside>
@@ -323,11 +371,13 @@ export default function NotesWarehouse({
             <span style={{ fontSize: '14px', fontWeight: 700, marginRight: 'auto' }}>
               {picked.size}개 고름
             </span>
-            <button onClick={compose} disabled={busy} className="btn"
-              style={{ background: 'var(--text-main)', borderColor: 'var(--text-main)',
-                color: 'var(--on-ink)' }}>
-              {busy ? '엮는 중…' : '묶어서 초안'}
-            </button>
+            {tab === 'short' && (
+              <button onClick={compose} disabled={busy} className="btn"
+                style={{ background: 'var(--text-main)', borderColor: 'var(--text-main)',
+                  color: 'var(--on-ink)' }}>
+                {busy ? '엮는 중…' : '묶어서 초안'}
+              </button>
+            )}
             {actions}
             <button onClick={() => setPicked(new Set())} disabled={busy} className="btn"
               style={{ border: 'none' }}>해제</button>

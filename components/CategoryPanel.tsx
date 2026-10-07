@@ -13,7 +13,8 @@ let cached: Counts | null = null
 /**
  * 카테고리 화면 — 모바일은 전체 화면, PC 는 가운데 창.
  * 맨 위 "전체 글 N", 그 아래 대분류 → 들여쓴 중분류. 오른쪽에 글 수.
- * 누르면 그 분류의 글 목록으로 간다. 지금 보고 있는 분류는 쪽빛으로 표시.
+ * 누르면 그 분류의 글 목록으로 간다. '전체 글'은 홈(전체 주제)으로 돌아간다.
+ * 지금 보고 있는 분류는 쪽빛으로 표시. current 가 빈 문자열이면 아무것도 표시하지 않는다.
  */
 export default function CategoryPanel({
   topics, current, onClose,
@@ -76,7 +77,7 @@ export default function CategoryPanel({
 
         <div className="cat-list">
           <button className={`cat-row cat-all${current === null ? ' on' : ''}`}
-            onClick={() => go('/archive')}>
+            onClick={() => go('/')}>
             <span>전체 글</span>
             {counts && <span className="cat-count">{counts.total}</span>}
           </button>

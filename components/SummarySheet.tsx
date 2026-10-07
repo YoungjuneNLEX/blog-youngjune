@@ -110,10 +110,10 @@ export default function SummarySheet({
             </div>
           )}
 
-          {/* 이 글이 나온 메모 — 공개한 메모가 있을 때만 보인다 */}
+          {/* 이 글이 나온 짧은 글 — 공개한 것이 있을 때만 보인다 */}
           {data.sourceNotes.length > 0 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <span className="label">이 글이 나온 메모</span>
+              <span className="label">이 글이 나온 짧은 글</span>
               {data.sourceNotes.map(n => (
                 <Link key={n.id} href={`/posts/${n.id}`} onClick={onClose}
                   style={{ fontSize: '14px', lineHeight: 1.65, color: 'var(--quote)' }}>

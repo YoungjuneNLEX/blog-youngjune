@@ -62,15 +62,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body className="min-h-screen"
         style={{ background: 'var(--bg)', ...themeVars } as React.CSSProperties}>
         <SessionProvider>
-          <Header siteName={config.siteName} topics={config.topics}
-            showBookshelf={config.showBookshelf} />
+          <Header siteName={config.siteName} topics={config.topics} />
           <main>{children}</main>
           <Footer
             siteName={config.footerName}
             note={config.footerNote}
             authorName={config.profile.name}
           />
-          <BottomNav topics={config.topics} showBookshelf={config.showBookshelf} />
+          <BottomNav topics={config.topics} />
         </SessionProvider>
       </body>
     </html>

@@ -9,16 +9,15 @@ import { Topic } from '@/lib/site-config'
 import { topicFromSlug } from '@/lib/cover'
 
 /** 쓰는 공간에는 두지 않는다 (자체 머리글을 쓴다) */
-const WRITING = ['/memo', '/notes', '/write', '/admin']
+const WRITING = ['/notes', '/write', '/admin']
 
 /**
- * 하단 고정 메뉴 (모바일) — 홈 · 주제 · 적바림 · 책장 · 소개
- * '적바림'은 관리자에게만 보인다. 방문자에게는 네 칸.
+ * 하단 고정 메뉴 (모바일)
+ *   방문자 : 홈 · 주제 · 소개
+ *   관리자 : 홈 · 주제 · 글쓰기 · 글관리 · 소개
  * 로그인 여부는 브라우저에서 판단하므로 페이지 캐시가 깨지지 않는다.
  */
-export default function BottomNav({
-  topics, showBookshelf,
-}: { topics: Topic[]; showBookshelf: boolean }) {
+export default function BottomNav({ topics }: { topics: Topic[] }) {
   const pathname = usePathname() || '/'
   const { data: session } = useSession()
   const [pick, setPick] = useState(false)
@@ -26,11 +25,12 @@ export default function BottomNav({
   if (WRITING.some(p => pathname.startsWith(p))) return null
 
   const isAdmin = session?.user?.role === 'admin'
-  const onTopics = pathname.startsWith('/topics') || pathname === '/archive'
-  // 지금 보고 있는 분류 (카테고리 화면에서 쪽빛으로 표시된다)
+  const onTopics = pathname.startsWith('/topics')
+  // 지금 보고 있는 분류. 홈이면 '전체 글', 그 밖의 화면이면 아무것도 표시하지 않는다.
   const currentTopic = pathname.startsWith('/topics/')
-    ? topicFromSlug(pathname.split('/')[2] || '') : null
-  const cols = 3 + (isAdmin ? 1 : 0) + (showBookshelf ? 1 : 0)
+    ? topicFromSlug(pathname.split('/')[2] || '')
+    : pathname === '/' ? null : ''
+  const cols = isAdmin ? 5 : 3
 
   return (
     <>
@@ -50,22 +50,23 @@ export default function BottomNav({
         </button>
 
         {isAdmin && (
-          <Link href="/memo" className="write">
+          <Link href="/write" className="write">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
               strokeWidth="2" strokeLinecap="round" aria-hidden>
               <rect x="4" y="4" width="16" height="16" rx="4" /><path d="M12 8v8M8 12h8" />
             </svg>
-            적바림
+            글쓰기
           </Link>
         )}
 
-        {showBookshelf && (
-          <Link href="/bookshelf" className={pathname.startsWith('/bookshelf') ? 'on' : ''}>
+        {isAdmin && (
+          <Link href="/notes">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-              strokeWidth="1.8" strokeLinejoin="round" aria-hidden>
-              <path d="M5 4h5v16H5zM10 4h4v16h-4zM15 5l4 1-3 14-4-1z" />
+              strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <rect x="4" y="4" width="16" height="16" rx="2.5" />
+              <path d="M8 9h8M8 13h8M8 17h5" />
             </svg>
-            책장
+            글관리
           </Link>
         )}
 
