@@ -9,6 +9,9 @@ export interface Topic {
   color: string     // 표지 바탕색. 비우면 상위 분류 색을 물려받는다.
   ink: string       // 그 바탕 위에 얹는 글자색. 비우면 상위 분류 것을 물려받는다.
   parentId?: string // 상위 분류의 id. 없으면 대분류. 깊이는 2단계까지만.
+  description?: string // 카테고리 소개글. 비어 있으면 주제 페이지의 소개 카드를 숨긴다.
+  coverUrl?: string    // 소개 카드의 대표 이미지. 비우면 첫 공개 글 표지 → 주제 색 표지.
+  series?: boolean     // 연재로 보기. 비우면(undefined) 상위 분류를 따른다. 대분류는 꺼진 것으로 본다.
 }
 
 // 쪽빛 시안(docs/design/Jjok.html)의 주제 바탕/글자 짝.
@@ -61,6 +64,20 @@ export function topicNamesUnder(topics: Topic[], name: string): string[] {
   const found = topics.find(t => t.name === name)
   if (!found) return [name]
   return [name, ...childTopics(topics, found.id).map(c => c.name)]
+}
+
+/**
+ * 이 주제를 연재로 보는가.
+ * 자기 값이 있으면 그것, 없으면 상위 분류 값, 그것도 없으면 끔.
+ * (대분류를 켜면 중분류가 따라가고, 중분류에서 따로 끌 수 있다)
+ */
+export function isSeries(topics: Topic[], name: string | null | undefined): boolean {
+  if (!name) return false
+  const t = topics.find(x => x.name === name)
+  if (!t) return false
+  if (typeof t.series === 'boolean') return t.series
+  const parent = t.parentId ? topics.find(x => x.id === t.parentId) : undefined
+  return parent?.series === true
 }
 
 /** 상위 분류 이름 (중분류일 때만) */
@@ -272,6 +289,13 @@ export function mergeConfig(partial: Partial<SiteConfig> | null | undefined): Si
       ink: hex(t.ink),
       parentId: typeof t.parentId === 'string' && t.parentId.trim() !== ''
         ? t.parentId.trim() : undefined,
+      // 소개는 선택. 비어 있으면 키를 두지 않아 저장된 설정이 가볍게 유지된다.
+      description: typeof t.description === 'string' && t.description.trim() !== ''
+        ? t.description.trim() : undefined,
+      coverUrl: typeof t.coverUrl === 'string' && t.coverUrl.trim() !== ''
+        ? t.coverUrl.trim() : undefined,
+      // 켬/끔만 의미가 있다. boolean 이 아니면 '상위 따름'(undefined).
+      series: typeof t.series === 'boolean' ? t.series : undefined,
     }))
 
   flattenToTwoLevels(topics)

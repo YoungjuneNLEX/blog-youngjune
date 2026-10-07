@@ -71,6 +71,11 @@ export default function SummarySheet({
             <div>
               <h2 className="sheet-title">{data.title}</h2>
               <span className="meta-sub">{data.metaText}</span>
+              {data.seriesNo ? (
+                <span className="meta-sub" style={{ color: 'var(--accent)', fontWeight: 700 }}>
+                  연재 {data.seriesNo}번째 글
+                </span>
+              ) : null}
             </div>
             <button onClick={onClose} aria-label="닫기" className="icon-btn"
               style={{ margin: '-8px -10px 0 0' }}>

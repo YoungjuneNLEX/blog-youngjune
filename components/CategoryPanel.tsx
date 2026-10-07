@@ -88,7 +88,10 @@ export default function CategoryPanel({
               <button key={topic.id}
                 className={`cat-row${depth === 1 ? ' cat-sub' : ''}${current === topic.name ? ' on' : ''}`}
                 onClick={() => go(`/topics/${topicSlug(topic.name)}`)}>
-                <span>{topic.name}</span>
+                <span className="cat-name">
+                  <span>{topic.name}</span>
+                  {topic.description && <span className="cat-desc">{topic.description}</span>}
+                </span>
                 {n !== null && <span className="cat-count">{n}</span>}
               </button>
             )

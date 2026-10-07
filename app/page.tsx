@@ -2,6 +2,7 @@ import { supabaseAdmin, assertDbOk } from '@/lib/supabase'
 import { getSiteConfig } from '@/lib/settings'
 import { toFeed } from '@/lib/feed'
 import { loadSourceNotes } from '@/lib/source-notes'
+import { loadSeriesNumbers } from '@/lib/series'
 import HomeCover from '@/components/HomeCover'
 import PostBrowser from '@/components/PostBrowser'
 
@@ -39,7 +40,9 @@ export default async function HomePage() {
 
   // 요약 창의 "이 글이 나온 메모" — 공개한 메모만 읽어 온다
   const sourceNotes = await loadSourceNotes(rows || [], '홈/나온 메모')
-  const entries = toFeed(rows || [], config.topics, sourceNotes)
+  // 연재로 보는 주제의 글은 요약 창에 '연재 N번째 글'이 붙는다
+  const seriesNos = await loadSeriesNumbers(config.topics, '홈/연재 번호')
+  const entries = toFeed(rows || [], config.topics, sourceNotes, seriesNos)
 
   return (
     <div>

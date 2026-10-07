@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import { supabaseAdmin, assertDbOk } from '@/lib/supabase'
 import { getSiteConfig } from '@/lib/settings'
 import { coverImage, excerptOf, toPlainText, topicSlug } from '@/lib/cover'
+import { isSeries } from '@/lib/site-config'
 import { readingMinutes, shortDate, summaryLines } from '@/lib/public'
 import PostActions from '@/components/PostActions'
 
@@ -52,17 +53,24 @@ export default async function PostPage({ params }: Props) {
   const label = config.topics.find(t => t.name === post.topic)?.short || post.topic || '적바림'
   const image = coverImage(post)
 
-  // 같은 주제의 앞뒤 글
-  const { data: siblings } = post.topic
-    ? await supabaseAdmin
-        .from('posts').select('id, title, kind')
-        .eq('published', true).eq('visibility', 'public').eq('topic', post.topic)
-        .order('created_at', { ascending: true })
-    : { data: null }
+  // 이전 글 / 다음 글 — 긴 글에만. 같은 주제 안의 공개 긴 글을 created_at 순서로.
+  // 연재로 보는 주제면 그 순서가 곧 N화다. (짧은 글 상세에는 두지 않는다)
+  let siblings: { id: string; title: string }[] | null = null
+  if (!isNote && post.topic) {
+    const { data, error } = await supabaseAdmin
+      .from('posts').select('id, title')
+      .eq('published', true).eq('visibility', 'public').eq('kind', 'article')
+      .eq('topic', post.topic)
+      .order('created_at', { ascending: true }).order('id', { ascending: true })
+    assertDbOk(error, '글 상세/이전·다음')
+    siblings = data
+  }
 
   const idx = siblings?.findIndex(s => s.id === id) ?? -1
   const prev = idx > 0 ? siblings![idx - 1] : null
   const next = idx >= 0 && siblings && idx < siblings.length - 1 ? siblings[idx + 1] : null
+  const series = !isNote && isSeries(config.topics, post.topic)
+  const no = series && idx >= 0 ? idx + 1 : null   // 이 글이 연재 몇 화인가
 
   return (
     <div className="article-page">
@@ -87,7 +95,10 @@ export default async function PostPage({ params }: Props) {
           </>
         ) : (
           <>
-            <p className="label" style={{ color: 'var(--text-sub)', marginBottom: '10px' }}>{label}</p>
+            <p className="label" style={{ color: 'var(--text-sub)', marginBottom: '10px' }}>
+              {label}
+              {no && <span style={{ color: 'var(--accent)', fontWeight: 700 }}> · {no}화</span>}
+            </p>
             <h1 className="serif"
               style={{ fontSize: '28px', fontWeight: 700, lineHeight: 1.4, margin: '0 0 12px' }}>
               {post.title}
@@ -113,23 +124,23 @@ export default async function PostPage({ params }: Props) {
         )}
       </article>
 
-      {(prev || next) && (
+      {!isNote && (prev || next) && (
         <nav style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '48px' }}>
           {prev ? (
             <Link href={`/posts/${prev.id}`}
               style={{ border: '1px solid var(--border)', borderRadius: '12px', padding: '14px' }}>
-              <span className="meta">← 이전</span>
+              <span className="meta">← 이전 글{no ? ` · ${no - 1}화` : ''}</span>
               <p className="serif" style={{ fontSize: '15px', fontWeight: 700, margin: '4px 0 0' }}>
-                {prev.title || '짧은 글'}
+                {prev.title}
               </p>
             </Link>
           ) : <span />}
           {next && (
             <Link href={`/posts/${next.id}`}
               style={{ border: '1px solid var(--border)', borderRadius: '12px', padding: '14px', textAlign: 'right' }}>
-              <span className="meta">다음 →</span>
+              <span className="meta">다음 글{no ? ` · ${no + 1}화` : ''} →</span>
               <p className="serif" style={{ fontSize: '15px', fontWeight: 700, margin: '4px 0 0' }}>
-                {next.title || '짧은 글'}
+                {next.title}
               </p>
             </Link>
           )}

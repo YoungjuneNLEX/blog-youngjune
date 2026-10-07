@@ -16,6 +16,7 @@ export interface FeedEntry {
   excerpt: string
   text: string          // 메모 본문 (kind='note' 일 때)
   sourceNotes: { id: string; text: string }[]
+  seriesNo: number | null   // 연재로 보는 주제의 N화 (아니면 null)
 }
 
 interface Row {
@@ -31,7 +32,9 @@ interface Row {
   source_note_ids?: string[] | null
 }
 
-export function toFeed(rows: Row[], topics: Topic[], notes?: Map<string, string>): FeedEntry[] {
+export function toFeed(
+  rows: Row[], topics: Topic[], notes?: Map<string, string>, series?: Map<string, number>,
+): FeedEntry[] {
   return rows.map(p => ({
     id: p.id,
     kind: p.kind === 'note' ? 'note' : 'article',
@@ -45,5 +48,6 @@ export function toFeed(rows: Row[], topics: Topic[], notes?: Map<string, string>
     excerpt: excerptOf(p, 120),
     text: toPlainText(p.content),
     sourceNotes: sourceNotesOf(p.source_note_ids, notes),
+    seriesNo: p.kind === 'note' ? null : series?.get(p.id) ?? null,
   }))
 }

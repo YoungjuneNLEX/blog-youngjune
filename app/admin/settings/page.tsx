@@ -43,6 +43,9 @@ export default function SettingsPage() {
   const [saved, setSaved] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
   const coverRef = useRef<HTMLInputElement>(null)
+  const topicImgRef = useRef<HTMLInputElement>(null)
+  const topicImgTarget = useRef<string | null>(null)   // 대표 이미지를 올릴 주제의 id
+  const [introBusy, setIntroBusy] = useState<string | null>(null)   // 소개글 초안을 만드는 중인 주제 id
   const [colorPlan, setColorPlan] =
     useState<{ config: SiteConfig; changes: ColorChange[] } | null>(null)
 
@@ -95,7 +98,7 @@ export default function SettingsPage() {
       ...c,
       topics: c.topics.map(t => t.id === id
         ? (parentId
-            ? { ...t, parentId, color: '', ink: '' }
+            ? { ...t, parentId, color: '', ink: '', series: undefined }
             : { ...t, parentId: undefined, color: t.color || NEUTRAL_TOPIC.color,
                 ink: t.ink || NEUTRAL_TOPIC.ink })
         : t),
@@ -159,6 +162,34 @@ export default function SettingsPage() {
     if (!confirm(msg)) return
     setConfig(c => ({ ...c, topics: c.topics.filter(x => x.id !== id) }))
     setSaved('')
+  }
+
+  /** 주제 소개 카드의 대표 이미지 올리기 */
+  async function uploadTopicImage(file: File, id: string) {
+    const form = new FormData()
+    form.append('file', file)
+    const res = await fetch('/api/upload', { method: 'POST', body: form })
+    if (!res.ok) { alert('사진을 올리지 못했습니다.'); return }
+    const d = await res.json()
+    setTopic(id, { coverUrl: d.url })
+  }
+
+  /**
+   * 'AI로 소개글 초안 만들기'. 초안을 칸에 채우기만 한다.
+   * 저장은 고친 뒤 아래 '저장하기'로 직접 한다.
+   */
+  async function makeIntro(t: Topic) {
+    if (t.description?.trim() && !confirm('쓰고 있는 소개글을 AI 초안으로 바꿀까요?')) return
+    setIntroBusy(t.id)
+    const res = await fetch('/api/topic-intro', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ topicId: t.id }),
+    })
+    setIntroBusy(null)
+    const d = await res.json().catch(() => ({}))
+    if (!res.ok) { alert(d.error || '소개글을 만들지 못했습니다.'); return }
+    setTopic(t.id, { description: d.description })
   }
 
   /** 사진을 올려 프로필 사진(avatarUrl) 또는 홈 커버(coverUrl) 에 넣는다 */
@@ -344,6 +375,78 @@ export default function SettingsPage() {
                     </label>
                   </div>
 
+                  {/* 카테고리 소개 — 주제 페이지 맨 위 소개 카드. 소개글이 비어 있으면 카드는 안 보인다. */}
+                  <label>
+                    <span className="meta" style={{ display: 'flex', alignItems: 'center',
+                      justifyContent: 'space-between', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
+                      <span>카테고리 소개 (비우면 소개 카드를 감춥니다)</span>
+                      <button type="button" onClick={() => makeIntro(t)} disabled={introBusy === t.id}
+                        style={{ fontSize: '12px', border: '1px solid var(--border)', borderRadius: '6px',
+                          padding: '4px 10px', minHeight: '32px', background: 'var(--bg-card)',
+                          color: 'var(--accent)', cursor: 'pointer', fontFamily: 'inherit' }}>
+                        {introBusy === t.id ? '만드는 중…' : 'AI로 소개글 초안 만들기'}
+                      </button>
+                    </span>
+                    <textarea value={t.description || ''} rows={3} maxLength={300}
+                      placeholder="이 분류에 어떤 글이 모여 있는지 두세 문장으로"
+                      style={{ ...input, resize: 'vertical', lineHeight: 1.7 }}
+                      onChange={e => setTopic(t.id, { description: e.target.value })} />
+                  </label>
+
+                  <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                    <span style={{ width: '88px', height: '52px', borderRadius: '8px', overflow: 'hidden',
+                      flexShrink: 0, background: 'var(--border-soft)', border: '1px solid var(--border)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {t.coverUrl
+                        ? <img src={t.coverUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        : <span className="meta" style={{ fontSize: '11px' }}>이미지 없음</span>}
+                    </span>
+                    <button type="button" className="btn"
+                      style={{ minHeight: '44px', padding: '0 12px', fontSize: '14px' }}
+                      onClick={() => { topicImgTarget.current = t.id; topicImgRef.current?.click() }}>
+                      대표 이미지 고르기
+                    </button>
+                    {t.coverUrl && (
+                      <button type="button" className="meta" style={{ background: 'none', border: 'none',
+                        cursor: 'pointer', textDecoration: 'underline' }}
+                        onClick={() => setTopic(t.id, { coverUrl: undefined })}>
+                        빼기
+                      </button>
+                    )}
+                    <span className="meta" style={{ flexBasis: '100%' }}>
+                      비우면 이 주제의 가장 오래된 사진 있는 글 표지, 그것도 없으면 주제 색 표지가 나옵니다.
+                    </span>
+                  </div>
+
+                  {/* 연재로 보기 — 켜면 주제 페이지가 '처음부터' 순서로 열리고 글에 N화가 붙는다 */}
+                  {depth === 0 ? (
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px',
+                      minHeight: '44px', cursor: 'pointer' }}>
+                      <input type="checkbox" checked={t.series === true}
+                        onChange={e => setTopic(t.id, { series: e.target.checked ? true : undefined })}
+                        style={{ width: '20px', height: '20px', accentColor: 'var(--accent)' }} />
+                      <span style={{ fontSize: '15px' }}>
+                        연재로 보기
+                        <span className="meta" style={{ display: 'block' }}>
+                          오래된 글이 위, 글마다 N화. 중분류도 따라가고 중분류에서 따로 끌 수 있습니다.
+                        </span>
+                      </span>
+                    </label>
+                  ) : (
+                    <label>
+                      <span className="meta" style={{ display: 'block', marginBottom: '4px' }}>연재로 보기</span>
+                      <select style={input}
+                        value={t.series === true ? 'on' : t.series === false ? 'off' : ''}
+                        onChange={e => setTopic(t.id, {
+                          series: e.target.value === 'on' ? true : e.target.value === 'off' ? false : undefined,
+                        })}>
+                        <option value="">상위 분류를 따름</option>
+                        <option value="on">켬</option>
+                        <option value="off">끔</option>
+                      </select>
+                    </label>
+                  )}
+
                   <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
                     <span className="meta">글 {usage[t.name] || 0}편</span>
                     {!t.color && depth === 1 && (
@@ -371,6 +474,13 @@ export default function SettingsPage() {
             )
           })}
         </div>
+        <input ref={topicImgRef} type="file" accept="image/*" style={{ display: 'none' }}
+          onChange={e => {
+            const f = e.target.files?.[0]
+            const id = topicImgTarget.current
+            if (f && id) uploadTopicImage(f, id)
+            e.target.value = ''
+          }} />
         <button onClick={addTopic} className="btn" style={{ marginTop: '12px' }}>+ 주제 추가</button>
       </section>
 

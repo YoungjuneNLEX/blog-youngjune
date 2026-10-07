@@ -297,7 +297,7 @@ a:hover { color: var(--accent); }
 .cat-row {
   width: 100%; min-height: 52px;
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  padding: 0 var(--gutter);
+  padding: 8px var(--gutter);
   background: none; border: none; cursor: pointer;
   font-family: inherit; font-size: 16px; color: var(--text-main); text-align: left;
 }
@@ -306,6 +306,33 @@ a:hover { color: var(--accent); }
 .cat-row.on { background: var(--accent-light); color: var(--accent); font-weight: 700; }
 .cat-count { font-size: 13px; color: var(--text-muted); flex-shrink: 0; }
 .cat-row.on .cat-count { color: var(--accent); }
+
+/* --------------------------------------------------------------------------
+   주제 페이지 소개 카드 + 정렬 전환
+   -------------------------------------------------------------------------- */
+
+.intro-wrap { max-width: var(--wrap); margin: 0 auto; padding: 16px var(--gutter) 12px; }
+.intro {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--bg-card);
+}
+.intro .cover { height: 170px; border-radius: 0; }
+.intro-body { padding: 16px; display: flex; flex-direction: column; gap: 8px; }
+.intro-name { margin: 0; font-family: var(--font-serif); font-size: 22px; font-weight: 700; line-height: 1.35; }
+.intro-desc { margin: 0; font-size: 14px; line-height: 1.75; color: var(--text-sub); white-space: pre-wrap; }
+.intro-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 4px; }
+.sort-row { padding: 0 var(--gutter) 12px; display: flex; }
+
+/* 카테고리 화면의 이름 + 한 줄 소개 */
+.cat-name { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; gap: 1px; }
+.cat-desc {
+  max-width: 100%;
+  font-size: 12px; font-weight: 400; color: var(--text-muted);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.cat-row.on .cat-desc { color: var(--text-muted); }
 
 /* --------------------------------------------------------------------------
    카드 목록 — 앨범형 / 목록형
@@ -736,6 +763,13 @@ a:hover { color: var(--accent); }
 
   .tabs { max-width: var(--wrap); margin: 0 auto; }
   .browse-bar { padding-left: var(--gutter); padding-right: 8px; }
+
+  .intro { display: grid; grid-template-columns: 320px minmax(0, 1fr); }
+  .intro .cover { height: 100%; min-height: 220px; }
+  .intro-body { padding: 24px 28px; justify-content: center; }
+  .intro-name { font-size: 28px; }
+  .intro-desc { font-size: 15px; }
+  .sort-row { max-width: var(--wrap); margin: 0 auto; }
 
   /* 앨범형은 3열, 목록형은 그대로 한 줄씩 */
   .album { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px 24px; padding-top: 8px; }

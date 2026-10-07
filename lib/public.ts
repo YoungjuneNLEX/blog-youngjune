@@ -23,7 +23,8 @@ export interface SheetData {
   metaText: string                                 // 주제 · N분 · 날짜
   coverMeta: string                                // 표지 아래 줄
   summary: string[]
-  sourceNotes: { id: string; text: string }[]      // 이 글이 나온 메모 (공개된 것만)
+  sourceNotes: { id: string; text: string }[]      // 이 글이 나온 짧은 글 (공개된 것만)
+  seriesNo?: number | null                         // 연재 N번째 글 (연재로 보는 주제일 때)
   items: { id: string; title: string; dateText: string }[]  // 책에 묶인 글 목록
 }
 
