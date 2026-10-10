@@ -6,7 +6,7 @@ import { childTopics, Topic } from '@/lib/site-config'
 import { formatTime } from '@/lib/date'
 import { fetchWithTimeout, networkErrorMessage } from '@/lib/http'
 
-const DRAFT_KEY = 'jeokbarim:short-draft'
+export const DRAFT_KEY = 'jeokbarim:short-draft'
 
 export interface MemoRow {
   id: string

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import ShortWriter, { MemoRow } from '@/components/ShortWriter'
+import ShortWriter, { MemoRow, DRAFT_KEY } from '@/components/ShortWriter'
 import LongWriter from '@/components/LongWriter'
 import WriteBar from '@/components/WriteBar'
 import { Topic } from '@/lib/site-config'
@@ -33,6 +33,9 @@ export default function WriteScreen({
     if (next === mode) return
     if (next === 'long') {
       setHtml(textToHtml(text))
+      // 본문은 긴 글로 옮겨 갔으니 이 기기에 남겨 둔 짧은 글 임시 저장은 지운다.
+      // (안 지우면 긴 글로 발행한 뒤 다음에 글쓰기를 열 때 같은 글이 짧은 글로 또 나타난다)
+      try { localStorage.removeItem(DRAFT_KEY) } catch { /* 무시 */ }
     } else {
       // 긴 글 → 짧은 글: 서식·이미지·제목은 사라지므로 한 번 묻는다
       const lost = hasRichFormat(html) || title.trim()
