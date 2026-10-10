@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { fetchWithTimeout, networkErrorMessage } from '@/lib/http'
 import dynamic from 'next/dynamic'
 import { childTopics, Topic } from '@/lib/site-config'
 
@@ -151,20 +152,28 @@ export default function LongWriter({
       published: publish,
     }
 
-    const res = await fetch(postId ? `/api/posts/${postId}` : '/api/posts', {
-      method: postId ? 'PATCH' : 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    })
+    try {
+      const res = await fetchWithTimeout(postId ? `/api/posts/${postId}` : '/api/posts', {
+        method: postId ? 'PATCH' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
 
-    if (res.ok) {
-      const post = await res.json()
-      setStatus(publish ? '발행 완료!' : postId ? '저장 완료!' : '초안 저장 완료!')
-      setTimeout(() => router.push(publish && !postId ? `/posts/${post.id}` : '/notes?tab=long'), 800)
-    } else {
-      setStatus('오류가 발생했습니다.')
+      if (res.ok) {
+        const post = await res.json()
+        setStatus(publish ? '발행 완료!' : postId ? '저장 완료!' : '초안 저장 완료!')
+        setTimeout(() => router.push(publish && !postId ? `/posts/${post.id}` : '/notes?tab=long'), 800)
+      } else if (res.status === 401 || res.status === 403) {
+        setStatus('로그인이 풀렸습니다. 쓴 글은 그대로 있으니 다시 로그인한 뒤 저장해 주세요.')
+      } else {
+        setStatus('오류가 발생했습니다.')
+      }
+    } catch (e) {
+      // 통신이 끊겨도 "저장 중…"에 매달리지 않는다. 쓴 글은 화면에 그대로 남는다.
+      setStatus(networkErrorMessage(e))
+    } finally {
+      setSaving(false)
     }
-    setSaving(false)
   }
 
   const badge = topic
