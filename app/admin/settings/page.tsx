@@ -44,8 +44,8 @@ export default function SettingsPage() {
   const fileRef = useRef<HTMLInputElement>(null)
   const coverRef = useRef<HTMLInputElement>(null)
   const topicImgRef = useRef<HTMLInputElement>(null)
-  const topicImgTarget = useRef<string | null>(null)   // 대표 이미지를 올릴 주제의 id
-  const [introBusy, setIntroBusy] = useState<string | null>(null)   // 소개글 초안을 만드는 중인 주제 id
+  const topicImgTarget = useRef<string | null>(null)   // 대표 이미지를 올릴 서재·시리즈의 id
+  const [introBusy, setIntroBusy] = useState<string | null>(null)   // 소개글 초안을 만드는 중인 서재·시리즈 id
   const [colorPlan, setColorPlan] =
     useState<{ config: SiteConfig; changes: ColorChange[] } | null>(null)
 
@@ -74,7 +74,7 @@ export default function SettingsPage() {
     setSaved('')
   }
 
-  /** 순서 바꾸기는 같은 부모 안에서만 (대분류끼리, 또는 같은 대분류의 중분류끼리) */
+  /** 순서 바꾸기는 같은 부모 안에서만 (서재끼리, 또는 같은 서재의 시리즈끼리) */
   function moveTopic(id: string, dir: -1 | 1) {
     setConfig(c => {
       const me = c.topics.find(t => t.id === id)
@@ -92,7 +92,7 @@ export default function SettingsPage() {
     setSaved('')
   }
 
-  /** 상위 분류 바꾸기. 중분류로 내려가면 색을 비워 대분류 색을 물려받게 한다. */
+  /** 소속 서재 바꾸기. 시리즈로 내려가면 색을 비워 서재 색을 물려받게 한다. */
   function setParent(id: string, parentId: string) {
     setConfig(c => ({
       ...c,
@@ -106,17 +106,21 @@ export default function SettingsPage() {
     setSaved('')
   }
 
-  function addTopic() {
+  /** 서재를 더한다. libraryId 를 주면 그 서재 아래 시리즈를 더한다(색은 비워 서재 색을 따르고 연재로 보기는 켠 채로). */
+  function addTopic(libraryId?: string) {
     setConfig(c => ({
       ...c,
-      topics: [...c.topics, { id: `t${Date.now()}`, name: '새 주제', short: '새', ...NEUTRAL_TOPIC }],
+      topics: [...c.topics, libraryId
+        ? { id: `t${Date.now()}`, name: '새 시리즈', short: '새', color: '', ink: '',
+            parentId: libraryId, series: true }
+        : { id: `t${Date.now()}`, name: '새 서재', short: '새', ...NEUTRAL_TOPIC }],
     }))
     setSaved('')
   }
 
   /**
-   * 주제 지우기.
-   * 대분류에 중분류가 딸려 있으면 "대분류로 올릴지 / 함께 지울지" 먼저 묻는다.
+   * 서재·시리즈 지우기.
+   * 서재에 시리즈가 딸려 있으면 "시리즈를 서재로 올릴지 / 함께 지울지" 먼저 묻는다.
    * 글은 지금까지처럼 '분류 전'으로 되돌아간다 (실제 이동은 저장할 때 API 가 한다).
    */
   function removeTopic(id: string) {
@@ -126,14 +130,14 @@ export default function SettingsPage() {
 
     if (kids.length > 0) {
       const raise = confirm(
-        `"${t.name}" 아래에 중분류가 ${kids.length}개 있습니다.\n\n` +
-        `[확인] 중분류를 대분류로 올리고 "${t.name}" 만 지웁니다.\n` +
+        `"${t.name}" 아래에 시리즈가 ${kids.length}개 있습니다.\n\n` +
+        `[확인] 시리즈를 서재로 올리고 "${t.name}" 만 지웁니다.\n` +
         `[취소] 다음 물음에서 함께 지울지 고릅니다.`,
       )
       if (raise) {
         const n = usage[t.name] || 0
-        if (!confirm(`"${t.name}" 을 지우고 중분류 ${kids.length}개를 대분류로 올립니다.` +
-          (n > 0 ? `\n이 대분류의 글 ${n}편은 '분류 전'으로 갑니다.` : ''))) return
+        if (!confirm(`"${t.name}" 을 지우고 시리즈 ${kids.length}개를 서재로 올립니다.` +
+          (n > 0 ? `\n이 서재의 글 ${n}편은 '분류 전'으로 갑니다.` : ''))) return
         setConfig(c => ({
           ...c,
           topics: c.topics
@@ -148,7 +152,7 @@ export default function SettingsPage() {
       }
       const all = [t, ...kids]
       const n = all.reduce((sum, x) => sum + (usage[x.name] || 0), 0)
-      if (!confirm(`"${t.name}" 과 중분류 ${kids.length}개를 함께 지울까요?` +
+      if (!confirm(`"${t.name}" 과 시리즈 ${kids.length}개를 함께 지울까요?` +
         (n > 0 ? `\n글 ${n}편이 '분류 전'으로 갑니다.` : ''))) return
       setConfig(c => ({ ...c, topics: c.topics.filter(x => x.id !== id && x.parentId !== id) }))
       setSaved('')
@@ -157,14 +161,14 @@ export default function SettingsPage() {
 
     const n = usage[t.name] || 0
     const msg = n > 0
-      ? `"${t.name}" 을 지울까요?\n이 주제의 글 ${n}편은 '분류 전'으로 옮겨집니다.`
+      ? `"${t.name}" 을 지울까요?\n이 곳의 글 ${n}편은 '분류 전'으로 옮겨집니다.`
       : `"${t.name}" 을 지울까요?`
     if (!confirm(msg)) return
     setConfig(c => ({ ...c, topics: c.topics.filter(x => x.id !== id) }))
     setSaved('')
   }
 
-  /** 주제 소개 카드의 대표 이미지 올리기 */
+  /** 서재·시리즈 소개 카드의 대표 이미지 올리기 */
   async function uploadTopicImage(file: File, id: string) {
     const form = new FormData()
     form.append('file', file)
@@ -203,8 +207,8 @@ export default function SettingsPage() {
   }
 
   /**
-   * 쪽빛 색으로 되돌리기 — 사이트 색과 주제의 바탕·글자색만 되돌린다.
-   * 누르면 바로 바꾸지 않고, 어떤 주제가 어떻게 바뀌는지 먼저 보여 준다.
+   * 쪽빛 색으로 되돌리기 — 사이트 색과 서재·시리즈의 바탕·글자색만 되돌린다.
+   * 누르면 바로 바꾸지 않고, 어떤 서재가 어떻게 바뀌는지 먼저 보여 준다.
    */
   function askColorReset() {
     setColorPlan(planColorReset(config))
@@ -216,7 +220,7 @@ export default function SettingsPage() {
     setSaved('')
   }
 
-  /** 저장 전에 주제 이름 변경·삭제로 몇 편이 함께 바뀌는지 알려준다 */
+  /** 저장 전에 서재·시리즈 이름 변경·삭제로 몇 편이 함께 바뀌는지 알려준다 */
   function confirmTopicChanges(): boolean {
     if (!before) return true
     const lines: string[] = []
@@ -233,7 +237,7 @@ export default function SettingsPage() {
       lines.push(`· "${old.name}" 삭제${n > 0 ? ` (글 ${n}편이 '분류 전'으로 갑니다)` : ''}`)
     }
     if (lines.length === 0) return true
-    return confirm(`주제가 이렇게 바뀝니다.\n\n${lines.join('\n')}\n\n저장할까요?`)
+    return confirm(`서재·시리즈가 이렇게 바뀝니다.\n\n${lines.join('\n')}\n\n저장할까요?`)
   }
 
   async function save() {
@@ -242,7 +246,9 @@ export default function SettingsPage() {
 
     const res = await fetch('/api/settings', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(config),
+      // 불러올 때 알던 항목 id 를 함께 보낸다. 그 사이 글쓰기 화면에서 새로 만든 시리즈를
+      // 서버가 "지운 것"으로 읽지 않게 하는 안전장치다.
+      body: JSON.stringify({ ...config, knownTopicIds: before?.topics.map(t => t.id) }),
     })
     const tRes = await fetch('/api/templates', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -252,8 +258,10 @@ export default function SettingsPage() {
 
     if (!res.ok || !tRes.ok) { alert('저장에 실패했습니다. 다시 시도해주세요.'); return }
     const d = await res.json()
+    // 서버가 그 사이 생긴 시리즈를 남겼을 수 있으니, 저장된 모습으로 화면을 맞춘다
+    setConfig(d.config)
     setBefore(d.config)
-    setSaved(d.moved > 0 ? `저장했습니다. 글 ${d.moved}편의 주제를 함께 옮겼습니다.` : '저장했습니다.')
+    setSaved(d.moved > 0 ? `저장했습니다. 글 ${d.moved}편의 서재·시리즈를 함께 옮겼습니다.` : '저장했습니다.')
     router.refresh()
   }
 
@@ -300,13 +308,13 @@ export default function SettingsPage() {
         </div>
       </section>
 
-      {/* 주제 */}
+      {/* 서재와 시리즈 */}
       <section style={card}>
-        <h2 className="sec-title" style={{ marginBottom: '4px' }}>주제</h2>
+        <h2 className="sec-title" style={{ marginBottom: '4px' }}>서재와 시리즈</h2>
         <p className="meta" style={{ marginBottom: '14px' }}>
-          대분류 아래에 중분류를 둘 수 있습니다(2단계까지). 중분류는 색을 비우면 대분류 색을 따릅니다.
-          이름을 바꾸면 그 주제로 쓴 글도 함께 옮겨집니다. 저장 전에 몇 편인지 알려드립니다.
-          순서 바꾸기(↑↓)는 같은 상위 분류 안에서만 움직입니다.
+          서재 아래에 시리즈를 둘 수 있습니다(2단계까지). 시리즈는 색을 비우면 서재 색을 따릅니다.
+          이름을 바꾸면 그 서재·시리즈로 쓴 글도 함께 옮겨집니다. 저장 전에 몇 편인지 알려드립니다.
+          순서 바꾸기(↑↓)는 같은 서재 안에서만 움직입니다. 시리즈는 글쓰기 화면에서 바로 만들 수도 있습니다.
         </p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -315,8 +323,8 @@ export default function SettingsPage() {
             const ink = coverInk(pair.color, pair.ink)
             const siblings = config.topics.filter(x => (x.parentId || '') === (t.parentId || ''))
             const at = siblings.findIndex(x => x.id === t.id)
-            // 3단계를 막는다: 자기 자신과 이미 중분류인 주제는 상위 분류가 될 수 없다.
-            // 자식이 있는 주제도 다른 대분류 밑으로 들어갈 수 없다.
+            // 3단계를 막는다: 자기 자신과 이미 시리즈인 것은 소속 서재가 될 수 없다.
+            // 시리즈가 딸린 서재도 다른 서재 밑으로 들어갈 수 없다.
             const canHaveParent = childTopics(config.topics, t.id).length === 0
             const parentChoices = config.topics.filter(x => !x.parentId && x.id !== t.id)
 
@@ -342,17 +350,17 @@ export default function SettingsPage() {
                   </label>
 
                   <label>
-                    <span className="meta" style={{ display: 'block', marginBottom: '4px' }}>상위 분류</span>
+                    <span className="meta" style={{ display: 'block', marginBottom: '4px' }}>소속 서재</span>
                     <select value={t.parentId || ''} style={input} disabled={!canHaveParent}
                       onChange={e => setParent(t.id, e.target.value)}>
-                      <option value="">없음 (대분류)</option>
+                      <option value="">없음 (서재)</option>
                       {parentChoices.map(p2 => (
                         <option key={p2.id} value={p2.id}>{p2.name}</option>
                       ))}
                     </select>
                     {!canHaveParent && (
                       <span className="meta" style={{ display: 'block', marginTop: '4px' }}>
-                        중분류가 딸려 있어 다른 분류 밑으로 옮길 수 없습니다
+                        시리즈가 딸려 있어 다른 서재 밑으로 옮길 수 없습니다
                       </span>
                     )}
                   </label>
@@ -375,11 +383,11 @@ export default function SettingsPage() {
                     </label>
                   </div>
 
-                  {/* 카테고리 소개 — 주제 페이지 맨 위 소개 카드. 소개글이 비어 있으면 카드는 안 보인다. */}
+                  {/* 소개 — 서재·시리즈 페이지 맨 위 소개 카드. 소개글이 비어 있으면 카드는 안 보인다. */}
                   <label>
                     <span className="meta" style={{ display: 'flex', alignItems: 'center',
                       justifyContent: 'space-between', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
-                      <span>카테고리 소개 (비우면 소개 카드를 감춥니다)</span>
+                      <span>{depth === 1 ? '시리즈' : '서재'} 소개 (비우면 소개 카드를 감춥니다)</span>
                       <button type="button" onClick={() => makeIntro(t)} disabled={introBusy === t.id}
                         style={{ fontSize: '12px', border: '1px solid var(--border)', borderRadius: '6px',
                           padding: '4px 10px', minHeight: '32px', background: 'var(--bg-card)',
@@ -388,7 +396,7 @@ export default function SettingsPage() {
                       </button>
                     </span>
                     <textarea value={t.description || ''} rows={3} maxLength={300}
-                      placeholder="이 분류에 어떤 글이 모여 있는지 두세 문장으로"
+                      placeholder={`이 ${depth === 1 ? '시리즈' : '서재'}에 어떤 글이 모여 있는지 두세 문장으로`}
                       style={{ ...input, resize: 'vertical', lineHeight: 1.7 }}
                       onChange={e => setTopic(t.id, { description: e.target.value })} />
                   </label>
@@ -414,11 +422,11 @@ export default function SettingsPage() {
                       </button>
                     )}
                     <span className="meta" style={{ flexBasis: '100%' }}>
-                      비우면 이 주제의 가장 오래된 사진 있는 글 표지, 그것도 없으면 주제 색 표지가 나옵니다.
+                      비우면 가장 오래된 사진 있는 글의 표지, 그것도 없으면 서재 색 표지가 나옵니다.
                     </span>
                   </div>
 
-                  {/* 연재로 보기 — 켜면 주제 페이지가 '처음부터' 순서로 열리고 글에 N화가 붙는다 */}
+                  {/* 연재로 보기 — 켜면 그 페이지가 '처음부터' 순서로 열리고 글에 N화가 붙는다 */}
                   {depth === 0 ? (
                     <label style={{ display: 'flex', alignItems: 'center', gap: '10px',
                       minHeight: '44px', cursor: 'pointer' }}>
@@ -428,7 +436,7 @@ export default function SettingsPage() {
                       <span style={{ fontSize: '15px' }}>
                         연재로 보기
                         <span className="meta" style={{ display: 'block' }}>
-                          오래된 글이 위, 글마다 N화. 중분류도 따라가고 중분류에서 따로 끌 수 있습니다.
+                          오래된 글이 위, 글마다 N화. 시리즈도 따라가고 시리즈에서 따로 끌 수 있습니다.
                         </span>
                       </span>
                     </label>
@@ -440,7 +448,7 @@ export default function SettingsPage() {
                         onChange={e => setTopic(t.id, {
                           series: e.target.value === 'on' ? true : e.target.value === 'off' ? false : undefined,
                         })}>
-                        <option value="">상위 분류를 따름</option>
+                        <option value="">서재를 따름</option>
                         <option value="on">켬</option>
                         <option value="off">끔</option>
                       </select>
@@ -449,14 +457,21 @@ export default function SettingsPage() {
 
                   <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
                     <span className="meta">글 {usage[t.name] || 0}편</span>
+                    {depth === 0 && (
+                      <button type="button" onClick={() => addTopic(t.id)}
+                        className="meta" style={{ background: 'none', border: 'none', padding: '8px 0',
+                          cursor: 'pointer', textDecoration: 'underline' }}>
+                        + 시리즈 추가
+                      </button>
+                    )}
                     {!t.color && depth === 1 && (
-                      <span className="meta">상위 분류 색을 따름</span>
+                      <span className="meta">서재 색을 따름</span>
                     )}
                     {(t.color || t.ink) && depth === 1 && (
                       <button onClick={() => setTopic(t.id, { color: '', ink: '' })}
                         className="meta" style={{ background: 'none', border: 'none', padding: 0,
                           cursor: 'pointer', textDecoration: 'underline' }}>
-                        상위 분류 색 따르기
+                        서재 색 따르기
                       </button>
                     )}
                   </div>
@@ -481,7 +496,7 @@ export default function SettingsPage() {
             if (f && id) uploadTopicImage(f, id)
             e.target.value = ''
           }} />
-        <button onClick={addTopic} className="btn" style={{ marginTop: '12px' }}>+ 주제 추가</button>
+        <button onClick={() => addTopic()} className="btn" style={{ marginTop: '12px' }}>+ 서재 추가</button>
       </section>
 
       {/* 프로필 */}
@@ -559,7 +574,7 @@ export default function SettingsPage() {
           긴 글은 항상 보입니다. 짧은 글만 켜고 끌 수 있습니다.
         </p>
         {([
-          ['showShortNotes', '짧은 글 탭 (홈·주제 페이지)'],
+          ['showShortNotes', '짧은 글 탭 (홈·서재 페이지)'],
         ] as const).map(([key, label]) => (
           <label key={key} style={{ display: 'flex', alignItems: 'center', gap: '10px',
             minHeight: '44px', cursor: 'pointer' }}>
@@ -580,7 +595,7 @@ export default function SettingsPage() {
         </div>
         <p className="meta" style={{ marginBottom: '14px' }}>
           잘못 만지면 글자가 안 보일 수 있습니다. 그럴 땐 위 버튼으로 되돌리세요.
-          버튼은 사이트 색과 주제 색(바탕·글자)만 되돌립니다. 주제 이름·순서·상위 분류와
+          버튼은 사이트 색과 서재·시리즈 색(바탕·글자)만 되돌립니다. 서재 이름·순서·소속 서재와
           문구·서재 주인·템플릿은 그대로 둡니다. 누르면 무엇이 바뀌는지 먼저 보여 드립니다.
         </p>
 
@@ -589,11 +604,11 @@ export default function SettingsPage() {
           <div style={{ border: '1px solid var(--accent)', borderRadius: '12px', padding: '14px',
             marginBottom: '14px', background: 'var(--accent-light)' }}>
             <p style={{ margin: '0 0 10px', fontSize: '15px', fontWeight: 700 }}>
-              주제 {colorPlan.changes.length}개의 색이 이렇게 바뀝니다
+              서재·시리즈 {colorPlan.changes.length}개의 색이 이렇게 바뀝니다
             </p>
             {colorPlan.changes.length === 0 ? (
               <p className="meta" style={{ margin: '0 0 12px' }}>
-                주제 색은 이미 쪽빛 기본값입니다. 사이트 색만 되돌립니다.
+                서재 색은 이미 쪽빛 기본값입니다. 사이트 색만 되돌립니다.
               </p>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '12px' }}>
@@ -607,7 +622,7 @@ export default function SettingsPage() {
                     <span className="meta">→</span>
                     {ch.after.color
                       ? <Swatch color={ch.after.color} ink={ch.after.ink} />
-                      : <span className="meta">상위 분류 색을 따름</span>}
+                      : <span className="meta">서재 색을 따름</span>}
                   </div>
                 ))}
               </div>

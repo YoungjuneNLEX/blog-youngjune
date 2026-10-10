@@ -16,7 +16,7 @@ const MAX_CHARS = 8000
 /**
  * 'AI로 소개글 초안 만들기'.
  *
- * 설정에 저장된 주제를 기준으로, 그 주제의 공개 긴 글(대분류는 중분류 글 포함)의
+ * 설정에 저장된 서재·시리즈를 기준으로, 그 공개 긴 글(서재는 시리즈 글 포함)의
  * 제목과 세 줄 요약(없으면 앞부분)을 모아 2~3문장 소개글 초안을 만든다.
  * 만들어 주기만 하고 저장하지 않는다. 관리자가 고친 뒤 설정을 저장할 때 들어간다.
  * 방문자 화면에서는 이 API 를 부르지 않는다.
@@ -32,7 +32,7 @@ export async function POST(req: Request) {
   const topic = config.topics.find(t => t.id === topicId)
   if (!topic) {
     return NextResponse.json(
-      { error: '저장된 주제를 찾지 못했습니다. 새로 만든 주제라면 먼저 저장해 주세요.' }, { status: 404 })
+      { error: '저장된 서재·시리즈를 찾지 못했습니다. 새로 만들었다면 먼저 저장해 주세요.' }, { status: 404 })
   }
 
   const names = topicNamesUnder(config.topics, topic.name)
@@ -47,7 +47,7 @@ export async function POST(req: Request) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   if (!data?.length) {
     return NextResponse.json(
-      { error: '이 주제에 공개한 긴 글이 아직 없습니다. 글을 공개한 뒤에 만들 수 있습니다.' }, { status: 400 })
+      { error: '이 서재·시리즈에 공개한 긴 글이 아직 없습니다. 글을 공개한 뒤에 만들 수 있습니다.' }, { status: 400 })
   }
 
   // 글마다 제목 + 세 줄 요약, 요약이 없으면 본문 앞부분
@@ -68,8 +68,8 @@ export async function POST(req: Request) {
     messages: [
       {
         role: 'user',
-        content: `아래는 한 사람이 쓴 블로그의 "${parent ? `${parent} > ` : ''}${topic.name}" 분류에 공개된 긴 글들입니다.
-이 분류를 처음 보는 방문자에게 보여 줄 소개글을 써 주세요.
+        content: `아래는 한 사람이 쓴 블로그의 "${parent ? `${parent} > ` : ''}${topic.name}" ${parent ? '시리즈' : '서재'}에 공개된 긴 글들입니다.
+이 ${parent ? '시리즈' : '서재'}를 처음 보는 방문자에게 보여 줄 소개글을 써 주세요.
 
 [글 목록 — 제목: 요약]
 ${lines.join('\n')}

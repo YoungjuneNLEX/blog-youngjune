@@ -135,7 +135,7 @@ export default function SummarySheet({
             <div className="sheet-actions-2">
               {data.topic && (
                 <Link href={`/topics/${topicSlug(data.topic)}`} className="btn" onClick={onClose}>
-                  같은 주제
+                  {topics.find(t => t.name === data.topic)?.parentId ? '같은 시리즈' : '같은 서재'}
                 </Link>
               )}
               <button onClick={share} className="btn" type="button">

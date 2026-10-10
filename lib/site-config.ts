@@ -1,17 +1,19 @@
 // 클라이언트/서버 양쪽에서 안전하게 쓸 수 있는 순수 설정 (supabase 의존성 없음)
 
-// 적바림 주제 — 글과 메모를 묶는 분류.
+// 서재와 시리즈 — 글을 묶는 두 단계.
+//   대분류(parentId 없음) = 서재, 중분류(parentId 있음) = 시리즈.
+// 코드 안의 이름(Topic, topic)은 예전 그대로 두고 화면 말만 서재/시리즈로 부른다.
 // 표지 이미지가 없는 글은 이 색 위에 제목을 찍어 표지를 만든다.
 export interface Topic {
   id: string        // 이름이 바뀌어도 같은 주제임을 알아보는 열쇠
   name: string      // 저장되는 이름. 노트 창고와 posts.topic 이 쓴다.
   short: string     // 좁은 자리에 쓰는 짧은 이름
-  color: string     // 표지 바탕색. 비우면 상위 분류 색을 물려받는다.
-  ink: string       // 그 바탕 위에 얹는 글자색. 비우면 상위 분류 것을 물려받는다.
-  parentId?: string // 상위 분류의 id. 없으면 대분류. 깊이는 2단계까지만.
-  description?: string // 카테고리 소개글. 비어 있으면 주제 페이지의 소개 카드를 숨긴다.
-  coverUrl?: string    // 소개 카드의 대표 이미지. 비우면 첫 공개 글 표지 → 주제 색 표지.
-  series?: boolean     // 연재로 보기. 비우면(undefined) 상위 분류를 따른다. 대분류는 꺼진 것으로 본다.
+  color: string     // 표지 바탕색. 비우면 서재 색을 물려받는다.
+  ink: string       // 그 바탕 위에 얹는 글자색. 비우면 서재 것을 물려받는다.
+  parentId?: string // 소속 서재의 id. 없으면 서재. 깊이는 2단계까지만.
+  description?: string // 서재·시리즈 소개글. 비어 있으면 소개 카드를 숨긴다.
+  coverUrl?: string    // 소개 카드의 대표 이미지. 비우면 첫 공개 글 표지 → 서재 색 표지.
+  series?: boolean     // 연재로 보기. 비우면(undefined) 서재를 따른다. 서재는 꺼진 것으로 본다.
 }
 
 // 쪽빛 시안(docs/design/Jjok.html)의 주제 바탕/글자 짝.
@@ -37,12 +39,12 @@ export const DEFAULT_TOPICS: Topic[] = [
 // 설정에 없는 주제·분류 전 글에 쓰는 무채색 짝
 export const NEUTRAL_TOPIC = { color: '#e9e7e2', ink: '#3f3f3d' }
 
-/** 어떤 주제의 중분류들 (설정에 적힌 순서 그대로) */
+/** 어떤 서재의 시리즈들 (설정에 적힌 순서 그대로) */
 export function childTopics(topics: Topic[], parentId: string): Topic[] {
   return topics.filter(t => t.parentId === parentId)
 }
 
-/** 대분류 → 그 중분류들 순서로 펼친 목록. 설정 화면과 카테고리 화면이 쓴다. */
+/** 서재 → 그 시리즈들 순서로 펼친 목록. 설정·글관리·서재 화면이 쓴다. */
 export function orderedTopics(topics: Topic[]): { topic: Topic; depth: 0 | 1 }[] {
   const out: { topic: Topic; depth: 0 | 1 }[] = []
   for (const t of topics.filter(x => !x.parentId)) {
@@ -57,8 +59,8 @@ export function orderedTopics(topics: Topic[]): { topic: Topic; depth: 0 | 1 }[]
 }
 
 /**
- * 이 주제의 글을 찾을 때 쓸 이름들.
- * 대분류면 자기 이름 + 모든 중분류 이름, 중분류면 자기 이름 하나.
+ * 이 서재·시리즈의 글을 찾을 때 쓸 이름들.
+ * 서재면 자기 이름 + 모든 시리즈 이름, 시리즈면 자기 이름 하나.
  */
 export function topicNamesUnder(topics: Topic[], name: string): string[] {
   const found = topics.find(t => t.name === name)
@@ -66,10 +68,38 @@ export function topicNamesUnder(topics: Topic[], name: string): string[] {
   return [name, ...childTopics(topics, found.id).map(c => c.name)]
 }
 
+/** 서재들 (설정 순서) */
+export function libraries(topics: Topic[]): Topic[] {
+  return topics.filter(t => !t.parentId)
+}
+
 /**
- * 이 주제를 연재로 보는가.
- * 자기 값이 있으면 그것, 없으면 상위 분류 값, 그것도 없으면 끔.
- * (대분류를 켜면 중분류가 따라가고, 중분류에서 따로 끌 수 있다)
+ * posts.topic 에 들어 있는 이름을 서재와 시리즈로 풀어 준다.
+ *   시리즈 이름이면 { library: 그 소속 서재, series: 그 시리즈 }
+ *   서재 이름이면   { library: 그 서재,       series: null }
+ *   모르는 이름·빈 값이면 둘 다 null (분류 전)
+ */
+export function selectionOf(
+  topics: Topic[], name: string | null | undefined,
+): { library: Topic | null; series: Topic | null } {
+  const found = name ? topics.find(t => t.name === name) : undefined
+  if (!found) return { library: null, series: null }
+  if (found.parentId) {
+    const library = topics.find(t => t.id === found.parentId) || null
+    return library ? { library, series: found } : { library: found, series: null }
+  }
+  return { library: found, series: null }
+}
+
+/** 서재와 시리즈를 posts.topic 에 넣을 이름 하나로. 시리즈가 있으면 시리즈, 없으면 서재. */
+export function topicNameOf(library: Topic | null, series: Topic | null): string {
+  return series?.name || library?.name || ''
+}
+
+/**
+ * 이 서재·시리즈를 연재로 보는가.
+ * 자기 값이 있으면 그것, 없으면 서재 값, 그것도 없으면 끔.
+ * (서재를 켜면 시리즈가 따라가고, 시리즈에서 따로 끌 수 있다)
  */
 export function isSeries(topics: Topic[], name: string | null | undefined): boolean {
   if (!name) return false

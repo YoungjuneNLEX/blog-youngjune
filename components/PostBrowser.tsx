@@ -9,35 +9,37 @@ import { Topic } from '@/lib/site-config'
 import { FeedEntry } from '@/lib/feed'
 import { SheetData } from '@/lib/public'
 
-/** 주제 페이지 맨 위 소개 카드에 들어가는 것. 소개글이 있을 때만 서버가 만들어 보낸다. */
+/** 서재·시리즈 페이지 맨 위 소개 카드에 들어가는 것. 소개글이 있을 때만 서버가 만들어 보낸다. */
 export interface TopicIntro {
   name: string
-  parent: string | null     // 중분류면 상위 분류 이름
+  parent: string | null     // 시리즈면 소속 서재 이름
   description: string
-  coverUrl: string | null   // 대표 이미지 → 없으면 첫 공개 글 표지. 둘 다 없으면 null(주제 색 표지)
+  coverUrl: string | null   // 대표 이미지 → 없으면 첫 공개 글 표지. 둘 다 없으면 null(서재 색 표지)
   count: number             // 이 페이지에 나오는 공개 글 수
 }
 
 /**
- * 글 목록 (C안) — 긴 글/짧은 글 탭, 주제 고르기, 앨범형·목록형 전환.
- * 홈·주제 페이지가 이 부품을 쓴다.
- * 주제 페이지에서는 소개 카드와 '최신순 | 처음부터' 전환이 붙는다.
+ * 글 목록 (C안) — 긴 글/짧은 글 탭, 서재 고르기, 앨범형·목록형 전환.
+ * 홈·서재·시리즈 페이지가 이 부품을 쓴다.
+ * 서재·시리즈 페이지에서는 소개 카드와 '최신순 | 처음부터' 전환이 붙는다.
  */
 export default function PostBrowser({
   entries, topics, showTabs = true, lockedTopic = null, notePreview = 0,
-  intro = null, series = false,
+  intro = null, series = false, afterIntro = null, hideList = false,
 }: {
   entries: FeedEntry[]
   topics: Topic[]
   showTabs?: boolean          // 짧은 글 탭을 보일지 (설정에서 끌 수 있다)
-  lockedTopic?: string | null // 주제 페이지처럼 주제가 이미 정해진 경우
+  lockedTopic?: string | null // 서재·시리즈 페이지처럼 이미 정해진 경우
   notePreview?: number        // 긴 글 아래에 짧은 글을 몇 개 미리 보일지 (홈)
-  intro?: TopicIntro | null   // 주제 소개 카드 (없으면 카드를 그리지 않는다)
-  series?: boolean            // 이 주제를 연재로 보는가 → 기본 정렬이 '처음부터'
+  intro?: TopicIntro | null   // 소개 카드 (없으면 카드를 그리지 않는다)
+  series?: boolean            // 연재로 보는가 → 기본 정렬이 '처음부터'
+  afterIntro?: React.ReactNode // 소개 카드 바로 아래에 끼울 것 (서재 페이지의 시리즈 줄)
+  hideList?: boolean          // 목록 칸(탭·정렬·카드·'글이 없습니다')을 통째로 숨긴다
 }) {
   const [tab, setTab] = useState<'article' | 'note'>('article')
   const [album, setAlbum] = useState(true)
-  // 정렬은 주제 페이지에서만 의미가 있다. 홈은 최근 글만 받아 두어서 '처음부터'가 틀린 결과를 보인다.
+  // 정렬은 서재·시리즈 페이지에서만 의미가 있다. 홈은 최근 글만 받아 두어서 '처음부터'가 틀린 결과를 보인다.
   const sortable = Boolean(lockedTopic)
   const [oldFirst, setOldFirst] = useState(series)
   const [pick, setPick] = useState(false)
@@ -70,7 +72,7 @@ export default function PostBrowser({
     [entries, notePreview],
   )
 
-  const label = lockedTopic || '전체 주제'
+  const label = lockedTopic || '전체 서재'
   const isNotes = showTabs && tab === 'note'
 
   const sortToggle = (
@@ -80,26 +82,29 @@ export default function PostBrowser({
     </div>
   )
 
+  const introBlock = intro && (
+    <div className="intro-wrap">
+      <section className="intro" aria-label="서재 소개">
+        <Cover title={intro.name} topic={intro.name} topics={topics} image={intro.coverUrl} />
+        <div className="intro-body">
+          {intro.parent && <span className="meta-sub">{intro.parent} &gt;</span>}
+          <h1 className="intro-name">{intro.name}</h1>
+          <p className="intro-desc">{intro.description}</p>
+          <div className="intro-foot">
+            <span className="meta">글 {intro.count}편</span>
+            {sortable && !isNotes && !hideList && sortToggle}
+          </div>
+        </div>
+      </section>
+    </div>
+  )
+
   return (
     <div>
-      {/* 주제 소개 카드 — 소개글이 있을 때만 */}
-      {intro && (
-        <div className="intro-wrap">
-          <section className="intro" aria-label="카테고리 소개">
-            <Cover title={intro.name} topic={intro.name} topics={topics} image={intro.coverUrl} />
-            <div className="intro-body">
-              {intro.parent && <span className="meta-sub">{intro.parent} &gt;</span>}
-              <h1 className="intro-name">{intro.name}</h1>
-              <p className="intro-desc">{intro.description}</p>
-              <div className="intro-foot">
-                <span className="meta">글 {intro.count}편</span>
-                {sortable && !isNotes && sortToggle}
-              </div>
-            </div>
-          </section>
-        </div>
-      )}
+      {introBlock}
+      {afterIntro}
 
+      {!hideList && (<>
       {showTabs && (
         <nav aria-label="보기" className="tabs">
           <button className={`tab${tab === 'article' ? ' tab-on' : ''}`}
@@ -214,6 +219,8 @@ export default function PostBrowser({
       {pick && (
         <CategoryPanel topics={topics} current={lockedTopic} onClose={() => setPick(false)} />
       )}
+
+      </>)}
 
       {open && <SummarySheet data={open} topics={topics} onClose={() => setOpen(null)} />}
     </div>

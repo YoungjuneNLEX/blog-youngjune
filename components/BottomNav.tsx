@@ -13,8 +13,8 @@ const WRITING = ['/notes', '/write', '/admin']
 
 /**
  * 하단 고정 메뉴 (모바일)
- *   방문자 : 홈 · 주제 · 소개
- *   관리자 : 홈 · 주제 · 글쓰기 · 글관리 · 소개
+ *   방문자 : 홈 · 서재 · 소개
+ *   관리자 : 홈 · 서재 · 글쓰기 · 글관리 · 소개
  * 로그인 여부는 브라우저에서 판단하므로 페이지 캐시가 깨지지 않는다.
  */
 export default function BottomNav({ topics }: { topics: Topic[] }) {
@@ -46,7 +46,7 @@ export default function BottomNav({ topics }: { topics: Topic[] }) {
         <button type="button" onClick={() => setPick(true)} className={onTopics ? 'on' : ''}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
             strokeWidth="1.8" strokeLinecap="round" aria-hidden><path d="M5 6h14M5 12h14M5 18h9" /></svg>
-          주제
+          서재
         </button>
 
         {isAdmin && (

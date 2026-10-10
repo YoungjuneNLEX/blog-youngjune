@@ -4,7 +4,8 @@ import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { fetchWithTimeout, networkErrorMessage } from '@/lib/http'
 import dynamic from 'next/dynamic'
-import { childTopics, Topic } from '@/lib/site-config'
+import LibrarySeriesPicker from '@/components/LibrarySeriesPicker'
+import { Topic } from '@/lib/site-config'
 
 const RichEditor = dynamic(() => import('@/components/RichEditor'), { ssr: false })
 
@@ -25,15 +26,19 @@ const esc = (s: string) => s.replace(/[&<>"]/g, c =>
   ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c] as string))
 
 /**
- * 긴 글 쓰기·고치기. 제목·본문·주제는 바깥(글쓰기 화면)이 쥐고 있어서,
+ * 긴 글 쓰기·고치기. 제목·본문·서재·시리즈는 바깥(글쓰기 화면)이 쥐고 있어서,
  * 짧은 글 ↔ 긴 글을 바꿔도 쓰던 것이 그대로 따라온다.
  * postId 가 있으면 그 글을 고치는 것이고, 없으면 새 글이다.
  */
 export default function LongWriter({
   postId, topics, title, onTitle, content, onContent, topic, onTopic, initial,
+  counts, onTopicCreated, canCreate = true,
 }: {
   postId?: string
   topics: Topic[]
+  counts?: Record<string, number>          // 서재·시리즈별 편수
+  onTopicCreated?: (topic: Topic) => void   // 새로 만든 시리즈를 바깥 목록에도 넣는다
+  canCreate?: boolean                       // 시리즈 만들기는 관리자만
   title: string
   onTitle: (v: string) => void
   content: string
@@ -68,7 +73,7 @@ export default function LongWriter({
 
   const fileRef = useRef<HTMLInputElement>(null)
 
-  // 템플릿은 관리자 설정에서 가져온다. 주제 목록은 바깥에서 받는다.
+  // 템플릿은 관리자 설정에서 가져온다. 서재·시리즈 목록은 바깥에서 받는다.
   useEffect(() => {
     fetch('/api/templates').then(r => r.json())
       .then(d => setTemplates(d.templates || []))
@@ -245,23 +250,10 @@ export default function LongWriter({
             </div>
           )}
 
-          {/* 주제 — 대분류 > 중분류. 표지 색과 주제 페이지가 이 값을 쓴다. */}
-          <div>
-            <label style={labelStyle}>주제</label>
-            <select value={topic} onChange={e => onTopic(e.target.value)} style={inputStyle}>
-              <option value="">분류 전</option>
-              {topics.filter(t => !t.parentId).map(parent => {
-                const kids = childTopics(topics, parent.id)
-                return kids.length === 0
-                  ? <option key={parent.id} value={parent.name}>{parent.name}</option>
-                  : (
-                    <optgroup key={parent.id} label={parent.name}>
-                      <option value={parent.name}>{parent.name} (대분류)</option>
-                      {kids.map(k => <option key={k.id} value={k.name}>{k.name}</option>)}
-                    </optgroup>
-                  )
-              })}
-            </select>
+          {/* 서재 + 시리즈 — 표지 색과 서재·시리즈 페이지가 이 값을 쓴다. */}
+          <div style={{ flexBasis: '100%' }}>
+            <LibrarySeriesPicker topics={topics} value={topic} onChange={onTopic}
+              counts={counts} onCreated={onTopicCreated} canCreate={canCreate} />
           </div>
 
           {/* 세 줄 요약 — 발행할 때 한 번 만들어 저장한다. 고칠 수 있다. */}

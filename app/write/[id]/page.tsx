@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import ShortWriter from '@/components/ShortWriter'
 import LongWriter, { LongInitial } from '@/components/LongWriter'
 import WriteBar from '@/components/WriteBar'
-import { Topic } from '@/lib/site-config'
+import { useWriteTopics } from '@/components/useWriteTopics'
 
 interface Loaded {
   kind: 'note' | 'article'
@@ -24,7 +25,9 @@ export default function EditPage() {
   const { id } = useParams<{ id: string }>()
   const [post, setPost] = useState<Loaded | null>(null)
   const [failed, setFailed] = useState(false)
-  const [topics, setTopics] = useState<Topic[]>([])
+  const { data: session } = useSession()
+  const isAdmin = session?.user?.role === 'admin'
+  const { topics, setTopics, counts, created } = useWriteTopics([], isAdmin)
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [topic, setTopic] = useState('')
@@ -54,7 +57,7 @@ export default function EditPage() {
     fetch('/api/settings').then(r => r.json())
       .then(d => setTopics(d.topics || []))
       .catch(() => {})
-  }, [id])
+  }, [id, setTopics])
 
   if (failed) return (
     <div className="write-page">
@@ -81,11 +84,13 @@ export default function EditPage() {
       {isNote ? (
         <ShortWriter topics={topics} text={content} onText={setContent}
           topic={topic} onTopic={setTopic}
+          counts={counts} onTopicCreated={created}
           edit={{ postId: id, published: post.published }} />
       ) : (
         <LongWriter postId={id} topics={topics} initial={post.initial}
           title={title} onTitle={setTitle} content={content} onContent={setContent}
-          topic={topic} onTopic={setTopic} />
+          topic={topic} onTopic={setTopic}
+          counts={counts} onTopicCreated={created} canCreate={isAdmin} />
       )}
     </div>
   )

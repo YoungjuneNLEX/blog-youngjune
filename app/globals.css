@@ -311,6 +311,18 @@ a:hover { color: var(--accent); }
    주제 페이지 소개 카드 + 정렬 전환
    -------------------------------------------------------------------------- */
 
+/* ── 서재 페이지의 시리즈 줄 ── */
+.series-wrap { max-width: var(--wrap); margin: 0 auto; padding: 8px 0 12px; }
+.series-head { display: flex; align-items: baseline; gap: 8px; padding: 0 var(--gutter) 8px; }
+.series-row {
+  display: flex; gap: 12px; list-style: none; margin: 0;
+  padding: 0 var(--gutter) 4px; overflow-x: auto; scroll-snap-type: x proximity;
+}
+.series-card { flex: 0 0 144px; scroll-snap-align: start; }
+.series-card a { display: flex; flex-direction: column; gap: 4px; min-height: 44px; }
+.series-cover { height: 144px; }
+.series-name { font-size: 14px; font-weight: 600; line-height: 1.4; }
+
 .intro-wrap { max-width: var(--wrap); margin: 0 auto; padding: 16px var(--gutter) 12px; }
 .intro {
   border: 1px solid var(--border);
@@ -681,6 +693,30 @@ a:hover { color: var(--accent); }
 }
 .wh-bar-inner { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .wh-bar .btn { min-height: 44px; font-size: 14px; padding: 0 14px; }
+
+/* --------------------------------------------------------------------------
+   서재 + 시리즈 고르기 (글쓰기·고치기)
+   -------------------------------------------------------------------------- */
+
+.lsp { display: flex; flex-direction: column; gap: 12px; }
+.lsp-group { display: flex; flex-direction: column; gap: 6px; }
+.lsp-label { font-weight: 600; }
+.lsp-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.lsp-count { margin-left: 6px; font-size: 12px; color: var(--text-muted); }
+.chip-on .lsp-count { color: inherit; opacity: 0.85; }
+.lsp-more {
+  align-self: flex-start; min-height: 44px; padding: 0;
+  background: none; border: none; cursor: pointer;
+  font-family: inherit; font-size: 14px; color: var(--accent);
+}
+.lsp-add { display: flex; gap: 8px; align-items: center; }
+.lsp-add input {
+  flex: 1; min-width: 0; min-height: 44px; padding: 0 12px; font-size: 15px;
+  border: 1px solid var(--border); border-radius: 10px;
+  background: var(--bg); color: var(--text-main); outline: none; font-family: inherit;
+}
+.lsp-add .btn { min-height: 44px; padding: 0 14px; font-size: 14px; flex-shrink: 0; white-space: nowrap; }
+.lsp-error { margin: 0; font-size: 13px; color: #a33; }
 
 /* --------------------------------------------------------------------------
    글쓰기 맨 위 줄 + 짧은 글 | 긴 글 전환

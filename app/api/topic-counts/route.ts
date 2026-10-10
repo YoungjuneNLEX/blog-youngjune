@@ -5,9 +5,9 @@ import { NextResponse } from 'next/server'
 export const revalidate = 300
 
 /**
- * 주제 이름별 공개 글 수.
+ * 서재·시리즈 이름별 공개 글 수.
  * 공개 글(published + visibility='public')만 센다. 비공개 글은 숫자에도 드러나지 않는다.
- * 대분류가 중분류 글까지 더하는 셈은 화면에서 한다. (설정의 계층을 아는 쪽이 화면이다)
+ * 서재가 시리즈 글까지 더하는 셈은 화면에서 한다. (설정의 계층을 아는 쪽이 화면이다)
  */
 export async function GET() {
   const { data, error } = await supabaseAdmin

@@ -46,7 +46,7 @@ export async function POST(req: Request) {
  * 노트 창고에서 여러 개를 한 번에 처리한다.
  *   action='publish'   공개하기
  *   action='unpublish' 다시 비공개로
- *   action='topic'     주제 바꾸기 (topic 이 빈 값이면 '분류 전'으로 되돌림)
+ *   action='topic'     서재 바꾸기 (topic 이 빈 값이면 '분류 전'으로 되돌림)
  */
 export async function PATCH(req: Request) {
   const admin = await requireAdmin()

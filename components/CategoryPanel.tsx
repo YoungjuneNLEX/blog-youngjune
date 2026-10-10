@@ -11,16 +11,21 @@ interface Counts { total: number; counts: Record<string, number> }
 let cached: Counts | null = null
 
 /**
- * 카테고리 화면 — 모바일은 전체 화면, PC 는 가운데 창.
- * 맨 위 "전체 글 N", 그 아래 대분류 → 들여쓴 중분류. 오른쪽에 글 수.
- * 누르면 그 분류의 글 목록으로 간다. '전체 글'은 홈(전체 주제)으로 돌아간다.
- * 지금 보고 있는 분류는 쪽빛으로 표시. current 가 빈 문자열이면 아무것도 표시하지 않는다.
+ * 서재 화면 — 모바일은 전체 화면, PC 는 가운데 창.
+ * 맨 위 "전체 글 N", 그 아래 서재 → 들여쓴 시리즈. 오른쪽에 글 수.
+ * 누르면 그 서재·시리즈의 글 목록으로 간다. '전체 글'은 홈(전체 서재)으로 돌아간다.
+ * 지금 보고 있는 곳은 쪽빛으로 표시. current 가 빈 문자열이면 아무것도 표시하지 않는다.
+ *
+ * 방문자에게 공개 글이 한 편도 없는 시리즈는 숨긴다. (만들어 놓고 안 쓴 시리즈가 빈 책처럼 보이지 않게)
+ * 숫자를 받아 오기 전에는 시리즈를 보이지 않다가, 받으면 글이 있는 시리즈만 나타난다.
+ * 숫자를 끝내 못 받으면 숨길 근거가 없으므로 전부 보여 준다.
  */
 export default function CategoryPanel({
   topics, current, onClose,
 }: { topics: Topic[]; current: string | null; onClose: () => void }) {
   const router = useRouter()
   const [counts, setCounts] = useState<Counts | null>(cached)
+  const [failed, setFailed] = useState(false)
 
   // 숫자는 곁들이는 정보다. 못 받아 와도 목록은 그대로 보여 준다.
   useEffect(() => {
@@ -29,11 +34,11 @@ export default function CategoryPanel({
     fetch('/api/topic-counts')
       .then(r => r.json())
       .then((d: Counts) => {
-        if (!d || typeof d.total !== 'number') return
+        if (!d || typeof d.total !== 'number') { if (alive) setFailed(true); return }
         cached = d
         if (alive) setCounts(d)
       })
-      .catch(() => { /* 숫자 없이 보여 준다 */ })
+      .catch(() => { if (alive) setFailed(true) })   // 숫자 없이 전부 보여 준다
     return () => { alive = false }
   }, [])
 
@@ -49,7 +54,7 @@ export default function CategoryPanel({
     }
   }, [onClose])
 
-  /** 대분류는 중분류 글까지 더해서 센다 */
+  /** 서재는 시리즈 글까지 더해서 센다 */
   function countOf(name: string): number | null {
     if (!counts) return null
     return topicNamesUnder(topics, name)
@@ -63,7 +68,7 @@ export default function CategoryPanel({
 
   return (
     <div className="scrim cat-scrim" onClick={onClose} role="presentation">
-      <div className="cat-panel" role="dialog" aria-label="카테고리"
+      <div className="cat-panel" role="dialog" aria-label="서재"
         onClick={e => e.stopPropagation()}>
         <div className="cat-head">
           <button onClick={onClose} aria-label="닫기" className="icon-btn">
@@ -72,7 +77,7 @@ export default function CategoryPanel({
               <path d="M6 6l12 12M18 6L6 18" />
             </svg>
           </button>
-          <span className="cat-title">카테고리</span>
+          <span className="cat-title">서재</span>
         </div>
 
         <div className="cat-list">
@@ -84,6 +89,10 @@ export default function CategoryPanel({
 
           {orderedTopics(topics).map(({ topic, depth }) => {
             const n = countOf(topic.name)
+            // 공개 글이 없는 시리즈는 방문자 화면에서 숨긴다 (지금 보고 있는 시리즈는 예외)
+            if (depth === 1 && !failed && current !== topic.name) {
+              if (counts === null || n === 0) return null
+            }
             return (
               <button key={topic.id}
                 className={`cat-row${depth === 1 ? ' cat-sub' : ''}${current === topic.name ? ' on' : ''}`}

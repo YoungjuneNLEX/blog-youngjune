@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { orderedTopics, Topic, topicNamesUnder } from '@/lib/site-config'
+import { childTopics, libraries, orderedTopics, Topic, topicNamesUnder } from '@/lib/site-config'
 import { toPlainText } from '@/lib/cover'
 import { formatDay, formatTime } from '@/lib/date'
 
@@ -25,10 +25,18 @@ type Filter =
 // X 는 링크를 23자로 셈한다. 280 에서 링크와 사이 공백을 빼고 여유를 둔다.
 const X_TEXT_LIMIT = 250
 
+/** 서재 바꾸기 메뉴의 한 줄 — 터치 영역 44px */
+function menuItem(border: boolean): React.CSSProperties {
+  return { display: 'block', width: '100%', textAlign: 'left', minHeight: '44px',
+    padding: '0 14px', background: 'none', border: 'none', cursor: 'pointer',
+    borderTop: border ? '1px solid var(--border-soft)' : 'none',
+    color: 'var(--text-main)', fontSize: '15px', fontFamily: 'inherit' }
+}
+
 /**
  * 글관리 — 쓴 글을 날짜별로 펼쳐 놓고 골라서 처리하는 곳.
- * 맨 위 [짧은 글 | 긴 글] 탭마다 같은 필터(분류 전·공개 여부·주제)를 쓰고,
- * 짧은 글은 공개·주제·X 공유·묶어서 긴 글 초안, 긴 글은 공개·주제를 고른다.
+ * 맨 위 [짧은 글 | 긴 글] 탭마다 같은 필터(분류 전·공개 여부·서재)를 쓰고,
+ * 짧은 글은 공개·서재·X 공유·묶어서 긴 글 초안, 긴 글은 공개·서재를 고른다.
  * "공개는 나중에 고르는 것"이라는 원칙이 실제로 일어나는 화면이다.
  */
 export default function NotesWarehouse({
@@ -46,6 +54,7 @@ export default function NotesWarehouse({
   const [picked, setPicked] = useState<Set<string>>(new Set())
   const [busy, setBusy] = useState(false)
   const [topicOpen, setTopicOpen] = useState(false)
+  const [pickLib, setPickLib] = useState<Topic | null>(null)   // 서재 바꾸기 2단계에서 고른 서재
   const [templateId, setTemplateId] = useState('')
   const grownSet = useMemo(() => new Set(grown), [grown])
 
@@ -61,7 +70,7 @@ export default function NotesWarehouse({
       case 'untagged':  return !r.topic
       case 'published': return r.published
       case 'private':   return !r.published
-      // 대분류를 고르면 그 아래 중분류 글까지 함께 보여 준다
+      // 서재를 고르면 그 아래 시리즈 글까지 함께 보여 준다
       case 'topic':     return !!r.topic && topicNamesUnder(topics, filter.name).includes(r.topic)
       default:          return true
     }
@@ -93,7 +102,7 @@ export default function NotesWarehouse({
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ids: Array.from(picked), ...body }),
     })
-    setBusy(false); setTopicOpen(false)
+    setBusy(false); setTopicOpen(false); setPickLib(null)
     if (!res.ok) {
       const d = await res.json().catch(() => ({}))
       alert(d.error || '처리하지 못했습니다.')
@@ -180,29 +189,49 @@ export default function NotesWarehouse({
         나만 보기로
       </button>
       <div style={{ position: 'relative' }}>
-        <button onClick={() => setTopicOpen(v => !v)} disabled={busy} className="btn"
-          style={{ width: '100%' }}>주제 바꾸기</button>
+        <button onClick={() => { setTopicOpen(v => !v); setPickLib(null) }} disabled={busy}
+          className="btn" style={{ width: '100%' }}>서재 바꾸기</button>
         {topicOpen && (
           <div style={{ position: 'absolute', bottom: 'calc(100% + 6px)', right: 0, zIndex: 50,
-            minWidth: '11rem', background: 'var(--bg-card)', border: '1px solid var(--border)',
-            borderRadius: '10px', overflow: 'hidden', boxShadow: '0 8px 24px rgba(0,0,0,0.12)' }}>
-            <button onClick={() => run({ action: 'topic', topic: '' })}
-              style={{ display: 'block', width: '100%', textAlign: 'left', minHeight: '44px',
-                padding: '0 14px', background: 'none', border: 'none', cursor: 'pointer',
-                color: 'var(--text-sub)', fontSize: '15px', fontFamily: 'inherit' }}>
-              분류 전으로
-            </button>
-            {orderedTopics(topics).map(({ topic: t, depth }) => (
-              <button key={t.id} onClick={() => run({ action: 'topic', topic: t.name })}
-                style={{ display: 'block', width: '100%', textAlign: 'left', minHeight: '44px',
-                  padding: depth === 1 ? '0 14px 0 30px' : '0 14px', background: 'none',
-                  borderTop: '1px solid var(--border-soft)',
-                  borderLeft: 'none', borderRight: 'none', borderBottom: 'none', cursor: 'pointer',
-                  color: 'var(--text-main)', fontSize: depth === 1 ? '14px' : '15px',
-                  fontFamily: 'inherit' }}>
-                {t.name}
-              </button>
-            ))}
+            minWidth: '12rem', maxHeight: '60vh', overflowY: 'auto', background: 'var(--bg-card)',
+            border: '1px solid var(--border)', borderRadius: '10px', overflow: 'hidden auto',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.12)' }}>
+            {pickLib === null ? (
+              <>
+                {/* 1단계: 서재를 고른다 */}
+                <button onClick={() => run({ action: 'topic', topic: '' })} style={menuItem(false)}>
+                  분류 전으로
+                </button>
+                {libraries(topics).map(lib => (
+                  <button key={lib.id} style={{ ...menuItem(true), display: 'flex',
+                    justifyContent: 'space-between', alignItems: 'center' }}
+                    onClick={() => childTopics(topics, lib.id).length > 0
+                      ? setPickLib(lib)
+                      : run({ action: 'topic', topic: lib.name })}>
+                    <span>{lib.name}</span>
+                    {childTopics(topics, lib.id).length > 0 && (
+                      <span aria-hidden style={{ color: 'var(--text-faint)' }}>›</span>
+                    )}
+                  </button>
+                ))}
+              </>
+            ) : (
+              <>
+                {/* 2단계: 그 서재의 시리즈를 고른다 (관리자 화면이라 빈 시리즈도 보인다) */}
+                <button onClick={() => setPickLib(null)} style={{ ...menuItem(false), fontWeight: 700 }}>
+                  ‹ {pickLib.name}
+                </button>
+                <button onClick={() => run({ action: 'topic', topic: pickLib.name })} style={menuItem(true)}>
+                  서재에만 두기
+                </button>
+                {childTopics(topics, pickLib.id).map(t => (
+                  <button key={t.id} onClick={() => run({ action: 'topic', topic: t.name })}
+                    style={{ ...menuItem(true), paddingLeft: '30px', fontSize: '14px' }}>
+                    {t.name}
+                  </button>
+                ))}
+              </>
+            )}
           </div>
         )}
       </div>
@@ -254,7 +283,7 @@ export default function NotesWarehouse({
             <button key={v.key} onClick={() => pick(v.value)}
               className={activeKey === v.key ? 'on' : undefined}>{v.label}</button>
           ))}
-          <div className="label" style={{ margin: '24px 0 8px 12px' }}>주제</div>
+          <div className="label" style={{ margin: '24px 0 8px 12px' }}>서재</div>
           {orderedTopics(topics).map(({ topic: t, depth }) => (
             <button key={t.id} onClick={() => pick({ type: 'topic', name: t.name })}
               className={activeKey === `t:${t.name}` ? 'on' : undefined}
@@ -328,7 +357,7 @@ export default function NotesWarehouse({
             <p style={{ margin: 0, fontSize: '14px', lineHeight: 1.7, color: 'var(--quote)' }}>
               {tab === 'short'
                 ? '같은 흐름의 짧은 글을 골라 긴 글 한 편으로 키웁니다.'
-                : '긴 글을 누르면 고치는 화면으로 갑니다. 여기서는 여러 편을 골라 공개와 주제를 바꿉니다.'}
+                : '긴 글을 누르면 고치는 화면으로 갑니다. 여기서는 여러 편을 골라 공개와 서재를 바꿉니다.'}
             </p>
           </div>
 

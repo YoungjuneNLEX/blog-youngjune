@@ -4,6 +4,7 @@ import { useState } from 'react'
 import ShortWriter, { MemoRow, DRAFT_KEY } from '@/components/ShortWriter'
 import LongWriter from '@/components/LongWriter'
 import WriteBar from '@/components/WriteBar'
+import { useWriteTopics } from '@/components/useWriteTopics'
 import { Topic } from '@/lib/site-config'
 import { hasRichFormat, htmlToText, textToHtml } from '@/lib/write-convert'
 
@@ -13,11 +14,14 @@ type Mode = 'short' | 'long'
  * 글쓰기 — 짧은 글과 긴 글을 한 화면에서.
  * 열자마자 짧은 글 입력칸에 커서가 있다. 맨 위 [짧은 글 | 긴 글] 로 바꾸면
  * 긴 글 칸(제목·템플릿·표지·요약·공개 설정)이 펼쳐지고, 쓰던 본문은 그대로 따라간다.
+ * 서재 + 시리즈 두 칸으로 고른다. 짧은 글은 시리즈 칸을 접어 두고 '+ 시리즈 추가'로 편다.
  * 짧은 글은 관리자만 쓴다. (관리자가 아닌 글쓴이는 긴 글만 보인다)
  */
 export default function WriteScreen({
-  isAdmin, today, topics,
+  isAdmin, today, topics: topicsProp,
 }: { isAdmin: boolean; today: MemoRow[]; topics: Topic[] }) {
+  // 서재·시리즈 목록. 여기서 새 시리즈를 만들면 목록에 바로 들어간다.
+  const { topics, counts, created } = useWriteTopics(topicsProp, isAdmin)
   const [mode, setMode] = useState<Mode>(isAdmin ? 'short' : 'long')
   // 오늘 쓴 짧은 글. 새로 쓰면 여기에 쌓여서, 긴 글에 다녀와도 목록이 남는다.
   const [recent, setRecent] = useState<MemoRow[]>(today)
@@ -65,11 +69,13 @@ export default function WriteScreen({
       {mode === 'short' ? (
         <ShortWriter key={`s${round}`} topics={topics} today={recent}
           onSaved={row => setRecent(prev => [row, ...prev])}
-          text={text} onText={setText} topic={topic} onTopic={setTopic} />
+          text={text} onText={setText} topic={topic} onTopic={setTopic}
+          counts={counts} onTopicCreated={created} />
       ) : (
         <LongWriter key={`l${round}`} topics={topics}
           title={title} onTitle={setTitle} content={html} onContent={setHtml}
-          topic={topic} onTopic={setTopic} />
+          topic={topic} onTopic={setTopic}
+          counts={counts} onTopicCreated={created} canCreate={isAdmin} />
       )}
     </div>
   )

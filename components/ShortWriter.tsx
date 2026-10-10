@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { childTopics, Topic } from '@/lib/site-config'
+import LibrarySeriesPicker from '@/components/LibrarySeriesPicker'
+import { Topic } from '@/lib/site-config'
 import { formatTime } from '@/lib/date'
 import { fetchWithTimeout, networkErrorMessage } from '@/lib/http'
 
@@ -17,11 +18,12 @@ export interface MemoRow {
 
 /**
  * 짧은 글 쓰기 — 들어오면 바로 쓸 수 있어야 한다.
- * 제목도 표지도 없고 주제는 안 골라도 된다. 새로 쓰면 곧장 "나만 보기"로 들어간다.
+ * 제목도 표지도 없고 서재는 안 골라도 된다. 새로 쓰면 곧장 "나만 보기"로 들어간다.
  * edit 이 있으면 이미 있는 짧은 글을 고치는 화면이 된다. (/write/[id])
  */
 export default function ShortWriter({
   topics, text, onText, topic, onTopic, today = [], onSaved, edit,
+  counts, onTopicCreated,
 }: {
   topics: Topic[]
   text: string
@@ -29,6 +31,8 @@ export default function ShortWriter({
   topic: string
   onTopic: (v: string) => void
   today?: MemoRow[]
+  counts?: Record<string, number>        // 서재·시리즈별 편수 (시리즈 옆에 보인다)
+  onTopicCreated?: (topic: Topic) => void // 글쓰기에서 새로 만든 시리즈를 바깥 목록에도 넣는다
   onSaved?: (row: MemoRow) => void   // 새로 쓴 것을 바깥에도 알린다 (모드를 바꿔도 목록이 남게)
   edit?: { postId: string; published: boolean }
 }) {
@@ -77,7 +81,7 @@ export default function ShortWriter({
         ? await fetchWithTimeout(`/api/posts/${edit.postId}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            // 공개 여부는 건드리지 않는다. 바꾸는 것은 본문과 주제뿐.
+            // 공개 여부는 건드리지 않는다. 바꾸는 것은 본문과 서재·시리즈뿐.
             body: JSON.stringify({ content: body, topic: topic || null }),
           })
         : await fetchWithTimeout('/api/notes', {
@@ -113,7 +117,7 @@ export default function ShortWriter({
     onSaved?.(saved)
     try { localStorage.removeItem(DRAFT_KEY) } catch { /* 무시 */ }
     onText('')
-    // 주제는 남겨 둔다 — 같은 주제로 이어 적는 일이 많다
+    // 서재·시리즈는 남겨 둔다 — 같은 곳에 이어 적는 일이 많다
     boxRef.current?.focus()
   }
 
@@ -136,28 +140,9 @@ export default function ShortWriter({
           value={text} onChange={e => onText(e.target.value)} onKeyDown={onKeyDown}
           placeholder="제목 없이, 한 줄이어도 괜찮아요" />
 
-        {/* 주제 — 안 고르면 '분류 전'으로 들어간다. 다시 누르면 해제된다.
-            대분류 줄 아래에 그 중분류를 한 칸 들여 붙인다. */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {topics.filter(t => !t.parentId).map(parent => {
-            const kids = childTopics(topics, parent.id)
-            const chip = (t: Topic, sub = false) => {
-              const on = topic === t.name
-              return (
-                <button key={t.id} type="button" onClick={() => onTopic(on ? '' : t.name)}
-                  className={`chip${on ? ' chip-on' : ''}${sub ? ' chip-sub' : ''}`}>
-                  {t.short}
-                </button>
-              )
-            }
-            return (
-              <div key={parent.id} style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                {chip(parent)}
-                {kids.map(k => chip(k, true))}
-              </div>
-            )
-          })}
-        </div>
+        {/* 서재 + 시리즈. 서재를 안 고르면 '분류 전'으로 들어간다. 시리즈 칸은 접어 두고 '+ 시리즈 추가'로 편다. */}
+        <LibrarySeriesPicker topics={topics} value={topic} onChange={onTopic}
+          counts={counts} onCreated={onTopicCreated} canCreate collapseSeries />
 
         {error && <p style={{ margin: 0, color: '#a33', fontSize: '13px' }}>{error}</p>}
 
