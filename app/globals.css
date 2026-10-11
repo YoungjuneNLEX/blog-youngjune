@@ -652,6 +652,10 @@ a:hover { color: var(--accent); }
   border-bottom: 1px solid var(--border);
 }
 .memo-row:last-child { border-bottom: none; }
+.memo-x {
+  min-height: 44px; margin: -12px 0 -12px 4px; padding: 0 8px; border: none; background: none;
+  font-family: inherit; font-size: 12px; color: var(--accent); text-decoration: underline; cursor: pointer;
+}
 
 /* --------------------------------------------------------------------------
    쓰는 공간 — 노트 창고(/notes)
@@ -750,6 +754,8 @@ a:hover { color: var(--accent); }
   color: var(--text-sub); cursor: pointer; white-space: nowrap;
 }
 .seg button.on { background: var(--accent); color: #ffffff; font-weight: 700; }
+/* 터치 영역 44px 이상 (바깥 테두리 포함) */
+.seg-tall button { min-height: 40px; }
 
 /* --------------------------------------------------------------------------
    글쓰기 화면 (에디터)

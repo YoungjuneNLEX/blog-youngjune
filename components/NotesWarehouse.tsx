@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { childTopics, libraries, orderedTopics, Topic, topicNamesUnder } from '@/lib/site-config'
 import { toPlainText } from '@/lib/cover'
+import { openXWindow, xShareUrl } from '@/lib/x-share'
 import { formatDay, formatTime } from '@/lib/date'
 
 export interface WarehouseRow {
@@ -21,9 +22,6 @@ type Tab = 'short' | 'long'
 type Filter =
   | { type: 'all' } | { type: 'untagged' } | { type: 'published' }
   | { type: 'private' } | { type: 'topic'; name: string }
-
-// X 는 링크를 23자로 셈한다. 280 에서 링크와 사이 공백을 빼고 여유를 둔다.
-const X_TEXT_LIMIT = 250
 
 /** 서재 바꾸기 메뉴의 한 줄 — 터치 영역 44px */
 function menuItem(border: boolean): React.CSSProperties {
@@ -152,16 +150,8 @@ export default function NotesWarehouse({
     if (row.kind !== 'note') { alert('짧은 글만 X에 공유할 수 있습니다.'); return }
     if (!confirm('X에 공유하면 이 짧은 글은 사이트에서도 공개로 바뀝니다. 계속할까요?')) return
 
-    const url = `${window.location.origin}/posts/${id}`
-    const body = toPlainText(row.content)
-    const text = body.length > X_TEXT_LIMIT
-      ? body.slice(0, X_TEXT_LIMIT - 1).trimEnd() + '…'
-      : body
-
-    window.open(
-      `https://x.com/intent/post?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`,
-      '_blank', 'noopener,noreferrer',
-    )
+    // 창은 클릭 안에서 바로 열고, 공개 전환은 그 뒤에 보낸다
+    openXWindow(xShareUrl(id, row.content))
     run({ action: 'publish' })
   }
 

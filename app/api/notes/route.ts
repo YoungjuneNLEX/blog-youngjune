@@ -15,14 +15,18 @@ async function requireAdmin() {
   return profile?.id ? { authorId: profile.id as string } : null
 }
 
-/** 빠른 메모 저장 — 제목 없이 본문만. 항상 비공개로 들어간다. */
+/**
+ * 짧은 글 저장 — 제목 없이 본문만.
+ * 기본은 비공개. publish === true 일 때만 공개(글쓰기의 '공개 + X')로 저장하고 공개 페이지를 새로 만든다.
+ */
 export async function POST(req: Request) {
   const admin = await requireAdmin()
   if (!admin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-  const { content, topic } = await req.json()
+  const { content, topic, publish } = await req.json()
   const body = String(content || '').trim()
   if (!body) return NextResponse.json({ error: '내용이 비어 있습니다.' }, { status: 400 })
+  const isPublic = publish === true   // 켠 때만. 그 밖의 값은 모두 비공개
 
   const { data, error } = await supabaseAdmin
     .from('posts')
@@ -31,7 +35,7 @@ export async function POST(req: Request) {
       content: body,
       kind: 'note',
       topic: topic || null,   // 나중에 분류해도 된다
-      published: false,       // 기록이 먼저, 공개는 나중에 고르는 것
+      published: isPublic,    // 기본은 비공개 — 기록이 먼저, 공개는 고르는 것
       visibility: 'public',
       author_id: admin.authorId,
     })
@@ -39,6 +43,7 @@ export async function POST(req: Request) {
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (isPublic) revalidatePublicPages()   // 비공개 저장은 공개 페이지에 영향이 없다
   return NextResponse.json(data)
 }
 

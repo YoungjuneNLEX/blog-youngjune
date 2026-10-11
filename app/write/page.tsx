@@ -26,7 +26,7 @@ export default async function WritePage() {
     // 넉넉히 가져와 한국 시간 기준 오늘 것만 남긴다
     const { data } = await supabaseAdmin
       .from('posts')
-      .select('id, content, topic, created_at')
+      .select('id, content, topic, created_at, published')
       .eq('kind', 'note')
       .order('created_at', { ascending: false })
       .limit(40)
