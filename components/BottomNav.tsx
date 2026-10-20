@@ -1,87 +1,43 @@
 'use client'
 
-import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useSession } from 'next-auth/react'
-import CategoryPanel from '@/components/CategoryPanel'
-import { Topic } from '@/lib/site-config'
-import { topicFromSlug } from '@/lib/cover'
-
-/** 쓰는 공간에는 두지 않는다 (자체 머리글을 쓴다) */
-const WRITING = ['/notes', '/write', '/admin']
 
 /**
- * 하단 고정 메뉴 (모바일)
- *   방문자 : 홈 · 서재 · 소개
- *   관리자 : 홈 · 서재 · 글쓰기 · 글관리 · 소개
- * 로그인 여부는 브라우저에서 판단하므로 페이지 캐시가 깨지지 않는다.
+ * 하단 고정 메뉴 — 콘티 · 질문 · (+ 새 콘티) · 메모 · 설정.
+ * 가운데 + 버튼이 가장 크다. 엄지가 닿는 아래쪽에 두고 터치 영역은 48px 이상.
  */
-export default function BottomNav({ topics }: { topics: Topic[] }) {
-  const pathname = usePathname() || '/'
-  const { data: session } = useSession()
-  const [pick, setPick] = useState(false)
+const ICON = { width: 24, height: 24, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor',
+  strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true } as const
 
-  if (WRITING.some(p => pathname.startsWith(p))) return null
-
-  const isAdmin = session?.user?.role === 'admin'
-  const onTopics = pathname.startsWith('/topics')
-  // 지금 보고 있는 분류. 홈이면 '전체 글', 그 밖의 화면이면 아무것도 표시하지 않는다.
-  const currentTopic = pathname.startsWith('/topics/')
-    ? topicFromSlug(pathname.split('/')[2] || '')
-    : pathname === '/' ? null : ''
-  const cols = isAdmin ? 5 : 3
+export default function BottomNav() {
+  const pathname = usePathname()
+  const on = (href: string) => (href === '/' ? pathname === '/' : pathname.startsWith(href))
 
   return (
-    <>
-      <div className="bottom-nav-space only-mobile" />
-      <nav aria-label="아래 메뉴" className="bottom-nav only-mobile"
-        style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
-        <Link href="/" className={pathname === '/' ? 'on' : ''}>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-            strokeWidth="1.8" strokeLinejoin="round" aria-hidden><path d="M4 11l8-7 8 7v9H4z" /></svg>
-          홈
-        </Link>
-
-        <button type="button" onClick={() => setPick(true)} className={onTopics ? 'on' : ''}>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-            strokeWidth="1.8" strokeLinecap="round" aria-hidden><path d="M5 6h14M5 12h14M5 18h9" /></svg>
-          서재
-        </button>
-
-        {isAdmin && (
-          <Link href="/write" className="write">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-              strokeWidth="2" strokeLinecap="round" aria-hidden>
-              <rect x="4" y="4" width="16" height="16" rx="4" /><path d="M12 8v8M8 12h8" />
-            </svg>
-            글쓰기
-          </Link>
-        )}
-
-        {isAdmin && (
-          <Link href="/notes">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-              strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <rect x="4" y="4" width="16" height="16" rx="2.5" />
-              <path d="M8 9h8M8 13h8M8 17h5" />
-            </svg>
-            글관리
-          </Link>
-        )}
-
-        <Link href="/about" className={pathname.startsWith('/about') ? 'on' : ''}>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-            strokeWidth="1.8" strokeLinecap="round" aria-hidden>
-            <circle cx="12" cy="8" r="4" /><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" />
-          </svg>
-          소개
-        </Link>
-      </nav>
-
-      {pick && (
-        <CategoryPanel topics={topics} current={currentTopic} onClose={() => setPick(false)} />
-      )}
-    </>
+    <nav className="bottom-nav" aria-label="주 메뉴">
+      <Link href="/" className={`nav-item${on('/') ? ' on' : ''}`} aria-current={on('/') ? 'page' : undefined}>
+        <svg {...ICON}><rect x="4" y="4" width="16" height="16" rx="2" /><path d="M4 9h16M9 9v11" /></svg>
+        <span>콘티</span>
+      </Link>
+      <Link href="/questions" className={`nav-item${on('/questions') ? ' on' : ''}`}
+        aria-current={on('/questions') ? 'page' : undefined}>
+        <svg {...ICON}><circle cx="12" cy="12" r="9" /><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .9-1 1.7M12 17h.01" /></svg>
+        <span>질문</span>
+      </Link>
+      <Link href="/new" className="nav-plus" aria-label="새 콘티">
+        <svg {...ICON} width={28} height={28} strokeWidth={2.2}><path d="M12 5v14M5 12h14" /></svg>
+      </Link>
+      <Link href="/memo" className={`nav-item${on('/memo') ? ' on' : ''}`}
+        aria-current={on('/memo') ? 'page' : undefined}>
+        <svg {...ICON}><path d="M5 20l1-4L17 5l3 3L9 19l-4 1z" /></svg>
+        <span>메모</span>
+      </Link>
+      <Link href="/settings" className={`nav-item${on('/settings') ? ' on' : ''}`}
+        aria-current={on('/settings') ? 'page' : undefined}>
+        <svg {...ICON}><circle cx="12" cy="12" r="3" /><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1" /></svg>
+        <span>설정</span>
+      </Link>
+    </nav>
   )
 }

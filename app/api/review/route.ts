@@ -1,15 +1,13 @@
 import Anthropic from '@anthropic-ai/sdk'
-import { auth } from '@/lib/auth'
+import { requireApiAdmin } from '@/lib/dal'
 import { NextResponse } from 'next/server'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 export async function POST(req: Request) {
   // Claude 호출은 건당 요금이 나가므로 관리자만
-  const session = await auth()
-  if (session?.user?.role !== 'admin') {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-  }
+  const denied = await requireApiAdmin()
+  if (denied) return denied
 
   const { title, content } = await req.json()
   const plainText = content?.replace(/<[^>]*>/g, '') || ''

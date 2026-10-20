@@ -2,12 +2,12 @@
   "id": "/memo",
   "name": "적바림",
   "short_name": "적바림",
-  "description": "떠오른 것을 바로 쓰는 곳",
-  "start_url": "/write",
+  "description": "영상 콘티를 짜는 나만의 작업실",
+  "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#fbfaf6",
-  "theme_color": "#33517e",
+  "background_color": "#fdfcf9",
+  "theme_color": "#fdfcf9",
   "orientation": "portrait",
   "icons": [
     {
