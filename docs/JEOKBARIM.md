@@ -123,27 +123,34 @@
 - 모바일 우선(390px 기준) → 아이패드(펜 입력) → PC 순으로 넓힌다.
 - 다크 모드는 지금은 만들지 않는다.
 
-## 운영 원칙
-- (옛 문서에 '운영 원칙' 절이 없었다. 옮길 내용이 정해지면 여기에 적는다.
-  작업 규칙은 지금 CLAUDE.md 에 있다: 한국어, 한 번에 한 단계, DB 는 SQL 파일로만, 비밀 키 커밋 금지.)
+## 운영 원칙 (가장 중요)
+- 운영자가 몇 주씩 손을 놓아도 무너지지 않는 구조로 만든다.
+- 정기 발행 일정, 알림, "N일째 안 올림" 같은 압박 장치는 만들지 않는다.
+- 해야 하는 관리 작업을 늘리는 기능은 넣지 않는다. 새 기능은 "이게 할 일을 늘리는가?"로 먼저 판단한다.
 
 ## 안정성
 - Supabase 무료 플랜은 활동이 없으면 프로젝트가 일시정지된다. (실제로 멈춘 적 있음)
-- keep-alive: Vercel Cron 이 하루 한 번 /api/keep-alive 를 불러 DB 에 가벼운 조회를 날린다.
+- keep-alive: Vercel Cron 이 하루 한 번 /api/keep-alive 를 불러 DB 에 가벼운 조회를 날린다. (vercel.json)
   CRON_SECRET 환경변수로 보호한다. (Vercel 이 Authorization: Bearer <CRON_SECRET> 를 붙여 호출)
-- 공개 페이지(홈·글)는 캐시 + 재검증(5분). 글·설정을 바꾸면 revalidatePath 로 즉시 새로 만든다.
-  DB 조회가 실패하면 예외를 던져 재검증을 실패시킨다. 그래야 "빈 페이지"가 캐시를 덮어쓰지 않고
-  마지막으로 성공한 페이지가 계속 보인다. (lib/supabase.ts 의 assertDbOk)
-- 캐시되는 페이지는 로그인 여부를 알 수 없으므로 공개 글(published + visibility='public')만 싣는다.
-  루트 레이아웃에서 auth() 를 부르지 않는다. 부르면 모든 페이지가 매 요청 동적 렌더링된다.
-  로그인 상태는 브라우저에서 SessionProvider 가 가져오고, 수정·삭제 버튼도 브라우저에서 판단한다.
-  (실제 권한은 API 가 다시 검사한다)
-- 관리자 화면(글관리 /notes, /admin, 글쓰기 /write)은 캐시하지 않는다. 항상 지금 DB 상태를 본다.
-- 단, 방문자 화면이 없어졌으므로 "공개 페이지 캐시"는 더 이상 필요 없다. keep-alive Cron 은 유지.
+  손을 놓은 몇 주 동안 프로젝트가 멈추지 않게 하는 핵심 장치이므로 없애지 않는다.
+- 모든 화면이 로그인 뒤에 있으므로 페이지를 캐시하지 않는다. 항상 지금 DB 상태를 본다.
+- DB 조회가 실패하면 빈 화면처럼 보이지 않고 오류로 드러나게 한다. (lib/supabase.ts 의 assertDbOk)
 
 ## 보안 관련 결정
-- (옛 문서에 '보안 관련 결정' 절이 없었다. 옮길 내용이 정해지면 여기에 적는다.
-  새 방향에서 이미 정해진 것: 전체 로그인 잠금, noindex·robots 차단, 첨부는 비공개 버킷 + 서명된 주소, AI 점검은 admin 만.)
+- 전체 로그인 잠금: 방문자 화면이 없다. 잠금은 "로그인한 사람"이 아니라 **관리자(admin)** 만 통과시킨다.
+  (구글 계정이면 누구나 로그인은 되므로, 로그인 여부만 보면 안 된다)
+- noindex, robots 전체 차단. 첨부는 비공개 버킷 + 서명된 주소(signed URL). AI 점검은 admin 만 호출.
+- **RLS 정리 (1단계 fix-rls, 실행 완료)**: public 스키마의 4개 테이블(posts, profiles, site_settings, books)은
+  RLS 가 켜져 있고 정책이 0개다. 누구나 쓰고 지울 수 있던 posts 쓰기 정책과 이메일이 새던 profiles 읽기 정책을 없앴다.
+  앱은 브라우저용 anon 키를 쓰지 않으므로 영향이 없다. 기록: supabase/fix-rls.sql
+  새 테이블·버킷도 RLS 를 켜고 anon 접근이 불가능하게 만든다.
+- **서버만 DB 에 닿는다**: DB 접근은 전부 서버의 service role 키(lib/supabase.ts 의 supabaseAdmin)로만 한다.
+  쓰기 API 는 admin 만 호출할 수 있고, 미발행 글 조회도 admin 만 된다.
+- **초안 입구 API**: 지금은 만들지 않았다(보류). 만들 때는 DRAFT_API_TOKEN 으로 보호하고 published=false 로 고정하며,
+  엔드포인트·표식·앱·DB 트리거 네 겹 방어를 따른다.
+- **DB 변경은 SQL 파일로만** 만들고(supabase/migrations/), 실행은 내가 직접 한다. Claude 는 DB 를 직접 바꾸지 않는다.
+  SQL 은 supabase-schema.sql 이 아니라 실제 DB 기준으로 만든다.
+- **비밀 키(.env, service role 키, ANTHROPIC_API_KEY 등)는 절대 커밋하지 않는다.** (.gitignore 에 .env* 가 있다)
 
 ## 하지 않을 것
 - 공개 발행, 방문자 화면, SEO, 댓글.
